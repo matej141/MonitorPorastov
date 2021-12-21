@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--    pridane-->
+    <style name="AppActionBarPopup" parent="@style/ThemeOverlay.AppCompat.Light" />
+    <style name="AppActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="actionModeBackground">@color/gold</item>
+    </style>
+
+    <style name="TextAppearance.Nav.Menu" parent="TextAppearance.MaterialComponents.Headline3">
+        <item name="android:textSize">16sp</item>
+        <item name="fontFamily">"San Francisco"</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_gravity">center</item>
+    </style>
+
+    <style name="NavigationViewStyle">
+        <item name="android:listPreferredItemHeightSmall">100dp</item><!-- menu item height-->
+        <item name="itemIconTint">@color/colorPrimaryDark</item>
+        <item name="itemTextColor">@color/colorPrimaryDark</item>
+        <item name="itemTextAppearance">@style/TextAppearance.Nav.Menu</item>
+        <item name="itemIconPadding">28dp</item>
+    </style>
+
+    <style name="TextAppearance.MainTitle" parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="android:textSize">30sp</item>
+        <item name="fontFamily">"San Francisco"</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:shadowColor">@android:color/black</item>
+        <item name="android:shadowDx">-2</item>
+        <item name="android:shadowDy">-2</item>
+        <item name="android:shadowRadius">1</item>
+    </style>
+
+</resources>

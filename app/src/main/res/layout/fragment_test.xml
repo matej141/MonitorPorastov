@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainLayout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <include
+        android:id="@id/toolbar"
+        layout="@layout/toolbar"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/rootView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true">
+
+        <FrameLayout
+            android:id="@+id/mapHolder"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" />
+
+
+        <!-- rozbalovaci FAB-->
+        <!--        <include-->
+        <!--            layout="@layout/fab"-->
+        <!--            android:layout_width="fill_parent"-->
+        <!--            android:layout_height="fill_parent"-->
+        <!--            android:layout_gravity="start|bottom|center"-->
+        <!--            android:layout_marginBottom="16.0dip"-->
+        <!--            android:visibility="gone" />-->
+
+        <RelativeLayout
+            android:id="@+id/centerMyLocation"
+            android:layout_width="39.0dip"
+            android:layout_height="39.0dip"
+            android:layout_gravity="end|center|top"
+            android:layout_marginTop="15.0dip"
+            android:layout_marginEnd="11.5dip"
+            android:layout_marginRight="11.5dip"
+            android:background="@drawable/button_map">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="26.0dip"
+                android:layout_height="26.0dip"
+                android:layout_centerInParent="true"
+                android:alpha="0.5"
+                app:srcCompat="@drawable/ic_baseline_my_location_24" />
+        </RelativeLayout>
+
+        <!--        <androidx.appcompat.widget.AppCompatTextView-->
+        <!--            android:id="@+id/developmentServerIndicator"-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:padding="16.0dip"-->
+        <!--            android:text="Development server"-->
+        <!--            android:textColor="@color/red"-->
+        <!--            android:visibility="gone" />-->
+
+        <RelativeLayout
+            android:id="@+id/mapZoomButton"
+            android:layout_width="39.0dip"
+            android:layout_height="39.0dip"
+            android:layout_gravity="end|center|top"
+            android:layout_marginTop="65.0dip"
+            android:layout_marginEnd="11.5dip"
+            android:layout_marginRight="11.5dip"
+            android:background="@drawable/button_map">
+
+            <ImageView
+                android:layout_width="26.0dip"
+                android:layout_height="26.0dip"
+                android:layout_centerInParent="true"
+                android:alpha="0.5"
+                android:src="@drawable/ic_zoom_out_map_black_24dp" />
+        </RelativeLayout>
+
+        <!--        <ImageButton-->
+        <!--            android:id="@+id/bluetoothButton"-->
+        <!--            android:layout_width="25.0dip"-->
+        <!--            android:layout_height="25.0dip"-->
+        <!--            android:layout_gravity="start|center|top"-->
+        <!--            android:layout_marginStart="10.0dip"-->
+        <!--            android:layout_marginLeft="10.0dip"-->
+        <!--            android:layout_marginTop="10.0dip"-->
+        <!--            android:background="@drawable/button_transparent"-->
+        <!--            android:scaleType="centerInside"-->
+        <!--            android:src="@drawable/bluetooth_gps"-->
+        <!--            android:visibility="gone" />-->
+
+        <com.github.pengrad.mapscaleview.MapScaleView
+            android:id="@+id/scaleView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom|center"
+            android:layout_marginEnd="66.0dip"
+            android:layout_marginRight="66.0dip"
+            android:layout_marginBottom="12.0dip"
+            app:scale_color="@color/text_white_primary"
+            app:scale_strokeWidth="1.0dip"
+            app:scale_textSize="14.0sp" />
+    </FrameLayout>
+</RelativeLayout>

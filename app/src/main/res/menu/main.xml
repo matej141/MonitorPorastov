@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/tools">
+    <!--    <item-->
+    <!--        android:id="@+id/action_settings"-->
+    <!--        android:orderInCategory="100"-->
+    <!--        android:title="@string/action_settings"-->
+    <!--        app:showAsAction="never" />-->
+    <item
+        android:icon="@drawable/ic_layers"
+        android:title="menu"
+        app:showAsAction="always">
+
+        <menu>
+            <group android:id="@+id/menu_vrstvy">
+                <item
+                    android:id="@+id/menu_parcely"
+                    android:title="@string/menu_parcely_txt" />
+                <item
+                    android:id="@+id/menu_lpis"
+                    android:title="@string/menu_lpis_txt" />
+                <item
+                    android:id="@+id/menu_c_parcely"
+                    android:title="@string/menu_c_parcely_txt" />
+                <item
+                    android:id="@+id/menu_e_parcely"
+                    android:title="@string/menu_e_parcely_txt" />
+                <item
+                    android:id="@+id/menu_gnss"
+                    android:title="@string/menu_gnss_txt" />
+            </group>
+
+            <group android:id="@+id/menu_podklad">
+                <item
+                    android:id="@+id/menu_ortofoto"
+                    android:title="@string/menu_ortofoto_txt" />
+                <item
+                    android:id="@+id/menu_svahovitost"
+                    android:title="@string/menu_svahovitost_txt" />
+                <item
+                    android:id="@+id/menu_nadm_zakl"
+                    android:title="@string/menu_nadm_zakl_txt" />
+                <item
+                    android:id="@+id/menu_nadm_rozs"
+                    android:title="@string/menu_nadm_rozs_txt" />
+
+            </group>
+        </menu>
+    </item>
+</menu>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/add_measure_nav_graph"
+    app:startDestination="@id/mapFragment">
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.android.monitorporastov.MapFragment"
+        android:label="fragment_map"
+        tools:layout="@layout/fragment_map" >
+        <action
+            android:id="@+id/action_mapFragment_to_addDrawingFragment"
+            app:destination="@id/addDrawingFragment"
+            app:popUpTo="@id/addDrawingFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+    <fragment
+        android:id="@+id/addDrawingFragment"
+        android:name="com.android.monitorporastov.AddDrawingFragment"
+        android:label="Informácie o poškodení"
+        tools:layout="@layout/fragment_add_damage" />
+</navigation>
