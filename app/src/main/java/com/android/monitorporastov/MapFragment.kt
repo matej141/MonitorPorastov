@@ -5,7 +5,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
@@ -119,7 +122,12 @@ class MapFragment : Fragment() {
     ): View {
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
-        val rootView = binding.root
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(
             context))
         // centered = false
@@ -139,7 +147,6 @@ class MapFragment : Fragment() {
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
         // drawerLockInterface.lockDrawer()
-        return rootView
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -306,8 +313,22 @@ class MapFragment : Fragment() {
                         //marker.icon = context?.let { ContextCompat.getDrawable(it, R.drawable.ic_map_marker) }
                         false
                     }
-                    marker.icon =
-                        context?.let { ContextCompat.getDrawable(it, R.drawable.ic_marker_polygon) }
+
+                    val height = 150
+                    val width = 150
+                    val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.ic_marker_polygon)
+                    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
+
+                    marker.isDraggable = true
+                    applyDraggableListener(marker)
+                    marker.setOnMarkerClickListener { marker, mapView ->
+                        //marker.icon = context?.let { ContextCompat.getDrawable(it, R.drawable.ic_map_marker) }
+                        false
+                    }
+//                    marker.icon =
+//                    context?.let { ContextCompat.getDrawable(it, R.drawable.ic_marker_polygon) }
+                    val bitmapd =  BitmapDrawable(resources, scaledBitmap)
+                    marker.icon = bitmapd
                     marker.position = GeoPoint(p.latitude, p.longitude)
                     polyMarkers.add(marker)
                     mMap.overlays.add(marker)
@@ -455,6 +476,7 @@ class MapFragment : Fragment() {
             override fun onMarkerDragStart(marker: Marker?) {
 
                 geoPoints = mutableListOf()
+
             }
 
             override fun onMarkerDragEnd(marker: Marker) {
