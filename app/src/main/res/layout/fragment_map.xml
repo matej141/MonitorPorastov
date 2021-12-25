@@ -46,6 +46,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/areCalculationsLayout" />
 
+        <ImageButton
+            android:id="@+id/button_compass"
+            android:layout_width="@dimen/map_button_size"
+            android:layout_height="@dimen/map_button_size"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/map_button_style"
+            android:focusable="true"
+            android:src="@drawable/ic_compass_colored"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/areCalculationsLayout" />
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/startDrawingButton"
             android:layout_width="wrap_content"
@@ -70,6 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/fab_margin"
             android:layout_marginBottom="20dp"
+            android:layout_marginEnd="@dimen/fab_margin"
             android:clickable="true"
 
             android:contentDescription="aaa"
@@ -79,6 +93,46 @@
 
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/ic_arrow_back"
+            app:tint="@android:color/white"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addPointButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/fab_margin"
+            android:layout_marginEnd="@dimen/fab_margin"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+
+            android:contentDescription="aaa"
+            android:focusable="true"
+
+            app:layout_constraintBottom_toBottomOf="parent"
+
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+
+            app:srcCompat="@drawable/ic_control_point"
+            app:tint="@android:color/white"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/doneGPSMeasureButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/fab_margin"
+            android:layout_marginEnd="@dimen/fab_margin"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+
+            android:contentDescription="aaa"
+            android:focusable="true"
+
+            app:layout_constraintBottom_toTopOf="@id/deleteButton"
+            app:layout_constraintEnd_toEndOf="parent"
+
+            app:srcCompat="@drawable/ic_done"
             app:tint="@android:color/white"
             android:visibility="gone"/>
 
@@ -99,6 +153,25 @@
             app:srcCompat="@drawable/ic_delete"
             app:tint="@android:color/white"
             android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/deletePointButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/fab_margin"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+
+            android:contentDescription="aaa"
+            android:focusable="true"
+
+            app:layout_constraintBottom_toTopOf="@id/saveButton"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_cancel"
+            app:tint="@android:color/white"
+            android:visibility="gone"/>
+
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/saveButton"

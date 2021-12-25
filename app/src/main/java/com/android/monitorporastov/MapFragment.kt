@@ -5,10 +5,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
@@ -26,11 +28,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.android.monitorporastov.databinding.FragmentMapBinding
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -54,21 +60,17 @@ class MapFragment : Fragment() {
     private var centered = false
     private lateinit var lastLocation: Location
     private var geoPoints = mutableListOf<GeoPoint>()
-    private var polygon: Polygon = Polygon()
+    private var newPolygon: Polygon = Polygon()
     private var polyMarkers = mutableListOf<Marker>()
     private var defaultZoomLevel = 18.0
-    private var manualDrawing = false
+    private var manualMeasure = false
+    private var gpsMeasure = false
     private var lastMarker: Marker? = null
     private var firstLoad = true
     private lateinit var alertDialogFactory: AlertDialogFactory
     private lateinit var drawerLockInterface: DrawerLockInterface
-
-    private val PREFS_NAME = "org.andnav.osm.prefs"
-    private val PREFS_TILE_SOURCE = "tilesource"
-    private val PREFS_LATITUDE_STRING = "latitudeString"
-    private val PREFS_LONGITUDE_STRING = "longitudeString"
-    private val PREFS_ORIENTATION = "orientation"
-    private val PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble"
+    private lateinit var polyMarkerIcon: Drawable
+    private var buttonDeleting = false
 
     private var mPrefs: SharedPreferences? = null
 
@@ -76,21 +78,38 @@ class MapFragment : Fragment() {
     private lateinit var locationRequest: LocationRequest
     private val interval = 1000
     private val fastestInterval = 1000L
+    private val polyMarkersHistory = mutableListOf<MutableList<Marker>>()
 
     private val binding get() = _binding!!
+    private val polygons = mutableListOf<Polygon>()
+    private val newPolygonDefaultId = "new polygon"
+    private val polygonOutlineColorStr = "#2CE635"
+    private val polygonFillColorStr = "#33EA3535"
+    private var actualPerimeter = 0.0
+    private var actualArea = 0.0
 
     // https://stackoverflow.com/questions/40760625/how-to-check-permission-in-fragment/68347506#68347506
     private var activityResultLauncher: ActivityResultLauncher<Array<String>>
+
+    companion object {
+        private const val PREFS_NAME = "MAP_FRAGMENT_PREFS"
+        private const val PREFS_TILE_SOURCE = "tileSource"
+        private const val PREFS_LATITUDE_STRING = "latitudeString"
+        private const val PREFS_LONGITUDE_STRING = "longitudeString"
+        private const val PREFS_ORIENTATION = "orientation"
+        private const val PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble"
+    }
+
     init {
         this.activityResultLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()) { result ->
             var allAreGranted = true
-            for(b in result.values) {
+            for (b in result.values) {
                 allAreGranted = allAreGranted && b
             }
 
-            if(allAreGranted) {
-                startLocating()
+            if (allAreGranted) {
+                startLocationUpdates()
             }
         }
     }
@@ -101,7 +120,7 @@ class MapFragment : Fragment() {
         alertDialogFactory = AlertDialogFactory(requireContext())
         mPrefs = context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
-       // setUpLocationService()
+        // setUpLocationService()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
@@ -141,12 +160,39 @@ class MapFragment : Fragment() {
         setUpMap()
 
 
-        if (manualDrawing) {
+        if (manualMeasure) {
             setUpForManualMeasure()
         }
+        if (gpsMeasure) {
+            setUpForGPSMeasure()
+        }
+        setPolyMarkerIcon()
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
+
+        // https://www.py4u.net/discuss/616531
+        val navController = findNavController()
+        navController.currentBackStackEntry?.savedStateHandle?.getLiveData<Boolean>("key")?.observe(
+            viewLifecycleOwner) { result ->
+            if (result) {
+                val polygon = Polygon()
+                polygon.points = newPolygon.actualPoints
+                polygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
+                polygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
+                polygons.add(polygon)
+                drawExistingPolygons()
+                setDefault()
+            }
+        }
+        drawExistingPolygons()
         // drawerLockInterface.lockDrawer()
+    }
+
+    private fun drawExistingPolygons() {
+        CoroutineScope(Dispatchers.Main).launch {
+            polygons.forEach { mMap.overlays.add(it) }
+            mMap.invalidate()
+        }
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -156,7 +202,7 @@ class MapFragment : Fragment() {
             }
             lastLocation = locationResult.lastLocation
             if (firstLoad) {
-                centerController(lastLocation)
+                centerMap()
                 mMapController.setZoom(defaultZoomLevel)
                 firstLoad = false
             }
@@ -167,12 +213,21 @@ class MapFragment : Fragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun startLocating() {
+    private fun startLocationUpdates() {
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
             Looper.getMainLooper()
         )
+    }
+
+    private fun setPolyMarkerIcon() {
+        val height = 150
+        val width = 150
+        val bitmap =
+            BitmapFactory.decodeResource(context?.resources, R.drawable.ic_marker_polygon_add)
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
+        polyMarkerIcon = BitmapDrawable(resources, scaledBitmap)
     }
 
     private fun stopLocationUpdates() {
@@ -182,11 +237,11 @@ class MapFragment : Fragment() {
     private fun setUpCallback() {
         requireActivity().onBackPressedDispatcher.addCallback(this) {
 
-            if (manualDrawing) {
+            if (manualMeasure) {
                 clearDrawingAlert()
             } else {
                 AlertDialog.Builder(requireContext())
-                    .setMessage("Chcete ukončiť aplikáciu?")
+                    .setTitle("Chcete ukončiť aplikáciu?")
                     .setPositiveButton("Áno") { _, _ -> requireActivity().finish() }
                     .setNegativeButton("Nie") { dialog, _ -> dialog.cancel() }
                     .create()
@@ -208,20 +263,108 @@ class MapFragment : Fragment() {
         binding.deleteButton.setOnClickListener {
             clearDrawingAlert()
         }
-
         binding.saveButton.setOnClickListener {
-            // Navigation.findNavController(it).navigateUp()
-            Navigation.findNavController(it).navigate(R.id.action_mapFragment_to_addDrawingFragment)
+            saveMeasure(it)
+        }
+        binding.addPointButton.setOnClickListener {
+            addPoint()
+        }
+        binding.buttonCompass.setOnClickListener {
+            centerRotationOfMap()
+        }
+        binding.deletePointButton.setOnClickListener {
+            setButtonDeleting()
+        }
+
+        binding.doneGPSMeasureButton.setOnClickListener {
+            endGPSMeasureAD()
         }
     }
 
+    private fun endGPSMeasureAD() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Naozaj chcete ukončiť meranie krokovaním?")
+            .setPositiveButton("Áno") { _, _ -> setToManualMeasure() }
+            .setNegativeButton("Nie") { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
+    }
+
+    private fun setToManualMeasure() {
+        setUpForManualMeasure()
+        polyMarkers.forEach { it.icon = polyMarkerIcon }
+        polyMarkers.forEach { applyDraggableListener(it) }
+        polyMarkers.forEach { it.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER) }
+        polyMarkers.forEach {
+            it.setOnMarkerClickListener { m, _ ->
+                deletePoint(m)
+                true
+            }
+        }
+    }
+
+    private fun setButtonDeleting() {
+        if (!buttonDeleting) {
+            buttonDeleting = true
+            binding.deletePointButton.backgroundTintList = ColorStateList.valueOf(Color
+                .parseColor("#EA0A0A"))
+        } else {
+            buttonDeleting = false
+            binding.deletePointButton.backgroundTintList = ColorStateList.valueOf(Color
+                .parseColor("#B4802E"))
+        }
+    }
+
+    private fun saveMeasure(v: View) {
+        if (polyMarkers.size < 3) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Nezadali ste dostatočný počet bodov")
+                .setMessage("Na uloženie záznamu musíte zadať aspoň 3 body.")
+                .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+                .create()
+                .show()
+        } else {
+            val bundle = Bundle()
+            bundle.putDouble(AddDamageFragment.ARG_AREA_ID, actualArea)
+            bundle.putDouble(AddDamageFragment.ARG_PERIMETER_ID, actualPerimeter)
+            Navigation.findNavController(v)
+                .navigate(R.id.action_mapFragment_to_addDrawingFragment, bundle)
+        }
+    }
+
+    private fun addPoint() {
+        geoPoints = mutableListOf()
+        val marker = Marker(mMap)
+
+        //marker.isDraggable = true
+        // applyDraggableListener(marker)
+        marker.setOnMarkerClickListener { _, _ ->
+            false
+        }
+        marker.icon =
+            context?.let { ContextCompat.getDrawable(it, R.drawable.ic_marker_polygon) }
+
+        marker.position = GeoPoint(lastLocation.latitude, lastLocation.longitude)
+        polyMarkersHistory.add(polyMarkers.toMutableList())
+        polyMarkers.add(marker)
+        mMap.overlays.add(marker)
+        // https://stackoverflow.com/questions/54574152/how-to-remove-markers-from-osmdroid-map
+        lastMarker = marker
+        drawPolygon()
+    }
+
     private fun showMeasureAD() {
+        if (!locationCheck()) {
+            return
+        }
         AlertDialog.Builder(requireContext())
             .setTitle("Vyberte spôsob:")
             .setAdapter(setUpAdapterForMeasureAD()) { dialog, item ->
 
                 if (item == 0) {
                     setUpForManualMeasure()
+                } else {
+                    setUpForGPSMeasure()
                 }
             }
             .setNegativeButton("Zrušiť") { dialog, _ -> dialog.cancel() }
@@ -258,27 +401,38 @@ class MapFragment : Fragment() {
         return adapter
     }
 
-    private fun firstSetUp() {
-        firstLoad = !firstLoad
-//        CoroutineScope(Dispatchers.Main).launch {
-//            val result: Deferred<Location> = async { setUpLocationService() }
-//            lastLocation = result.await()
-//            mMapController.setCenter(GeoPoint(lastLocation.latitude, lastLocation.longitude))
-//        }
-
-
-    }
-
     private fun setUpMap() {
         mMap = binding.mapView
         mMap.setDestroyMode(false)
         // mMap.mapOrientation = 45.0f
+
+//        runBlocking(Dispatchers.IO) {
+//            var c: HttpURLConnection? = null
+//            var inputStream: InputStream? = null // we should use IO thread here !
+//            c = URL("https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get").openConnection() as HttpURLConnection
+//            inputStream = c.inputStream
+//            val wmsEndpoint: WMSEndpoint = WMSParser.parse(inputStream)
+//
+//            inputStream.close()
+//            c.disconnect()
+//            val source = WMSTileSource.createFrom(wmsEndpoint, wmsEndpoint.layers[0])
+//
+//            mMap.setTileSource(source)
+//        }
+
         mMap.setTileSource(TileSourceFactory.MAPNIK)
+
         mMap.setMultiTouchControls(true)
         mMap.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
         mMapController = mMap.controller
         mMap.maxZoomLevel = 30.0
-        mMapController.setZoom(defaultZoomLevel)
+        val startZoomLevel = 5.0
+        val startGeoPoint = GeoPoint(48.148598, 17.107748)
+        if (firstLoad) {
+            mMapController.setZoom(startZoomLevel)
+            mMapController.setCenter(startGeoPoint)
+        }
+
         val mRotationGestureOverlay = RotationGestureOverlay(mMap)
         mRotationGestureOverlay.isEnabled = true
 
@@ -289,6 +443,10 @@ class MapFragment : Fragment() {
         if (mainMarker != null) {
             mMap.overlays.add(mainMarker)
         }
+    }
+
+    private fun centerRotationOfMap() {
+        mMap.mapOrientation = 0.0f
     }
 
     private fun redrawPolygon() {
@@ -303,42 +461,36 @@ class MapFragment : Fragment() {
     private fun setUpMapReceiver() {
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                if (manualDrawing) {
+                if (manualMeasure) {
                     geoPoints = mutableListOf()
                     val marker = Marker(mMap)
 
                     marker.isDraggable = true
                     applyDraggableListener(marker)
-                    marker.setOnMarkerClickListener { marker, mapView ->
-                        //marker.icon = context?.let { ContextCompat.getDrawable(it, R.drawable.ic_map_marker) }
-                        false
-                    }
 
-                    val height = 150
-                    val width = 150
-                    val bitmap = BitmapFactory.decodeResource(context?.resources, R.drawable.ic_marker_polygon)
-                    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
-
+                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                     marker.isDraggable = true
                     applyDraggableListener(marker)
-                    marker.setOnMarkerClickListener { marker, mapView ->
-                        //marker.icon = context?.let { ContextCompat.getDrawable(it, R.drawable.ic_map_marker) }
-                        false
-                    }
 //                    marker.icon =
-//                    context?.let { ContextCompat.getDrawable(it, R.drawable.ic_marker_polygon) }
-                    val bitmapd =  BitmapDrawable(resources, scaledBitmap)
-                    marker.icon = bitmapd
+//                    context?.let { ContextCompat.getDrawable(it, R.drawable.ic_marker_polygon_add) }
+
+                    marker.icon = polyMarkerIcon
                     marker.position = GeoPoint(p.latitude, p.longitude)
+                    polyMarkersHistory.add(polyMarkers.toMutableList())
                     polyMarkers.add(marker)
                     mMap.overlays.add(marker)
                     // https://stackoverflow.com/questions/54574152/how-to-remove-markers-from-osmdroid-map
 
                     // mMap.overlays.forEach { if (it is Polygon) mMap.overlays.remove(it) }
                     lastMarker = marker
+                    marker.setOnMarkerClickListener { m, _ ->
+                        deletePoint(m)
+                        true
+                    }
+
                     drawPolygon()
                 }
-                return false
+                return true
             }
 
             override fun longPressHelper(p: GeoPoint): Boolean {
@@ -348,11 +500,18 @@ class MapFragment : Fragment() {
         mMap.overlays.add(MapEventsOverlay(mReceive))
     }
 
+    private fun deletePoint(marker: Marker) {
+        if (!buttonDeleting) return
+        mMap.overlays.remove(marker)
+        polyMarkersHistory.add(polyMarkers.toMutableList())
+        polyMarkers = polyMarkers.filter { it != marker }.toMutableList()
+        drawPolygon()
+    }
+
     override fun onStart() {
         super.onStart()
 //        fused.startLocationUpdates()
         if (!firstLoad) {
-
             val zoomLevel = mPrefs!!.getFloat(PREFS_ZOOM_LEVEL_DOUBLE, 1f)
             mMap.controller.setZoom(zoomLevel.toDouble())
             val orientation = mPrefs!!.getFloat(PREFS_ORIENTATION, 0f)
@@ -385,7 +544,7 @@ class MapFragment : Fragment() {
         super.onResume()
         // fused.startLocationUpdates()
 
-       // mMap.onResume()
+        // mMap.onResume()
     }
 
     override fun onPause() {
@@ -411,21 +570,34 @@ class MapFragment : Fragment() {
     }
 
     private fun undoMap() {
-        if (lastMarker == null) return
-        polyMarkers.removeLast()
-        mMap.overlays.remove(lastMarker)
-        lastMarker = if (polyMarkers.isEmpty()) {
-            null
-        } else {
-            polyMarkers.last()
+        if (polyMarkersHistory.isEmpty()) return
+        polyMarkersHistory.last().forEach {
+            if (!polyMarkers.contains(it)) {
+                mMap.overlays.add(it)
+            }
         }
+        polyMarkers.forEach {
+            if (!polyMarkersHistory.last().contains(it)) {
+                mMap.overlays.remove(it)
+            }
+        }
+
+        polyMarkers = polyMarkersHistory.last()
+        polyMarkersHistory.removeLast()
+
+//        if (lastMarker == null) return
+//        polyMarkers.removeLast()
+//        mMap.overlays.remove(lastMarker)
+//        lastMarker = if (polyMarkers.isEmpty()) {
+//            null
+//        } else {
+//            polyMarkers.last()
+//        }
         drawPolygon()
     }
 
     private fun centerMap() {
-        if (!this::lastLocation.isInitialized) {
-            Toast.makeText(context, "Poloha ešte nebola získaná, počkajte prosím",
-                Toast.LENGTH_SHORT).show()
+        if (!locationCheck()) {
             return
         }
         if (mMap.zoomLevelDouble < 25) {
@@ -434,34 +606,60 @@ class MapFragment : Fragment() {
         mMapController.setCenter(GeoPoint(lastLocation))
     }
 
+    private fun locationCheck(): Boolean {
+        if (!this::lastLocation.isInitialized) {
+            Toast.makeText(context, "Poloha ešte nebola získaná, počkajte prosím",
+                Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
+    }
+
     private fun setUpForMeasure() {
         binding.startDrawingButton.visibility = View.GONE
         binding.areCalculationsLayout.root.visibility = View.VISIBLE
+
+        binding.deleteButton.visibility = View.VISIBLE
+
+        drawerLockInterface.lockDrawer()
     }
 
     private fun setUpForManualMeasure() {
         setUpForMeasure()
-        binding.backButton.visibility = View.VISIBLE
-        binding.deleteButton.visibility = View.VISIBLE
+        manualMeasure = true
+        gpsMeasure = false
+        binding.addPointButton.visibility = View.GONE
+        binding.doneGPSMeasureButton.visibility = View.GONE
         binding.saveButton.visibility = View.VISIBLE
-        manualDrawing = true
-        drawerLockInterface.lockDrawer()
+        binding.deletePointButton.visibility = View.VISIBLE
+        binding.backButton.visibility = View.VISIBLE
+    }
+
+    private fun setUpForGPSMeasure() {
+        setUpForMeasure()
+        gpsMeasure = true
+        binding.addPointButton.visibility = View.VISIBLE
+        binding.doneGPSMeasureButton.visibility = View.VISIBLE
     }
 
     private fun setDefault() {
-        manualDrawing = false
+        manualMeasure = false
+        gpsMeasure = false
         binding.startDrawingButton.visibility = View.VISIBLE
         binding.areCalculationsLayout.root.visibility = View.GONE
         binding.backButton.visibility = View.GONE
         binding.deleteButton.visibility = View.GONE
         binding.saveButton.visibility = View.GONE
+        binding.addPointButton.visibility = View.GONE
+        binding.deletePointButton.visibility = View.GONE
+        binding.doneGPSMeasureButton.visibility = View.GONE
         clearMeasure()
         drawerLockInterface.unlockDrawer()
     }
 
     private fun clearDrawingAlert() {
         AlertDialog.Builder(requireContext())
-            .setMessage("Chcete zahodiť aktuálne meranie?")
+            .setTitle("Chcete zahodiť aktuálne meranie?")
             .setPositiveButton("Áno") { _, _ -> setDefault() }
             .setNegativeButton("Nie") { dialog, _ -> dialog.cancel() }
             .create()
@@ -474,24 +672,25 @@ class MapFragment : Fragment() {
 
         marker.setOnMarkerDragListener(object : Marker.OnMarkerDragListener {
             override fun onMarkerDragStart(marker: Marker?) {
-
                 geoPoints = mutableListOf()
 
             }
 
             override fun onMarkerDragEnd(marker: Marker) {
-
+                drawing()
             }
 
             override fun onMarkerDrag(marker: Marker?) {
                 //mMap.overlays.forEach { if (it is Polygon) mMap.overlays.remove(it) }
-                polyMarkers.forEach {
-                    geoPoints.add(GeoPoint(it.position.latitude,
-                        it.position.longitude))
-                }
+                drawing()
+            }
+
+            fun drawing() {
                 drawPolygon()
             }
-        })
+        }
+
+        )
     }
 
     private fun clearMeasure() {
@@ -509,16 +708,19 @@ class MapFragment : Fragment() {
     }
 
     private fun drawPolygon() {
-        mMap.overlays.forEach { if (it is Polygon) mMap.overlays.remove(it) }
-        geoPoints = mutableListOf()
+        mMap.overlays.forEach {
+            if (it is Polygon && it.id == newPolygonDefaultId) mMap.overlays.remove(it)
+        }
+        val geoPoints = mutableListOf<GeoPoint>()
         polyMarkers.forEach { geoPoints.add(GeoPoint(it.position.latitude, it.position.longitude)) }
         // https://github.com/osmdroid/osmdroid/wiki/Markers,-Lines-and-Polygons-(Kotlin)
-        polygon = Polygon()
-        polygon.id = "New poly"
-        polygon.outlinePaint.color = Color.GREEN
-        polygon.fillPaint.color = Color.parseColor("#1EFFE70E")
-        polygon.points = geoPoints
-        mMap.overlays.add(polygon)
+        newPolygon = Polygon()
+
+        newPolygon.id = newPolygonDefaultId
+        newPolygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
+        newPolygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
+        newPolygon.points = geoPoints
+        mMap.overlays.add(newPolygon)
 
         computeArea()
         computePerimeter()
@@ -526,21 +728,27 @@ class MapFragment : Fragment() {
     }
 
     private fun computeArea() {
+        val geoPoints = mutableListOf<GeoPoint>()
+        polyMarkers.forEach { geoPoints.add(GeoPoint(it.position.latitude, it.position.longitude)) }
+        actualArea = SphericalUtil.computeArea(geoPoints.map {
+            LatLng(it.latitude,
+                it.longitude)
+        }.toList())
         val displayedText = "${
-            "%.${3}f".format(SphericalUtil.computeArea(geoPoints.map {
-                LatLng(it.latitude,
-                    it.longitude)
-            }.toList()))
+            "%.${3}f".format(actualArea)
         } m\u00B2"
         binding.areCalculationsLayout.area.text = displayedText
     }
 
     private fun computePerimeter() {
+        val geoPoints = mutableListOf<GeoPoint>()
+        polyMarkers.forEach { geoPoints.add(GeoPoint(it.position.latitude, it.position.longitude)) }
+        actualPerimeter = SphericalUtil.computeLength(geoPoints.map {
+            LatLng(it.latitude,
+                it.longitude)
+        }.toList())
         val displayedText = "${
-            "%.${3}f".format(SphericalUtil.computeLength(geoPoints.map {
-                LatLng(it.latitude,
-                    it.longitude)
-            }.toList()))
+            "%.${3}f".format(actualPerimeter)
         } m"
         binding.areCalculationsLayout.perimeter.text = displayedText
     }
@@ -556,11 +764,11 @@ class MapFragment : Fragment() {
     }
 
     private fun centerController(l: Location) {
-        if (!centered) {
-            mMapController.setCenter(GeoPoint(l.latitude, l.longitude))
-           // mMapController.setZoom(defaultZoomLevel)
-            centered = !centered
-        }
+
+        mMapController.setCenter(GeoPoint(l.latitude, l.longitude))
+        // mMapController.setZoom(defaultZoomLevel)
+
+
     }
 
     private fun updateLocation(l: Location) {
@@ -571,7 +779,6 @@ class MapFragment : Fragment() {
                 false
             }
             mainMarker!!.id = "Main marker"
-            val box = mMap.boundingBox
             // https://www.programcreek.com/java-api-examples/?class=org.osmdroid.views.overlay.Marker&method=setIcon
             // https://stackoverflow.com/questions/29041027/android-getresources-getdrawable-deprecated-api-22
             mainMarker!!.icon =
@@ -580,27 +787,8 @@ class MapFragment : Fragment() {
         }
 
         mainMarker!!.position = position
+        mMap.invalidate()
 
-    }
-
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MapFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MapFragment().apply {
-                arguments = Bundle().apply {
-
-                }
-            }
     }
 
     override fun onDestroy() {
@@ -608,6 +796,7 @@ class MapFragment : Fragment() {
         context?.getSharedPreferences(PREFS_NAME, 0)?.edit()?.clear()?.apply()
         val preferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         preferences.edit().clear().apply()
+        _binding = null
     }
 
 }

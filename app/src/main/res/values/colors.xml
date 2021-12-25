@@ -18,5 +18,7 @@
     <color name="semi_transparent_white">#b2ffffff</color>
     <color name="text_white_primary">#ffffffff</color>
     <color name="gold">#ffd8a338</color>
-
+    <color name="red">#EA0A0A</color>
+    <color name="semi_red">#33EA3535</color>
+    <color name="semi_green">#2CE635</color>
 </resources>

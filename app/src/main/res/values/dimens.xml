@@ -8,4 +8,7 @@
     <dimen name="map_button_size">45dp</dimen>
     <dimen name="photo_thumbnail_size">200dp</dimen>
     <dimen name="photo_button_size">50dp</dimen>
+
+    <dimen name="container_horizontal_margin">6dp</dimen>
+
 </resources>

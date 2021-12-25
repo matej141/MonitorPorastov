@@ -32,23 +32,29 @@ import androidx.navigation.ui.*
 import androidx.preference.PreferenceManager
 import android.R.id.toggle
 import androidx.navigation.NavController
+import com.android.monitorporastov.databinding.FragmentMapBinding
 
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, DrawerLockInterface {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
+    DrawerLockInterface {
 
+    private var _binding: ActivityMainBinding? = null
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
+
     private lateinit var drawerLayout: DrawerLayout
     private val neededPermission = listOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
-    private lateinit var navController : NavController
+    private lateinit var navController: NavController
     private val requestCode = 100
+
+    private val binding get() = _binding!!
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(binding.appBarMain.toolbar)
@@ -66,17 +72,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // this.requestedOrientation= ActivityInfo.SCREEN_ORIENTATION_LOCKED
         setUpActionBarUnLocked()
 
-
         navView.setupWithNavController(navController)
-        navView.setNavigationItemSelectedListener{
+        navView.setNavigationItemSelectedListener {
             drawerLayout.closeDrawer(GravityCompat.START)
             if (it.itemId == R.id.nav_map) {
                 navController.popBackStack(R.id.nav_map, false)
                 true
-            }
-            else
+            } else
 
-                NavigationUI.onNavDestinationSelected(it , navController)
+                NavigationUI.onNavDestinationSelected(it, navController)
         }
     }
 
@@ -91,8 +95,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             AlertDialog.Builder(this)
                 .setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                .setPositiveButton("Yes") { _, _ -> startActivity(Intent(
-                    Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+                .setPositiveButton("Yes") { _, _ ->
+                    startActivity(Intent(
+                        Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
                 .setNegativeButton("No") { dialog, _ -> dialog.cancel() }
                 .create()
                 .show()
@@ -117,7 +123,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             Manifest.permission.ACCESS_COARSE_LOCATION
         )
         for (perm in neededPermission) {
-            if (ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    perm) != PackageManager.PERMISSION_GRANTED
+            ) {
                 askedPermissions.add(perm)
             }
         }
@@ -164,7 +172,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onDestroy() {
-        PreferenceManager.getDefaultSharedPreferences(baseContext).edit().clear().apply()
+        //PreferenceManager.getDefaultSharedPreferences(baseContext).edit().clear().apply()
 
         super.onDestroy()
     }

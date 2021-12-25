@@ -2,9 +2,9 @@ package com.android.monitorporastov
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -13,25 +13,17 @@ import android.view.*
 import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.databinding.PhotoListItemBinding
-import android.graphics.BitmapFactory
 
-import android.os.ParcelFileDescriptor
-import android.text.Editable
-import java.io.FileDescriptor
-
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import androidx.navigation.fragment.findNavController
+import com.android.monitorporastov.placeholder.PlaceholderContent
+import com.android.monitorporastov.placeholder.PlaceholderItem
 
 
-class AddDrawingFragment : Fragment() {
+class AddDamageFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
 
@@ -40,7 +32,7 @@ class AddDrawingFragment : Fragment() {
     private val binding get() = _binding!!
     var adapterOfPhotos = PhotosRecyclerViewAdapter(mutableListOf())
 
-    val listOfDamageType = arrayOf("Požiar",
+    private val listOfDamageType = arrayOf("Požiar",
         "Sucho",
         "Povodeň",
         "Poškodenie diviačou zverou",
@@ -48,9 +40,20 @@ class AddDrawingFragment : Fragment() {
         "Poškodenie srnčou zverou",
         "Napadnutie škodcom")
 
+    private var perimeter :Double? = null
+    private var area :Double? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        arguments?.let {
+            if (it.containsKey(ARG_PERIMETER_ID)) {
+                perimeter = it.getDouble(ARG_PERIMETER_ID)
+            }
+            if (it.containsKey(ARG_AREA_ID)) {
+                area = it.getDouble(ARG_AREA_ID)
+            }
+        }
 
     }
 
@@ -58,7 +61,6 @@ class AddDrawingFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        // Inflate the layout for this fragment
         _binding = FragmentAddDamageBinding.inflate(inflater, container, false)
 
         return binding.root
@@ -79,14 +81,54 @@ class AddDrawingFragment : Fragment() {
         binding.addDataDamageType.setOnClickListener {
             choiceAD()
         }
-//        binding.addDataDamageType.onFocusChangeListener =
-//            View.OnFocusChangeListener { v, hasFocus ->
-//                if (hasFocus) {
-//                    choiceAD()
-//                } else {
-//                    // Hide your calender here
-//                }
-//            }
+        binding.saveDamage.setOnClickListener {
+            saveData(it)
+        }
+    }
+
+    private fun saveData(v: View) {
+        if (binding.addDataName.editText?.length() ?: 0 == 0) {
+            warningAD()
+            return
+        }
+        val item = createPlaceholderItem()
+        if (item != null) {
+            PlaceholderContent.addItem(item)
+        }
+
+        val bundle = Bundle()
+        bundle.putBoolean(
+            "saved",
+            true
+        )
+        val navController = findNavController()
+        val b = true
+        navController.previousBackStackEntry?.savedStateHandle?.set("key", b)
+        navController.popBackStack()
+        //Navigation.findNavController(v).navigate(R.id.action_addMeasureFragment_to_nav_map, bundle)
+    }
+
+    private fun createPlaceholderItem(): PlaceholderItem? {
+        val name = binding.addDataName.editText?.text.toString()
+        val damageType = binding.addDataDamageType.text.toString()
+        val info = binding.addDataDescription.editText?.text.toString()
+        val photos = adapterOfPhotos.bitmaps
+        val id = PlaceholderContent.ITEMS_COUNT
+        val placeholderItem =
+            perimeter?.let { area?.let { it1 ->
+                PlaceholderItem(id, name, damageType, info, photos, it,
+                    it1)
+            } }
+        return placeholderItem
+    }
+
+    private fun warningAD() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Nekompletné údaje")
+            .setMessage("Musíte zadať aspoň názov poškodenia")
+            .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
     }
 
     private fun choiceAD() {
@@ -106,7 +148,7 @@ class AddDrawingFragment : Fragment() {
         { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
-                val item = PlaceholderItem(data?.extras?.get("data") as Bitmap)
+                val item = PhotoItem(data?.extras?.get("data") as Bitmap)
                 adapterOfPhotos.values.add(item)
                 adapterOfPhotos.notifyItemInserted(adapterOfPhotos.values.size - 1)
             }
@@ -118,13 +160,8 @@ class AddDrawingFragment : Fragment() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val uri: Uri? = data?.data
-                // https://stackoverflow.com/questions/20782713/retrieve-bitmap-from-uri
-//                val parcelFileDescriptor =
-//                    uri?.let { requireContext().contentResolver.openFileDescriptor(it, "r") }
-//                val fileDescriptor: FileDescriptor = parcelFileDescriptor!!.fileDescriptor
-//                val image = BitmapFactory.decodeFileDescriptor(fileDescriptor)
-//                parcelFileDescriptor.close()
-                val item = uri?.let { PlaceholderItem(it) }
+
+                val item = uri?.let { PhotoItem(it) }
                 if (item != null) {
                     adapterOfPhotos.values.add(item)
                 }
@@ -143,6 +180,7 @@ class AddDrawingFragment : Fragment() {
     }
 
     private fun choosePhoto() {
+        // https://handyopinion.com/pick-image-from-gallery-in-kotlin-android/
         val galleryIntent = Intent(
             Intent.ACTION_PICK,
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -152,16 +190,18 @@ class AddDrawingFragment : Fragment() {
 
     private fun takePhoto() {
         val cameraIntent = Intent(
-            MediaStore.ACTION_IMAGE_CAPTURE
+            ACTION_IMAGE_CAPTURE
         )
         resultTakePhotoLauncher.launch(cameraIntent)
 
     }
 
     class PhotosRecyclerViewAdapter(
-        var values: MutableList<PlaceholderItem>,
+        var values: MutableList<PhotoItem>,
     ) :
         RecyclerView.Adapter<PhotosRecyclerViewAdapter.ViewHolder>() {
+
+        val bitmaps = mutableListOf<Bitmap>()
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val binding =
@@ -174,9 +214,12 @@ class AddDrawingFragment : Fragment() {
             val item = values[position]
             if (item.image is Uri) {
                 holder.photoImage.setImageURI(item.image as Uri?)
+                val bitmap = (holder.photoImage.drawable as BitmapDrawable).bitmap
+                bitmaps.add(bitmap)
             }
             if (item.image is Bitmap) {
                 holder.photoImage.setImageBitmap(item.image)
+                bitmaps.add(item.image)
             }
             holder.deleteButton.setOnClickListener {
                 values.removeAt(position)
@@ -195,8 +238,13 @@ class AddDrawingFragment : Fragment() {
 
     }
 
-    data class PlaceholderItem(val image: Any?) {
+    data class PhotoItem(val image: Any?) {
 
+    }
+
+    companion object {
+        const val ARG_PERIMETER_ID = "perimeter_id"
+        const val ARG_AREA_ID = "area_id"
     }
 
 }
