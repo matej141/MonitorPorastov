@@ -96,7 +96,6 @@
             android:layout_height="wrap_content"
             app:layoutManager="LinearLayoutManager"
             app:layout_constraintTop_toBottomOf="@+id/linear1"
-            tools:context="com.android.ciernikmasterdetail.MainActivity"
             tools:listitem="@layout/photo_list_item" />
 
         <LinearLayout

@@ -26,6 +26,9 @@ import com.android.monitorporastov.placeholder.PlaceholderItem
 class AddDamageFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
+    private var dataItem: PlaceholderItem? = null
+    private var editData = false
+
 
     private var _binding: FragmentAddDamageBinding? = null
 
@@ -40,8 +43,8 @@ class AddDamageFragment : Fragment() {
         "Poškodenie srnčou zverou",
         "Napadnutie škodcom")
 
-    private var perimeter :Double? = null
-    private var area :Double? = null
+    private var perimeter: Double? = null
+    private var area: Double? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +55,12 @@ class AddDamageFragment : Fragment() {
             }
             if (it.containsKey(ARG_AREA_ID)) {
                 area = it.getDouble(ARG_AREA_ID)
+            }
+            if (it.containsKey(ARG_DATA_ITEM_ID)) {
+                dataItem =
+                    PlaceholderContent.ITEM_MAP[it.getInt(DataDetailFragment.ARG_DATA_ITEM_ID)]
+                editData = true
+
             }
         }
 
@@ -69,38 +78,76 @@ class AddDamageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.itemList
+        setupRecycleView()
+        setUpListeners()
+        if (editData) {
+            setUpExistingContent()
+        }
+    }
 
+    private fun setUpExistingContent() {
+        binding.addDataName.editText?.setText(dataItem?.name)
+        binding.addDataDamageType.setText(dataItem?.damageType)
+        binding.addDataDescription.editText?.setText(dataItem?.info)
+        dataItem?.photos?.forEach { adapterOfPhotos.values.add(PhotoItem(it)) }
+    }
+
+    private fun setUpListeners() {
         binding.galleryButton.setOnClickListener {
             choosePhoto()
         }
         binding.cameraButton.setOnClickListener {
             takePhoto()
         }
-        recyclerView.adapter = adapterOfPhotos
 
         binding.addDataDamageType.setOnClickListener {
             choiceAD()
         }
         binding.saveDamage.setOnClickListener {
-            saveData(it)
+            saveData()
         }
     }
 
-    private fun saveData(v: View) {
+    private fun setupRecycleView() {
+        recyclerView.adapter = adapterOfPhotos
+    }
+
+    private fun saveData() {
         if (binding.addDataName.editText?.length() ?: 0 == 0) {
             warningAD()
             return
         }
         val item = createPlaceholderItem()
-        if (item != null) {
-            PlaceholderContent.addItem(item)
-        }
 
+        if (editData) {
+            if (item != null) {
+                PlaceholderContent.changeItem(item, item.id)
+            }
+            navigateToItemDetail()
+
+        } else {
+            if (item != null) {
+                PlaceholderContent.addItem(item)
+            }
+            navigateToMap()
+        }
+    }
+
+    private fun navigateToItemDetail() {
         val bundle = Bundle()
-        bundle.putBoolean(
-            "saved",
-            true
-        )
+        val navController = findNavController()
+        dataItem?.let {
+            bundle.putInt(
+                DataDetailFragment.ARG_DATA_ITEM_ID,
+                it.id
+            )
+            navController.navigate(R.id.action_add_measure_fragment_TO_data_detail_fragment,
+                bundle)
+
+        }
+    }
+
+    private fun navigateToMap() {
         val navController = findNavController()
         val b = true
         navController.previousBackStackEntry?.savedStateHandle?.set("key", b)
@@ -114,11 +161,26 @@ class AddDamageFragment : Fragment() {
         val info = binding.addDataDescription.editText?.text.toString()
         val photos = adapterOfPhotos.bitmaps
         val id = PlaceholderContent.ITEMS_COUNT
+        if (editData) {
+            return dataItem?.let {
+                PlaceholderItem(it.id,
+                    name,
+                    damageType,
+                    info,
+                    photos,
+                    it.perimeter,
+                    it.area)
+            }
+        }
+
         val placeholderItem =
-            perimeter?.let { area?.let { it1 ->
-                PlaceholderItem(id, name, damageType, info, photos, it,
-                    it1)
-            } }
+            perimeter?.let {
+                area?.let { it1 ->
+                    PlaceholderItem(id, name, damageType, info, photos, it,
+                        it1)
+                }
+            }
+
         return placeholderItem
     }
 
@@ -193,7 +255,6 @@ class AddDamageFragment : Fragment() {
             ACTION_IMAGE_CAPTURE
         )
         resultTakePhotoLauncher.launch(cameraIntent)
-
     }
 
     class PhotosRecyclerViewAdapter(
@@ -207,7 +268,6 @@ class AddDamageFragment : Fragment() {
             val binding =
                 PhotoListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return ViewHolder(binding)
-
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -238,13 +298,14 @@ class AddDamageFragment : Fragment() {
 
     }
 
-    data class PhotoItem(val image: Any?) {
-
-    }
+    data class PhotoItem(val image: Any?)
 
     companion object {
         const val ARG_PERIMETER_ID = "perimeter_id"
         const val ARG_AREA_ID = "area_id"
+
+        const val ARG_DATA_ITEM_ID = "item_id"
+
     }
 
 }

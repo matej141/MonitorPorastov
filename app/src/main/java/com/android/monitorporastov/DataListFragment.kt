@@ -1,12 +1,10 @@
 package com.android.monitorporastov
 
-import android.content.ClipData
-import android.content.ClipDescription
-import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.databinding.DataListItemBinding
 import com.android.monitorporastov.databinding.FragmentDataListBinding
@@ -20,8 +18,6 @@ class DataListFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private var p = true
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,16 +35,26 @@ class DataListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView: RecyclerView = binding.dataItemList
-        setupRecyclerView(recyclerView)
+        val onClickListener = View.OnClickListener { itemView ->
+            val item = itemView.tag as PlaceholderItem
+            val bundle = Bundle()
+            bundle.putInt(
+                DataDetailFragment.ARG_DATA_ITEM_ID,
+                item.id
+            )
+            itemView.findNavController().navigate(R.id.show_data_detail, bundle)
+        }
+        setupRecyclerView(recyclerView, onClickListener)
     }
 
     private fun setupRecyclerView(
         recyclerView: RecyclerView,
+        onClickListener: View.OnClickListener,
     ) {
         recyclerView.adapter = PlaceholderItemRecyclerViewAdapter(
-            PlaceholderContent.ITEMS
+            PlaceholderContent.ITEMS,
+            onClickListener
         )
-        p = false
 
     }
 
@@ -64,8 +70,9 @@ class DataListFragment : Fragment() {
 
     class PlaceholderItemRecyclerViewAdapter(
         private val values: List<PlaceholderItem>,
+        private val onClickListener: View.OnClickListener,
 
-    ) :
+        ) :
         RecyclerView.Adapter<PlaceholderItemRecyclerViewAdapter.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -78,9 +85,17 @@ class DataListFragment : Fragment() {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = values[position]
+            val emptyTxt = "-"
             holder.dataListItemName.text = item.name
-            holder.dataListItemDamageType.text = item.damageType
-            holder.dataListItemInfo.text = item.info
+            if (item.damageType.isEmpty()) holder.dataListItemDamageType.text =
+                emptyTxt else holder.dataListItemDamageType.text = item.damageType
+            if (item.info.isEmpty()) holder.dataListItemInfo.text =
+                emptyTxt else holder.dataListItemInfo.text = item.info
+
+            with(holder.itemView) {
+                tag = item
+                setOnClickListener(onClickListener)
+            }
         }
 
         override fun getItemCount() = values.size

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_map">
+
+    <fragment
+        android:id="@+id/nav_map"
+        android:name="com.android.monitorporastov.MapFragment"
+        android:label="@string/menu_map_txt"
+        tools:layout="@layout/fragment_map">
+        <action
+            android:id="@+id/action_mapFragment_to_addDrawingFragment"
+            app:destination="@id/add_measure_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/add_measure_fragment"
+        android:name="com.android.monitorporastov.AddDamageFragment"
+        android:label="Informácie o poškodení"
+        tools:layout="@layout/fragment_add_damage">
+        <action
+            android:id="@+id/action_addMeasureFragment_to_nav_map"
+            app:destination="@id/nav_map"
+            app:popUpTo="@+id/add_measure_fragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_add_measure_fragment_TO_data_detail_fragment"
+            app:destination="@id/data_detail_fragment"
+            app:popUpTo="@+id/add_measure_fragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_my_data"
+        android:name="com.android.monitorporastov.DataListFragment"
+        android:label="Záznamy"
+        tools:layout="@layout/fragment_data_list">
+        <action
+            android:id="@+id/show_data_detail"
+            app:destination="@id/data_detail_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/data_detail_fragment"
+        android:name="com.android.monitorporastov.DataDetailFragment"
+        android:label="Detail"
+        tools:layout="@layout/fragment_data_detail">
+        <action
+            android:id="@+id/action_data_detail_fragment_TO_add_measure_fragment"
+            app:destination="@id/add_measure_fragment"
+            app:popUpTo="@+id/data_detail_fragment"
+            app:popUpToInclusive="true" />
+
+    </fragment>
+
+</navigation>

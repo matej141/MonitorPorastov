@@ -7,9 +7,9 @@ data class PlaceholderItem(
     val name: String,
     val damageType: String,
     val info: String,
-    val photos: List<Bitmap>,
-    val perimeter: Double,
-    val area: Double
+    val photos: List<Bitmap> = emptyList(),
+    val perimeter: Double = 0.0,
+    val area: Double = 0.0
 ) {
 
 }

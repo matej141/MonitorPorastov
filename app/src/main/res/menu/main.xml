@@ -16,7 +16,8 @@
             <group android:id="@+id/menu_vrstvy">
                 <item
                     android:id="@+id/menu_parcely"
-                    android:title="@string/menu_parcely_txt" />
+                    android:title="@string/menu_parcely_txt"
+                     />
                 <item
                     android:id="@+id/menu_lpis"
                     android:title="@string/menu_lpis_txt" />

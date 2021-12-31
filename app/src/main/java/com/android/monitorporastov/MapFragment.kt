@@ -14,9 +14,7 @@ import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.ListAdapter
 import android.widget.TextView
@@ -26,6 +24,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
@@ -186,6 +185,22 @@ class MapFragment : Fragment() {
         }
         drawExistingPolygons()
         // drawerLockInterface.lockDrawer()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        MenuCompat.setGroupDividerEnabled(menu, true)
+        inflater.inflate(R.menu.main, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+        if (id == R.id.menu_parcely) {
+            Toast.makeText(requireContext(), "haha", Toast.LENGTH_SHORT).show()
+            item.isChecked = true
+            item.isCheckable = true
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun drawExistingPolygons() {
@@ -433,6 +448,7 @@ class MapFragment : Fragment() {
             mMapController.setCenter(startGeoPoint)
         }
 
+        mMap.minZoomLevel = 4.0
         val mRotationGestureOverlay = RotationGestureOverlay(mMap)
         mRotationGestureOverlay.isEnabled = true
 

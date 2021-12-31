@@ -33,4 +33,22 @@
         <item name="android:shadowRadius">1</item>
     </style>
 
+    <style name="TextAppearance.Detail.Name" parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="android:textSize">18sp</item>
+        <item name="fontFamily">"San Francisco"</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Detail.Value" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">18sp</item>
+        <item name="fontFamily">"San Francisco"</item>
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ToolbarStyle" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+    </style>
+
 </resources>
