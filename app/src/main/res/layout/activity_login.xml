@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginActivity">
+    tools:context=".activities.LoginActivity">
 
     <ImageView
         android:id="@+id/login_logo"
@@ -16,7 +16,8 @@
         android:src="@drawable/logo_alpha_200x94px"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/logo_skeagis_desc" />
 
     <TextView
         android:id="@+id/login_main_title"
@@ -25,7 +26,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:fontFamily="San Francisco"
-        android:text="Monitor porastov"
+        android:text="@string/app_name"
         android:textColor="#248F48"
         android:textSize="30sp"
         android:textStyle="bold"
@@ -51,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:hint="Prihlasovacie meno" />
+            android:hint="@string/user_name_txt" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -72,7 +73,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:hint="Heslo" />
+            android:hint="@string/password_txt" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -81,7 +82,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="15dp"
         android:paddingHorizontal="45dp"
-        android:text="zapamätať prihlasovacie údaje"
+        android:text="@string/remember_crededials_txt"
         android:textColor="@color/colorAccent"
         app:layout_constraintBottom_toTopOf="@+id/login_button"
 
@@ -97,6 +98,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/login_remember_user_credentials"
-        android:text="Prihlásiť"/>
+        android:text="@string/login_button_txt"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

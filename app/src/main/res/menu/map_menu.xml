@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/tools">
+
+    <item
+        android:icon="@drawable/ic_layers"
+        android:title="@string/map_menu_title"
+        app:showAsAction="always">
+
+        <menu>
+            <group
+                android:id="@+id/menu_podklad"
+                android:checkableBehavior="single">
+                <item
+                    android:id="@+id/menu_default_map"
+                    android:checked="true"
+                    android:title="@string/menu_default_map" />
+                <item
+                    android:id="@+id/menu_ortofoto"
+                    android:title="@string/menu_ortofoto_txt" />
+
+
+            </group>
+        </menu>
+    </item>
+</menu>

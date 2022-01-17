@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.android.monitorporastov.MapFragment"
+        android:name="com.android.monitorporastov.fragments.MapFragment"
         android:label="fragment_map"
         tools:layout="@layout/fragment_map" >
         <action
@@ -18,7 +18,7 @@
     </fragment>
     <fragment
         android:id="@+id/add_measure_fragment"
-        android:name="com.android.monitorporastov.AddDamageFragment"
+        android:name="com.android.monitorporastov.fragments.AddDamageFragment"
         android:label="Informácie o poškodení"
         tools:layout="@layout/fragment_add_damage" />
 </navigation>

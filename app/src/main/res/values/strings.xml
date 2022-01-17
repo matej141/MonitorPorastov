@@ -6,7 +6,7 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
-    <!-- TODO: Remove or change this placeholder text -->
+
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="menu_map_txt">Mapa</string>
     <string name="menu_data">Moje záznamy</string>
@@ -30,4 +30,63 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="save_button_desc">Save button</string>
+    <string name="delete_point_button_desc">Delete point button</string>
+    <string name="delete_button_desc">Delete button</string>
+    <string name="done_gps_measure_button_desc">Done GPS measure button</string>
+    <string name="add_point_button_desc">Add point button</string>
+    <string name="back_button_desc">Back button</string>
+    <string name="start_drawing_button_desc">Start drawing button</string>
+    <string name="compass_button_desc">Compass button</string>
+    <string name="center_button_desc">Center button</string>
+    <string name="menu_default_map">Základná mapa</string>
+    <string name="map_menu_title">menu</string>
+
+    <string name="logo_skeagis_desc">Logo Skeagis</string>
+    <string name="user_name_txt">Prihlasovacie meno</string>
+    <string name="password_txt">Heslo</string>
+    <string name="remember_crededials_txt">zapamätať prihlasovacie údaje</string>
+    <string name="login_button_txt">Prihlásiť</string>
+    <string name="perimeter_txt">Obvod:</string>
+    <string name="perimeter_default_val">0.000 m</string>
+    <string name="area_txt">Plocha:</string>
+    <string name="area_default_val">0.000 m²</string>
+    <string name="photo_image_desc">photo image</string>
+    <string name="detail_table_name_txt">Názov</string>
+    <string name="detail_table_type_txt">Typ poškodenia</string>
+    <string name="detail_table_perimeter_txt">Obvod</string>
+    <string name="detail_table_area_txt">Plocha</string>
+    <string name="detail_table_info_txt">Poznámky</string>
+    <string name="detail_table_photos_txt">Fotografie:</string>
+    <string name="delete_photo_ib_desc">delete image button</string>
+
+    <string name="map_default">default</string>
+    <string name="map_ortofoto">ortofoto</string>
+    <string name="ortofoto_url">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>
+
+<!--    texty v alert dialógoch-->
+    <string name="gps_ad_title">Zrejme máte vypnuté GPS. Chcete ho zapnúť?</string>
+    <string name="button_positive_text">Áno</string>
+    <string name="button_negative_text">Nie</string>
+    <string name="button_cancel_text">Zrušiť</string>
+    <string name="ok_text">OK</string>
+    <string name="exit_app_ad_title">Chcete ukončiť aplikáciu?</string>
+    <string name="show_measure_ad_title">Vyberte spôsob:</string>
+    <string name="login_ag_title">Prihlásenie neúspešné</string>
+    <string name="login_ag_message">Skontrolujte svoje prihlasovacie údaje.
+        Ak problém pretrváva, kontaktujte podporu.</string>
+    <string name="explanation_ad_title">Mapu nie je možné zobraziť</string>
+    <string name="explanation_ad_message">Mapu nie je možné zobraziť a ani nie je možné s ňou pracovať, pretože nebol udelený prístup k polohe.</string>
+    <string name="location_alert">Poloha ešte nebola získaná, počkajte prosím</string>
+    <string name="end_gps_measure_ad_title">Naozaj chcete ukončiť vyznačovanie krokovaním?</string>
+    <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
+    <string-array name="damages">
+        <item>Požiar</item>
+        <item>Sucho</item>
+        <item>Povodeň</item>
+        <item>Poškodenie diviačou zverou</item>
+        <item>Poškodenie jeleňou zverou</item>
+        <item>Poškodenie srnčou zverou</item>
+        <item>Napadnutie škodcom</item>
+    </string-array>
 </resources>

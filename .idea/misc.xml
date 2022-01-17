@@ -46,7 +46,7 @@
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/mani.xml" value="0.182518115942029" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/manual_area_calculations.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/map_view.xml" value="0.17097264437689969" />
-        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/nav_header_main.xml" value="0.14697406340057637" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/nav_header_main.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/photo_list_item.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/toolbar.xml" value="0.20871327254305977" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/activity_main_drawer.xml" value="0.24739583333333334" />
@@ -54,6 +54,8 @@
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/main_menu.xml" value="0.2713541666666667" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/map_menu.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/menu_edit_data.xml" value="0.264" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1" />
       </map>
     </option>
   </component>

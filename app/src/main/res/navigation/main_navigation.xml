@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/nav_map"
-        android:name="com.android.monitorporastov.MapFragment"
+        android:name="com.android.monitorporastov.fragments.MapFragment"
         android:label="@string/menu_map_txt"
         tools:layout="@layout/fragment_map">
         <action
@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/add_measure_fragment"
-        android:name="com.android.monitorporastov.AddDamageFragment"
+        android:name="com.android.monitorporastov.fragments.AddDamageFragment"
         android:label="Informácie o poškodení"
         tools:layout="@layout/fragment_add_damage">
         <action
@@ -34,7 +34,7 @@
 
     <fragment
         android:id="@+id/nav_my_data"
-        android:name="com.android.monitorporastov.DataListFragment"
+        android:name="com.android.monitorporastov.fragments.DataListFragment"
         android:label="Záznamy"
         tools:layout="@layout/fragment_data_list">
         <action
@@ -44,7 +44,7 @@
 
     <fragment
         android:id="@+id/data_detail_fragment"
-        android:name="com.android.monitorporastov.DataDetailFragment"
+        android:name="com.android.monitorporastov.fragments.DataDetailFragment"
         android:label="Detail"
         tools:layout="@layout/fragment_data_detail">
         <action

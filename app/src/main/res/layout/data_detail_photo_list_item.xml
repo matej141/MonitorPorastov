@@ -9,6 +9,7 @@
         android:layout_width="@dimen/photo_thumbnail_size"
         android:layout_height="@dimen/photo_thumbnail_size"
 
-        tools:srcCompat="@tools:sample/avatars"/>
+        tools:srcCompat="@tools:sample/avatars"
+        android:contentDescription="@string/photo_image_desc" />
 
 </LinearLayout>

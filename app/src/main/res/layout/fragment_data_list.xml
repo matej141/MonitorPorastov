@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".DataListFragment"
+    tools:context=".fragments.DataListFragment"
     android:layout_marginHorizontal="@dimen/container_horizontal_margin">
 
     <androidx.recyclerview.widget.RecyclerView

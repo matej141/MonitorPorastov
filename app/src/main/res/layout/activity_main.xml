@@ -14,7 +14,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Ak chceme farebny text, tu treba prípadne doplniť style= ....  vid napr VIS appku-->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         style="@style/NavigationViewStyle"

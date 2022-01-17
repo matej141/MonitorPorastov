@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--    pridane-->
-    <style name="AppActionBarPopup" parent="@style/ThemeOverlay.AppCompat.Light" />
-    <style name="AppActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="actionModeBackground">@color/gold</item>
-    </style>
+
 
     <style name="TextAppearance.Nav.Menu" parent="TextAppearance.MaterialComponents.Headline3">
         <item name="android:textSize">16sp</item>
