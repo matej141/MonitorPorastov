@@ -68,8 +68,12 @@ dependencies {
     kapt "androidx.room:room-compiler:2.4.0"
     implementation "androidx.room:room-ktx:2.4.0"
 
-    // pridane z GPS measurement app
-    implementation 'com.github.pengrad:mapscaleview:1.6.0'
+
     implementation 'com.google.maps.android:android-maps-utils:0.6.2'
+
+    implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
+    implementation "com.squareup.retrofit2:converter-simplexml:2.6.1"
+    implementation 'com.squareup.retrofit2:converter-scalars:2.1.0'
 
 }

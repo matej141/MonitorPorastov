@@ -1,14 +1,12 @@
 package com.android.monitorporastov
 
 import android.util.Log
+import org.osmdroid.api.IMapView
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.util.MapTileIndex
-import org.osmdroid.wms.WMSTileSource
-import org.osmdroid.api.IMapView
 import org.osmdroid.wms.WMSEndpoint
 import org.osmdroid.wms.WMSLayer
-import java.lang.Exception
-import java.lang.StringBuilder
+import org.osmdroid.wms.WMSTileSource
 import kotlin.math.pow
 
 /**
@@ -21,12 +19,12 @@ open class WMSTileSourceRepaired(
     private val layer: String,
     private val crs: String,
     size: Int,
-    private val style: String?
+    private val style: String?,
 ) : OnlineTileSourceBase(aName, 0, 22, size, "png", aBaseUrl) {
     override fun getTileURLString(pMapTileIndex: Long): String {
         val baseUrl = baseUrl
         val sb = StringBuilder(baseUrl)
-        if (!baseUrl.endsWith("?")) sb.append("?")
+        if (!baseUrl.endsWith("?") && !baseUrl.endsWith("&")) sb.append("?")
         sb.append("request=GetMap")
         sb.append("&width=").append(tileSizePixels)
         sb.append("&height=").append(tileSizePixels)
@@ -64,6 +62,7 @@ open class WMSTileSourceRepaired(
         sb.append("&format=image/png")
         sb.append("&transparent=true")
         if (style != null) sb.append("&styles=").append(style)
+        sb.append("&viewparams=meno:dano")
         Log.i(IMapView.LOGTAG, sb.toString())
         return sb.toString()
     }
