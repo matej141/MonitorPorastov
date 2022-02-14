@@ -3,14 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:context=".fragments.DataDetailFragment"
-        >
+        tools:context=".fragments.DataDetailFragment">
 
         <LinearLayout
             android:id="@+id/data_detail_table"
@@ -95,7 +93,6 @@
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:gravity="start"
-
                     android:text="@string/detail_table_perimeter_txt"
                     android:textAppearance="@style/TextAppearance.Detail.Name" />
 
@@ -152,7 +149,6 @@
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:gravity="start"
-
                     android:text="@string/detail_table_info_txt"
                     android:textAppearance="@style/TextAppearance.Detail.Name" />
 

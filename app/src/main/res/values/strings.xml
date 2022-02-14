@@ -62,6 +62,7 @@
 
     <string name="map_default">default</string>
     <string name="map_ortofoto">ortofoto</string>
+
     <string name="ortofoto_url">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>
 
 <!--    texty v alert dialógoch-->

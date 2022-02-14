@@ -8,17 +8,26 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
+import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.PhotoItem
-import com.android.monitorporastov.PhotosRecyclerViewAdapter
-import com.android.monitorporastov.R
+import com.android.monitorporastov.*
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
+import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.placeholder.PlaceholderContent
 import com.android.monitorporastov.placeholder.PlaceholderItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -29,7 +38,7 @@ class AddDamageFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var dataItem: PlaceholderItem? = null
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
-
+    private val viewModel: ListViewModel by activityViewModels()
 
     private var _binding: FragmentAddDamageBinding? = null
 
@@ -40,6 +49,8 @@ class AddDamageFragment : Fragment() {
 
     private var perimeter: Double? = null
     private var area: Double? = null
+    private lateinit var newItem: DamageData
+//    private lateinit var userName: String   // dokoncit!!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +88,16 @@ class AddDamageFragment : Fragment() {
             setUpExistingContent()
         }
         listOfDamageType = resources.getStringArray(R.array.damages)
+        viewModel.newItem.observe(viewLifecycleOwner, Observer { newItem ->
+            newItem?.let {
+                this.newItem = it
+            }
+        })
+//        viewModel.username.observe(viewLifecycleOwner, Observer { username ->
+//            username?.let {
+//                this.username = it
+//            }
+//        })  // dokoncit!!!
     }
 
     /**
@@ -121,7 +142,7 @@ class AddDamageFragment : Fragment() {
             return
         }
         val item = createPlaceholderItem()
-
+        createItem()
         // ak používateľ iba upravoval dáta, upravené dáta uloží a naviguje ho naspäť
         // na fragment zobrazujúci detail o poškodení.
         if (editData) {
@@ -133,9 +154,87 @@ class AddDamageFragment : Fragment() {
             // na mapový fragment.
         } else {
             if (item != null) {
+                saveDataToGeoserver()
                 PlaceholderContent.addItem(item)
             }
-            navigateToMap()
+
+        }
+    }
+
+    private fun createStringFromPoints(): String {
+        val geoPoints = newItem.coordinates
+        var str = ""
+        geoPoints.forEach { str += "${it.latitude},${it.longitude} " }
+        str += "${geoPoints[0].latitude},${geoPoints[0].longitude}"
+
+        return str
+    }
+
+    private fun createInsertTransactionText(): String {
+        val str = createStringFromPoints()
+        return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
+                "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
+                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">" +
+                "<Insert xmlns=\"http://www.opengis.net/wfs\">" +
+                "<porasty xmlns=\"http://opengeo.org/geoserver_skuska\">" +
+                "<nazov xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.nazov}</nazov>" +
+                "<pouzivatel xmlns=\"http://opengeo.org/geoserver_skuska\">dano</pouzivatel>" +
+                "<typ_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.typ_poskodenia}</typ_poskodenia>" +
+                "<popis_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.popis_poskodenia}</popis_poskodenia>" +
+                "<obvod xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obvod}</obvod>" +
+                "<obsah xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obsah}</obsah>" +
+                "<geom xmlns=\"http://opengeo.org/geoserver_skuska\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
+                "<gml:outerBoundaryIs><gml:LinearRing><gml:coordinates cs=\",\" ts=\" \">" +
+                str +
+                "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></geom></porasty></Insert></Transaction>"
+    }
+
+    private fun createRequestBody(requestBodyText: String): RequestBody {
+
+        return RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
+    }
+
+    private fun createOkHttpClient() :OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(BasicAuthInterceptor("dano", "test"))
+            .connectTimeout(100, TimeUnit.SECONDS)
+            .readTimeout(100, TimeUnit.SECONDS)
+            .writeTimeout(100, TimeUnit.SECONDS)
+            .connectionPool(ConnectionPool(0, 5, TimeUnit.MINUTES))
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .build()
+
+
+    private fun saveDataToGeoserver() {
+        val str = createInsertTransactionText()
+        val requestBody = createRequestBody(createInsertTransactionText())
+        val okHttpClient = createOkHttpClient()
+        val service = RetroService.getServiceWithScalarsFactory(okHttpClient)
+        CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.Main) {
+                binding.progressBar.visibility = View.VISIBLE
+            }
+            val response = service.postToGeoserver(requestBody)
+            withContext(Dispatchers.Main) {
+                if (response.isSuccessful) {
+                    binding.progressBar.visibility = View.GONE
+                    val r: String? = response.body()
+
+                    Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
+                    if (r != null) {
+                        Log.d("MODELL", r)
+                    }
+
+                    Toast.makeText(context, "Načítané!", Toast.LENGTH_LONG)
+                        .show()
+                    navigateToMap()
+
+                } else {
+                    Log.d("MODELL", "Error: ${response.message()}")
+                }
+
+            }
         }
     }
 
@@ -162,6 +261,16 @@ class AddDamageFragment : Fragment() {
         val navController = findNavController()
         navController.previousBackStackEntry?.savedStateHandle?.set("key", true)
         navController.popBackStack()
+    }
+
+    private fun createItem() {
+        val name = binding.addDataName.editText?.text.toString()
+        val damageType = binding.addDataDamageType.text.toString()
+        val info = binding.addDataDescription.editText?.text.toString()
+        newItem.nazov = name
+        newItem.typ_poskodenia = damageType
+        newItem.popis_poskodenia = info
+
     }
 
     /**

@@ -1,17 +1,23 @@
 package com.android.monitorporastov.activities
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import com.android.monitorporastov.databinding.ActivityLoginBinding
-import android.text.Editable
-
-import android.text.TextWatcher
-import androidx.appcompat.app.AlertDialog
-import com.google.android.material.textfield.TextInputLayout
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.android.monitorporastov.R
+import com.android.monitorporastov.UserData
+import com.android.monitorporastov.databinding.ActivityLoginBinding
+import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.*
+import okhttp3.*
+import java.io.IOException
 
 
 class LoginActivity : AppCompatActivity() {
@@ -24,7 +30,9 @@ class LoginActivity : AppCompatActivity() {
     private val saveDataKey = "SaveDataKey"
     private var saveDataBoolean = false
     private lateinit var sharedPreferences: SharedPreferences
+    private val unauthorisedCode = 401;
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -70,13 +78,19 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Nastavenie listnereov pre textboxy a buttony
+     * Nastavenie listnerov pre textboxy a buttony
      */
     private fun setLoginListeners() {
         applyTextChangeListener(binding.loginUsername)
         applyTextChangeListener(binding.loginPassword)
         binding.loginButton.setOnClickListener {
-            checkLogin()
+            if (checkFieldsAreNotEmpty()) {
+                CoroutineScope(Dispatchers.Main).launch {
+                   performLogin()
+                }
+            }
+
+
         }
         binding.loginRememberUserCredentials
             .setOnCheckedChangeListener { _, isChecked ->
@@ -85,18 +99,70 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    /**
-     * Kontrola správnosti prihlasovacích údajov.
-     */
-    private fun checkLogin() {
-        if (!checkFieldsAreNotEmpty()) {
+
+    private fun loginRequest(): Request {
+        val userNameText = binding.loginUsername.editText?.text.toString()
+        val passwordText = CharArray(binding.loginPassword.editText?.text!!.length)
+        binding.loginPassword.editText?.text!!.getChars(0,
+            binding.loginPassword.editText?.text!!.length, passwordText, 0)
+        val credential = Credentials.basic(userNameText, String(passwordText))
+        return Request.Builder()
+            .url("http://services.skeagis.sk:7492/geoserver/rest")
+            .addHeader("Authorization", credential)
+            .build()
+    }
+
+    private suspend fun performLogin() {
+        val request = loginRequest()
+        val client = OkHttpClient()
+        val res = CompletableDeferred<Boolean>()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.Main) {
+                binding.progressBar.visibility = View.VISIBLE
+            }
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    // runOnUiThread { showLoginWarningAD() }
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    CoroutineScope(Dispatchers.Main).launch {
+
+                        binding.progressBar.visibility = View.GONE
+                    }
+                    response.body()?.close()
+                    if (response.code() == unauthorisedCode) {
+
+                        res.complete(false)
+                        return
+                    }
+
+                    res.complete(true)
+                }
+            })
+
+
+        }
+        val ret = res.await()
+        if (!ret) {
+            showLoginWarningAD()
             return
         }
-        if (!checkIfUserNameIsCorrect() || !checkIfPasswordIsCorrect()) {
-            showLoginAD()
-            return
-        }
-        // ked vsetko ok:
+        saveData()
+        val userNameText = binding.loginUsername.editText?.text.toString()
+        val passwordText = CharArray(binding.loginPassword.editText?.text!!.length)
+        binding.loginPassword.editText?.text!!.getChars(0,
+            binding.loginPassword.editText?.text!!.length, passwordText, 0)
+        UserData.username = userNameText
+        UserData.password = passwordText
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun perform() {
         saveData()
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
@@ -160,31 +226,66 @@ class LoginActivity : AppCompatActivity() {
         return true
     }
 
-    /**
-     * Kontrola, či používateľské meno je správne.
-     */
-    private fun checkIfUserNameIsCorrect(): Boolean {
 
-        if (binding.loginUsername.editText?.text.toString() == login) {
-            return true
-        }
-        return false
+    private fun checkRest(urlString: String): Boolean {
+        var success = true
+//        try {
+//
+//
+//
+//            val c: HttpURLConnection = URL(urlString).openConnection() as HttpURLConnection
+//            val userCredentials = "${binding.loginUsername.editText?.text.toString()}:" +
+//                    binding.loginUsername.editText?.text.toString()}
+//            val basicAuth =
+//                "Basic " + String(Base64.getEncoder().encode(userCredentials.toByteArray()))
+//            c.setRequestProperty("Authorization", basicAuth)
+//            val inputStream: InputStream = c.inputStream
+//            inputStream.close()
+//            c.disconnect()
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            success = false
+//        }
+        val client = OkHttpClient()
+        val credential = Credentials.basic(binding.loginUsername.editText?.text.toString(),
+            binding.loginUsername.editText?.text.toString())
+        val request = Request.Builder()
+            .url(urlString)
+            .addHeader("Authorization", credential)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                success = false
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                println(response.body()?.string())
+                if (!response.isSuccessful) {
+                    success = false
+                }
+            }
+        })
+
+        return success
     }
 
-    /**
-     * Kontrola, či heslo je správne.
-     */
-    private fun checkIfPasswordIsCorrect(): Boolean {
-        if (binding.loginPassword.editText?.text.toString() == password) {
-            return true
+
+    private suspend fun checkLoginCredentials(): Boolean = withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Main) {
+            binding.progressBar.visibility = View.VISIBLE
         }
-        return false
+        val checkRest = checkRest("http://212.5.204.126:7492/geoserver/rest")
+        withContext(Dispatchers.Main) {
+            binding.progressBar.visibility = View.GONE
+        }
+        checkRest
     }
 
     /**
      * Zobrazenie alert dialogu, ktorý oznamuje, že prihlásenie bolo neúspešné.
      */
-    private fun showLoginAD() {
+    private fun showLoginWarningAD() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.login_ag_title))
             .setMessage(getString(R.string.login_ag_message))
@@ -195,3 +296,5 @@ class LoginActivity : AppCompatActivity() {
 
 
 }
+
+
