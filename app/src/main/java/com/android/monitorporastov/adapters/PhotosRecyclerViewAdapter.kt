@@ -1,4 +1,4 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.adapters
 
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -20,6 +20,7 @@ class PhotosRecyclerViewAdapter(
     RecyclerView.Adapter<PhotosRecyclerViewAdapter.ViewHolder>() {
 
     val bitmaps = mutableListOf<Bitmap>()
+    val hesStrings = mutableListOf<String>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding =
@@ -41,8 +42,13 @@ class PhotosRecyclerViewAdapter(
         holder.deleteButton.setOnClickListener {
             values.removeAt(position)
             bitmaps.removeAt(position)
+            hesStrings.removeAt(position)
             notifyItemRemoved(position)
         }
+    }
+
+    fun addHexString(hexString: String) {
+        hesStrings.add(hexString)
     }
 
     override fun getItemCount() = values.size

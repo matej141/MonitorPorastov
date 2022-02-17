@@ -2,15 +2,19 @@ package com.android.monitorporastov.fragments
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
 import android.util.Log
 import android.view.*
-import android.widget.Toast
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -18,15 +22,20 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
+import com.android.monitorporastov.adapters.PhotoItem
+import com.android.monitorporastov.adapters.PhotosRecyclerViewAdapter
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.placeholder.PlaceholderContent
 import com.android.monitorporastov.placeholder.PlaceholderItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import id.zelory.compressor.Compressor
+import id.zelory.compressor.constraint.format
+import id.zelory.compressor.constraint.quality
+import id.zelory.compressor.constraint.size
+import kotlinx.coroutines.*
 import okhttp3.*
+import java.io.*
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 
@@ -50,6 +59,7 @@ class AddDamageFragment : Fragment() {
     private var perimeter: Double? = null
     private var area: Double? = null
     private lateinit var newItem: DamageData
+    private val maxSizeOfPhoto = 600
 //    private lateinit var userName: String   // dokoncit!!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -150,7 +160,7 @@ class AddDamageFragment : Fragment() {
                 PlaceholderContent.changeItem(item, item.id)
             }
             navigateToItemDetail()
-        // ak používateľ pridával nové poškodenie, dáta uloží a naviguje ho naspäť
+            // ak používateľ pridával nové poškodenie, dáta uloží a naviguje ho naspäť
             // na mapový fragment.
         } else {
             if (item != null) {
@@ -170,8 +180,8 @@ class AddDamageFragment : Fragment() {
         return str
     }
 
-    private fun createInsertTransactionText(): String {
-        val str = createStringFromPoints()
+    private fun createInsertDataTransactionText(): String {
+        val stringFromPoints = createStringFromPoints()
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                 "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
@@ -184,18 +194,18 @@ class AddDamageFragment : Fragment() {
                 "<popis_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.popis_poskodenia}</popis_poskodenia>" +
                 "<obvod xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obvod}</obvod>" +
                 "<obsah xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obsah}</obsah>" +
+                "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>" +
                 "<geom xmlns=\"http://opengeo.org/geoserver_skuska\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
                 "<gml:outerBoundaryIs><gml:LinearRing><gml:coordinates cs=\",\" ts=\" \">" +
-                str +
+                stringFromPoints +
                 "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></geom></porasty></Insert></Transaction>"
     }
 
     private fun createRequestBody(requestBodyText: String): RequestBody {
-
         return RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
     }
 
-    private fun createOkHttpClient() :OkHttpClient =
+    private fun createOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(BasicAuthInterceptor("dano", "test"))
             .connectTimeout(100, TimeUnit.SECONDS)
@@ -205,37 +215,123 @@ class AddDamageFragment : Fragment() {
             .protocols(listOf(Protocol.HTTP_1_1))
             .build()
 
+    private fun getFeatureIdFromResponseString(responseString: String): Int {
+        if (responseString.contains("fid=")) {
+            var string = responseString.substringAfter("fid=\"")
+            string = string.substringAfter(".")
+            string = string.substringBefore("\"")
+            return string.toInt()
+        }
+        return -1
+    }
+
+    private fun createPhotoStrings(): String {
+        val photoHexStrings = adapterOfPhotos.hesStrings
+        var photoStrings = ""
+        photoHexStrings.forEach {
+            val line =
+                "   <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
+                        "   <unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>\n"
+            photoStrings += line
+        }
+        return photoStrings
+    }
+
+    private fun createInsertPhotosTransactionText(): String {
+        val photoStrings = createPhotoStrings()
+        return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:fotografie\" version=\"1.0.0\">\n" +
+                "    <Insert xmlns=\"http://www.opengis.net/wfs\">\n" +
+                "        <fotografie xmlns=\"http://opengeo.org/geoserver_skuska\">\n" +
+                "        $photoStrings" +
+                "        </fotografie>\n" +
+                "    </Insert>\n" +
+                "</Transaction>"
+    }
+
+    // https://dev.to/rohitjakhar/hide-keyboard-in-android-using-kotlin-in-20-second-18gp
+    // mozno uzitocne na editText https://stackoverflow.com/questions/52469649/kotlin-hide-soft-keyboard-on-android-8
+    private fun Fragment.hideKeyboard() {
+        view?.let { activity?.hideKeyboard(it) }
+    }
+
+    fun Activity.hideKeyboard() {
+        hideKeyboard(currentFocus ?: View(this))
+    }
+
+    private fun Context.hideKeyboard(view: View) {
+        val inputMethodManager =
+            getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun createUniqueId(): String {
+        val uuid = UUID.randomUUID().toString()
+        return "dano:$uuid"
+    }
 
     private fun saveDataToGeoserver() {
-        val str = createInsertTransactionText()
-        val requestBody = createRequestBody(createInsertTransactionText())
+        hideKeyboard()
+        val uniqueId = createUniqueId()
+        newItem.unique_id = uniqueId
+
+        CoroutineScope(Dispatchers.Main).launch {
+            binding.progressBar.visibility = View.VISIBLE
+//            val operation = async(Dispatchers.IO) {
+//                sendInfoToGeoserver()
+//                sendPhotosToGeoserver()
+//            }
+//            operation.await()
+            val list =
+                listOf(
+                    async { sendDetailInfoToGeoserver() },
+                    async {
+                        if (adapterOfPhotos.bitmaps.isNotEmpty()) {
+                            sendPhotosToGeoserver()
+                        }
+                    })
+            list.awaitAll()
+            binding.progressBar.visibility = View.GONE
+            navigateToMap()
+        }
+    }
+
+    private suspend fun sendDataToGeoserver(requestBody: RequestBody): Boolean {
+        val deferredBoolean = CompletableDeferred<Boolean>()
         val okHttpClient = createOkHttpClient()
         val service = RetroService.getServiceWithScalarsFactory(okHttpClient)
         CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.VISIBLE
-            }
             val response = service.postToGeoserver(requestBody)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
-                    binding.progressBar.visibility = View.GONE
+                    // binding.progressBar.visibility = View.GONE
                     val r: String? = response.body()
 
                     Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
                     if (r != null) {
                         Log.d("MODELL", r)
                     }
-
-                    Toast.makeText(context, "Načítané!", Toast.LENGTH_LONG)
-                        .show()
-                    navigateToMap()
-
+                    if (r != null && r.contains("SUCCESS")) {
+                        Log.d("MODELL", "Fotky úspešné....")
+                    }
+                    deferredBoolean.complete(true)
                 } else {
                     Log.d("MODELL", "Error: ${response.message()}")
-                }
+                    deferredBoolean.complete(false)
 
+                }
             }
         }
+        return deferredBoolean.await()
+    }
+
+    private suspend fun sendDetailInfoToGeoserver(): Boolean {
+        val requestBody = createRequestBody(createInsertDataTransactionText())
+        return sendDataToGeoserver(requestBody)
+    }
+
+    private suspend fun sendPhotosToGeoserver(): Boolean {
+        val requestBody = createRequestBody(createInsertPhotosTransactionText())
+        return sendDataToGeoserver(requestBody)
     }
 
     /**
@@ -270,7 +366,6 @@ class AddDamageFragment : Fragment() {
         newItem.nazov = name
         newItem.typ_poskodenia = damageType
         newItem.popis_poskodenia = info
-
     }
 
     /**
@@ -331,6 +426,7 @@ class AddDamageFragment : Fragment() {
             .show()
     }
 
+
     /**
      * Použitie fotoaparátu - launcher.
      */
@@ -339,9 +435,8 @@ class AddDamageFragment : Fragment() {
         { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
-                val item = PhotoItem(data?.extras?.get("data") as Bitmap)
-                adapterOfPhotos.values.add(item)
-                adapterOfPhotos.notifyItemInserted(adapterOfPhotos.values.size - 1)
+                val bitmap = data?.extras?.get("data") as Bitmap
+                addBitmapToAdapter(bitmap)
             }
         }
 
@@ -354,14 +449,131 @@ class AddDamageFragment : Fragment() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val uri: Uri? = data?.data
+                val contentResolver: ContentResolver? = context?.contentResolver
+                if (uri != null && contentResolver != null) {
+                    val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                        MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                    } else {
+                        val source = ImageDecoder.createSource(contentResolver, uri)
+                        ImageDecoder.decodeBitmap(source)
+                    }
 
-                val item = uri?.let { PhotoItem(it) }
-                if (item != null) {
-                    adapterOfPhotos.values.add(item)
+                    addBitmapToAdapter(bitmap)
                 }
-                adapterOfPhotos.notifyItemInserted(adapterOfPhotos.values.size - 1)
             }
         }
+
+    private fun addBitmapToAdapter(bitmap: Bitmap) {
+        val resizedBitmap = getResizedBitmap(bitmap, maxSizeOfPhoto)
+        val item = PhotoItem(resizedBitmap)
+        adapterOfPhotos.values.add(item)
+        adapterOfPhotos.notifyItemInserted(adapterOfPhotos.values.size - 1)
+        CoroutineScope(Dispatchers.Main).launch {
+            addBitmapHex(resizedBitmap)
+        }
+    }
+
+    private suspend fun addBitmapHex(bitmap: Bitmap) {
+        val compressedByteArray = createCompressedByteArray(bitmap)
+        val hexStringOfByteArray = createHexStringFromByteArray(compressedByteArray)
+        adapterOfPhotos.addHexString(hexStringOfByteArray)
+    }
+
+    private suspend fun createCompressedByteArray(bitmap: Bitmap): ByteArray {
+        val imageFile = createImageFile(bitmap)
+        val compressedFile = createCompressedFile(imageFile)
+        val byteArrayFromFile = createByteArrayFromFile(compressedFile)
+        deleteFiles(imageFile, compressedFile)
+        return byteArrayFromFile
+    }
+
+    private fun createHexStringFromByteArray(bytes: ByteArray): String {
+        // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
+        val hexArray = "0123456789ABCDEF".toCharArray()
+        val hexChars = CharArray(bytes.size * 2)
+        for (j in bytes.indices) {
+            val v = bytes[j].toInt() and 0xFF
+
+            hexChars[j * 2] = hexArray[v ushr 4]
+            hexChars[j * 2 + 1] = hexArray[v and 0x0F]
+        }
+        return String(hexChars)
+    }
+
+    private fun deleteFiles(vararg files: File) {
+        files.forEach { it.delete() }
+    }
+
+    private suspend fun createCompressedFile(imageFile: File): File {
+        val compressedImageFileDeferred = CompletableDeferred<File>()
+        CoroutineScope(Dispatchers.Main).launch {
+            // https://github.com/zetbaitsu/Compressor
+            val compressedImageFile: File = Compressor.compress(requireContext(), imageFile) {
+                // resolution(1280, 720)
+                quality(80)
+                format(Bitmap.CompressFormat.JPEG)
+                size(1_097_152)
+            }
+            imageFile.delete()
+            compressedImageFileDeferred.complete(compressedImageFile)
+
+        }
+        return compressedImageFileDeferred.await()
+    }
+
+    private suspend fun createByteArrayFromFile(file: File): ByteArray {
+        // https://stackoverflow.com/questions/10039672/android-how-to-read-file-in-bytes
+        val size: Long = file.length()
+        val byteArrayDeferred = CompletableDeferred<ByteArray>()
+        val byteArray = ByteArray(size.toInt())
+        CoroutineScope(Dispatchers.IO).launch {
+            kotlin.runCatching {
+                val buf = BufferedInputStream(FileInputStream(file))
+                buf.read(byteArray, 0, byteArray.size)
+                buf.close()
+            }
+            byteArrayDeferred.complete(byteArray)
+        }
+
+        return byteArrayDeferred.await()
+    }
+
+    private fun createImageFile(bitmap: Bitmap): File {
+        val childName = "filename"
+        val newImageFile = File(requireContext().cacheDir, childName)
+        newImageFile.createNewFile()
+        // newImageFile.deleteOnExit() // vyskusat potom
+        val byteArray = createByteArrayFromBitmap(bitmap)
+        // https://stackoverflow.com/questions/11274715/save-bitmap-to-file-function
+        val fileOutputStream = FileOutputStream(newImageFile)
+        fileOutputStream.write(byteArray)
+        fileOutputStream.flush()
+        fileOutputStream.close()
+        return newImageFile
+    }
+
+    private fun createByteArrayFromBitmap(bitmap: Bitmap): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        byteArrayOutputStream.close()
+        return byteArray
+    }
+
+    // https://stackoverflow.com/questions/16954109/reduce-the-size-of-a-bitmap-to-a-specified-size-in-android
+    private fun getResizedBitmap(image: Bitmap, maxSize: Int): Bitmap {
+        var width = image.width
+        var height = image.height
+        val bitmapRatio = width.toFloat() / height.toFloat()
+        if (bitmapRatio > 1) {
+            width = maxSize
+            height = (width / bitmapRatio).toInt()
+        } else {
+            height = maxSize
+            width = (height * bitmapRatio).toInt()
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
