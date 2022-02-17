@@ -143,6 +143,7 @@ class MapFragment : Fragment() {
     }
 
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -155,6 +156,11 @@ class MapFragment : Fragment() {
             .setInterval((interval).toLong())
             .setFastestInterval((fastestInterval))
 
+//        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+//            if (location != null) {
+//                lastLocation = location
+//            }
+//        }
         setUpCallback()
 
         requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
@@ -196,11 +202,12 @@ class MapFragment : Fragment() {
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
 
+
+
         // https://www.py4u.net/discuss/616531
         // riešenie navcontrolleru, keď sa používateľ z fragmentu vráti do tohto fragmentu
         val navController = findNavController()
-        navController.currentBackStackEntry?.savedStateHandle?.getLiveData<Boolean>("key")?.
-        observe(
+        navController.currentBackStackEntry?.savedStateHandle?.getLiveData<Boolean>("key")?.observe(
             viewLifecycleOwner) { result ->
             if (result) {
                 // pridanie vytvoreného polygónu do zoznamu existujúcich polygónov
@@ -250,8 +257,9 @@ class MapFragment : Fragment() {
             item.isChecked = true
         } else if (id == R.id.menu_ortofoto && mapTypeStr != getString(R.string.map_ortofoto)) {
             mapTypeStr = getString(R.string.map_ortofoto)
-            val urlWmsEndpoint = "http://services.skeagis.sk:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
-           // loadLayer(getString(R.string.ortofoto_url))
+            val urlWmsEndpoint =
+                "http://services.skeagis.sk:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
+            // loadLayer(getString(R.string.ortofoto_url))
             loadLayer(urlWmsEndpoint)
             item.isChecked = true
         }
@@ -260,9 +268,11 @@ class MapFragment : Fragment() {
     }
 
     /**
-     * inicializácia locationCallbacku, základu pre určovanie polohy
+     * Inicializácia locationCallbacku, základu pre určovanie polohy
      */
     private val locationCallback = object : LocationCallback() {
+        // https://stackoverflow.com/questions/45576935/android-fusedlocationprovider-returns-null-if-no-internet-connection-available
+        // https://stackoverflow.com/questions/59734242/android-fusedlocationproviderclient-not-working-with-apn-sim-its-working-with-wi
         override fun onLocationResult(locationResult: LocationResult?) {
             if (locationResult == null) {
                 return
@@ -607,7 +617,7 @@ class MapFragment : Fragment() {
                         WMSTileSourceRepaired.createFrom(wmsEndpoint, layer)
                     val credential = Credentials.basic("dano", "test")
                     Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
-                       credential
+                        credential
                     if (layer.bbox != null) {
                         //center map on this location
                         mMap.zoomToBoundingBox(layer.bbox, true)
@@ -691,8 +701,7 @@ class MapFragment : Fragment() {
                     mMap.overlays.add(marker)
 
                     drawPolygon()
-                }
-                else {
+                } else {
                     val okHttpClientInterceptor: OkHttpClient = OkHttpClient.Builder()
                         .addInterceptor(BasicAuthInterceptor("dano", "test"))
                         .connectTimeout(100, TimeUnit.SECONDS)
@@ -715,13 +724,15 @@ class MapFragment : Fragment() {
                             if (response.isSuccessful) {
                                 val res: UsersData? = response.body()
                                 val list = mutableListOf<DamageData>()
-                                res?.features?.forEach {list.add(it.properties)}
+                                res?.features?.forEach { list.add(it.properties) }
                                 if (list.isNotEmpty()) {
 
                                     val listOfGeopoints = mutableListOf<GeoPoint>()
                                     res?.features?.get(0)?.geometry?.coordinates?.forEach {
                                         it.forEach { p ->
-                                            listOfGeopoints.add(GeoPoint(p[1], p[0])) } }
+                                            listOfGeopoints.add(GeoPoint(p[1], p[0]))
+                                        }
+                                    }
                                     listOfGeopoints.removeLast()
                                     showDetailInfo(list[0])
                                     setSelectedRecord(list[0])
@@ -740,8 +751,7 @@ class MapFragment : Fragment() {
 //                                Toast.makeText(context, list.toString(), Toast.LENGTH_LONG)
 //                                    .show()
 
-                            }
-                            else
+                            } else
                                 Log.d("MODEL", "Error: ${response.message()}")
                         }
                     }
@@ -766,7 +776,7 @@ class MapFragment : Fragment() {
     }
 
     private fun setInvisibilityOfAreaCalculationsLayout() {
-        binding.layoutContainer.areaCalculationsLayout.root.visibility= View.GONE
+        binding.layoutContainer.areaCalculationsLayout.root.visibility = View.GONE
     }
 
     private fun setVisibilityOfAreaCalculationsLayout() {
@@ -775,11 +785,11 @@ class MapFragment : Fragment() {
 
     private fun showDetailInfo(data: DamageData) {
         binding.layoutContainer.detailInformationLayout.damageName.text =
-            if(!data.nazov.isNullOrEmpty()) data.nazov else "-------"
+            if (!data.nazov.isNullOrEmpty()) data.nazov else "-------"
         binding.layoutContainer.detailInformationLayout.damageType.text =
-            if(!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "-------"
+            if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.damageInfo.text =
-            if(!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "-------"
+            if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.perimeter.text = "${data.obvod} m"
         binding.layoutContainer.detailInformationLayout.area.text = "${data.obsah} m²"
 
@@ -1000,13 +1010,14 @@ class MapFragment : Fragment() {
             .readTimeout(100, TimeUnit.SECONDS)
             .writeTimeout(100, TimeUnit.SECONDS)
             .build()
-        val requestBodyText = "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">\n" +
-                "    <Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skuska:porasty\">\n" +
-                "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
-                "            <PropertyIsEqualTo><PropertyName>id</PropertyName><Literal>${selectedRecord?.id}</Literal></PropertyIsEqualTo>\n" +
-                "        </Filter>\n" +
-                "    </Delete>\n" +
-                "</Transaction>"
+        val requestBodyText =
+            "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">\n" +
+                    "    <Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skuska:porasty\">\n" +
+                    "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
+                    "            <PropertyIsEqualTo><PropertyName>id</PropertyName><Literal>${selectedRecord?.id}</Literal></PropertyIsEqualTo>\n" +
+                    "        </Filter>\n" +
+                    "    </Delete>\n" +
+                    "</Transaction>"
         val requestBody: RequestBody =
             RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
         val service = RetroService.getServiceWithScalarsFactory(okHttpClientInterceptor)
@@ -1030,8 +1041,7 @@ class MapFragment : Fragment() {
                     sqlTileWriter.purgeCache("geoserver_skuska:porasty_pouzivatel_sql")
                     loadWMSPolygons()
                     setDefault()
-                }
-                else
+                } else
                     Log.d("MODEL", "Error: ${response.message()}")
 
                 binding.progressBar.visibility = View.GONE
@@ -1281,7 +1291,8 @@ class MapFragment : Fragment() {
     }
 
     private fun loadWMSPolygons() {
-        val urlWmsEndpoint = "http://212.5.204.126:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
+        val urlWmsEndpoint =
+            "http://212.5.204.126:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
         CoroutineScope(Dispatchers.IO).launch {
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.VISIBLE
@@ -1315,6 +1326,7 @@ class MapFragment : Fragment() {
                     tilesOverlay.loadingBackgroundColor = Color.TRANSPARENT
 
                     mMap.overlays?.add(tilesOverlay)
+                    mMap.invalidate()
                 } else {
                     unloadLayerAD()
                 }
