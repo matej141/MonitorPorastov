@@ -6,17 +6,17 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.databinding.DataListItemBinding
-import com.android.monitorporastov.placeholder.PlaceholderItem
+import com.android.monitorporastov.model.DamageData
 
 /**
  * RecyclerViewAdapter určený na prácu s placeholder prvkami,
  */
-class PlaceholderItemRecyclerViewAdapter(
-    private val values: List<PlaceholderItem>,
+class DataListItemRecyclerViewAdapter(
+    var values: List<DamageData>,
     private val onClickListener: View.OnClickListener,
 
     ) :
-    RecyclerView.Adapter<PlaceholderItemRecyclerViewAdapter.ViewHolder>() {
+    RecyclerView.Adapter<DataListItemRecyclerViewAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 
@@ -28,12 +28,7 @@ class PlaceholderItemRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = values[position]
-        val emptyTxt = "-"
-        holder.dataListItemName.text = item.name
-        if (item.damageType.isEmpty()) holder.dataListItemDamageType.text =
-            emptyTxt else holder.dataListItemDamageType.text = item.damageType
-        if (item.info.isEmpty()) holder.dataListItemInfo.text =
-            emptyTxt else holder.dataListItemInfo.text = item.info
+        holder.bind(item)
 
         with(holder.itemView) {
             tag = item
@@ -45,8 +40,17 @@ class PlaceholderItemRecyclerViewAdapter(
 
     inner class ViewHolder(binding: DataListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        val dataListItemName: TextView = binding.dataListItemName
-        val dataListItemDamageType: TextView = binding.dataListItemDamageType
-        val dataListItemInfo: TextView = binding.dataListItemInfo
+        private val dataListItemName: TextView = binding.dataListItemName
+        private val dataListItemDamageType: TextView = binding.dataListItemDamageType
+        private val dataListItemInfo: TextView = binding.dataListItemInfo
+
+        fun bind(item: DamageData) {
+            val emptyTxt = "-"
+            dataListItemName.text = item.nazov
+            if (item.typ_poskodenia.isNullOrEmpty()) dataListItemDamageType.text =
+                emptyTxt else dataListItemDamageType.text = item.typ_poskodenia
+            if (item.popis_poskodenia.isNullOrEmpty()) dataListItemInfo.text =
+                emptyTxt else dataListItemInfo.text = item.popis_poskodenia
+        }
     }
 }

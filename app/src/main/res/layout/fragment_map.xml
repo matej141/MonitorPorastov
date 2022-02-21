@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".fragments.MapFragment">
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -26,29 +25,10 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
-
-
         <include
             android:id="@+id/layout_container"
             layout="@layout/layout_container"
             android:visibility="visible" />
-
-
-
-<!--        <ViewStub-->
-<!--            android:id="@+id/areaCalculationsLayout"-->
-<!--            android:layout="@layout/area_calculations_layout"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:visibility="gone"-->
-<!--            app:layout_constraintTop_toTopOf="parent"-->
-<!--            app:layout_constraintStart_toStartOf="parent"-->
-<!--            app:layout_constraintEnd_toEndOf="parent"/>-->
-
-<!--        <include-->
-<!--            android:id="@+id/detail_information_layout"-->
-<!--            layout="@layout/detail_information_layout"-->
-<!--            android:visibility="visible" />-->
 
         <ImageButton
             android:id="@+id/button_center"
@@ -78,8 +58,6 @@
             app:layout_constraintTop_toBottomOf="@id/layout_container"
             android:contentDescription="@string/compass_button_desc" />
 
-
-
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/startDrawingButton"
             android:layout_width="wrap_content"
@@ -95,8 +73,7 @@
 
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@android:drawable/ic_input_add"
-            app:tint="@android:color/white"
-            />
+            app:tint="@android:color/white" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/backButton"
@@ -111,25 +88,6 @@
             android:focusable="true"
 
             app:layout_constraintBottom_toBottomOf="parent"
-
-            app:layout_constraintStart_toStartOf="parent"
-            app:srcCompat="@drawable/ic_arrow_back"
-            app:tint="@android:color/white"
-            android:visibility="gone"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/speciButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/fab_margin"
-            android:layout_marginBottom="20dp"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:clickable="true"
-
-            android:contentDescription="@string/back_button_desc"
-            android:focusable="true"
-
-            app:layout_constraintBottom_toTopOf="@id/backButton"
 
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/ic_arrow_back"

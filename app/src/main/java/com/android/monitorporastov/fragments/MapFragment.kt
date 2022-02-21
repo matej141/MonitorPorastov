@@ -123,6 +123,7 @@ class MapFragment : Fragment() {
         private const val PREFS_ORIENTATION = "orientation"
         private const val PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble"
         private const val PREFS_MAP_TYPE = "mapType"
+        private const val MAP_TAG = "MapFragment"
     }
 
     // na začiatku skontrolujeme povolenia k polohe
@@ -490,14 +491,9 @@ class MapFragment : Fragment() {
         binding.deletePointButton.setOnClickListener {
             setButtonDeleting()
         }
-
         binding.doneGPSMeasureButton.setOnClickListener {
             endGPSMeasureAD()
         }
-        binding.speciButton.setOnClickListener {
-            toGeoServer()
-        }
-
         binding.deleteRecordButton.setOnClickListener {
             showDeleteRecordAD()
         }
@@ -695,66 +691,9 @@ class MapFragment : Fragment() {
             // pomocou tejto metódy je možné reagovať na kliknutie do mapy
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
                 if (manualMeasure) {
-                    val marker = createMarker(p)  // vytvorenie markeru
-                    polyMarkersHistory.add(polyMarkers.toMutableList())
-                    polyMarkers.add(marker)
-                    mMap.overlays.add(marker)
-
-                    drawPolygon()
+                    addMarkerToMapOnClick(p)
                 } else {
-                    val okHttpClientInterceptor: OkHttpClient = OkHttpClient.Builder()
-                        .addInterceptor(BasicAuthInterceptor("dano", "test"))
-                        .connectTimeout(100, TimeUnit.SECONDS)
-                        .readTimeout(100, TimeUnit.SECONDS)
-                        .writeTimeout(100, TimeUnit.SECONDS)
-                        .build()
-                    val service = RetroService.getServiceWithGsonFactory(okHttpClientInterceptor)
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val coordinate = "${p.latitude},${p.longitude}"
-                        val filter = "<Filter xmlns:ogc=\"http://www.opengis.net/ogc\" " +
-                                "xmlns:gml=\"http://www.opengis.net/gml\">" +
-                                "<Intersects>" +
-                                "<PropertyName>geom</PropertyName>" +
-                                "<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
-                                "<gml:coordinates>$coordinate</gml:coordinates>" +
-                                "</gml:Point>" +
-                                "</Intersects></Filter>"
-                        val response = service.getDetailUrlFilter(filter)
-                        withContext(Dispatchers.Main) {
-                            if (response.isSuccessful) {
-                                val res: UsersData? = response.body()
-                                val list = mutableListOf<DamageData>()
-                                res?.features?.forEach { list.add(it.properties) }
-                                if (list.isNotEmpty()) {
-
-                                    val listOfGeopoints = mutableListOf<GeoPoint>()
-                                    res?.features?.get(0)?.geometry?.coordinates?.forEach {
-                                        it.forEach { p ->
-                                            listOfGeopoints.add(GeoPoint(p[1], p[0]))
-                                        }
-                                    }
-                                    listOfGeopoints.removeLast()
-                                    showDetailInfo(list[0])
-                                    setSelectedRecord(list[0])
-                                    showDetailPolygon(listOfGeopoints)
-                                    setUpForDetail()
-                                }
-
-                                if (list.isEmpty() && detailShown) {
-                                    detailShown = false
-                                    mMap.overlays.removeLast()
-                                    mMap.invalidate()
-                                    setDefault()
-
-
-                                }
-//                                Toast.makeText(context, list.toString(), Toast.LENGTH_LONG)
-//                                    .show()
-
-                            } else
-                                Log.d("MODEL", "Error: ${response.message()}")
-                        }
-                    }
+                    getDetailOfPolygonOnMap(p)
                 }
                 return true
             }
@@ -765,6 +704,95 @@ class MapFragment : Fragment() {
         }
         // tento receiver sa nakoniec pridá do mapy ako overlay
         mMap.overlays.add(MapEventsOverlay(mReceive))
+    }
+
+    private fun createCoordinateString(p: GeoPoint): String {
+        return "${p.latitude},${p.longitude}"
+    }
+
+    private fun createFilterString(p: GeoPoint): String {
+        val coordinateString = createCoordinateString(p)
+        return "<Filter xmlns:ogc=\"http://www.opengis.net/ogc\" " +
+                "xmlns:gml=\"http://www.opengis.net/gml\">" +
+                "<Intersects>" +
+                "<PropertyName>geom</PropertyName>" +
+                "<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
+                "<gml:coordinates>$coordinateString</gml:coordinates>" +
+                "</gml:Point>" +
+                "</Intersects></Filter>"
+    }
+
+    private fun getDetailOfPolygonOnMap(p: GeoPoint) {
+        val filterString = createFilterString(p)
+        getDetailFromOfPolygonFromGeoserver(filterString)
+    }
+
+    private fun getDetailFromOfPolygonFromGeoserver(filterString: String) {
+        val okHttpClient = Utils.createOkHttpClient()
+        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
+        CoroutineScope(Dispatchers.IO).launch {
+            val response = service.getUsingUrlFilter(filterString)
+            withContext(Dispatchers.Main) {
+                if (response.isSuccessful) {
+                    val usersData: UsersData? = response.body()
+                    handleIfShowDetailOfPolygon(usersData)
+
+                } else {
+                    Log.d(MAP_TAG, "Response error: ${response.message()}")
+                }
+            }
+        }
+    }
+
+    private fun createListOfGeopoints(usersData: UsersData): MutableList<GeoPoint> {
+        val listOfGeopoints = mutableListOf<GeoPoint>()
+        usersData.features[0].geometry.coordinates.forEach {
+            it.forEach { p ->
+                listOfGeopoints.add(GeoPoint(p[1], p[0]))
+            }
+        }
+        return listOfGeopoints
+    }
+
+    private fun showDetailOfPolygonOnMap(usersData: UsersData) {
+        val data: DamageData = usersData.features[0].properties
+        val listOfGeopoints = createListOfGeopoints(usersData)
+
+        Log.d(MAP_TAG, "Response was successful, data was received.")
+        listOfGeopoints.removeLast()
+        showDetailInfo(data)
+        setSelectedRecord(data)
+        showDetailPolygon(listOfGeopoints)
+        setUpForDetail()
+    }
+
+    private fun handleIfShowDetailOfPolygon(usersData: UsersData?) {
+        val countOfFeatures: Int? = usersData?.features?.size
+
+        if (countOfFeatures != null && countOfFeatures > 0) {
+            showDetailOfPolygonOnMap(usersData)
+        }
+
+        if ((countOfFeatures == null || countOfFeatures == 0)
+            && detailShown) {
+            clearMapFromShownDetail()
+        }
+    }
+
+    private fun clearMapFromShownDetail() {
+        detailShown = false
+        mMap.overlays.removeLast()
+        mMap.invalidate()
+        setDefault()
+    }
+
+    private fun addMarkerToMapOnClick(p: GeoPoint) {
+        val marker = createMarker(p)  // vytvorenie markeru
+        polyMarkersHistory.add(polyMarkers.toMutableList())
+        polyMarkers.add(marker)
+        mMap.overlays.add(marker)
+
+        drawPolygon()
     }
 
     private fun setInvisibilityOfDetailInformationLayout() {
@@ -784,14 +812,20 @@ class MapFragment : Fragment() {
     }
 
     private fun showDetailInfo(data: DamageData) {
+        val txtPerimeter = "${
+            "%.${3}f".format(data.obvod)
+        } m"
+        val txtArea = "${
+            "%.${3}f".format(data.obsah)
+        } m\u00B2"
         binding.layoutContainer.detailInformationLayout.damageName.text =
             if (!data.nazov.isNullOrEmpty()) data.nazov else "-------"
         binding.layoutContainer.detailInformationLayout.damageType.text =
             if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.damageInfo.text =
             if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "-------"
-        binding.layoutContainer.detailInformationLayout.perimeter.text = "${data.obvod} m"
-        binding.layoutContainer.detailInformationLayout.area.text = "${data.obsah} m²"
+        binding.layoutContainer.detailInformationLayout.perimeter.text = txtPerimeter
+        binding.layoutContainer.detailInformationLayout.area.text = txtArea
 
 
     }
@@ -991,7 +1025,6 @@ class MapFragment : Fragment() {
         binding.saveButton.visibility = View.VISIBLE
         binding.deletePointButton.visibility = View.VISIBLE
         binding.backButton.visibility = View.VISIBLE
-        binding.speciButton.visibility = View.VISIBLE
     }
 
     private fun showDeleteRecordAD() {
@@ -1078,7 +1111,6 @@ class MapFragment : Fragment() {
         binding.addPointButton.visibility = View.GONE
         binding.deletePointButton.visibility = View.GONE
         binding.doneGPSMeasureButton.visibility = View.GONE
-        binding.speciButton.visibility = View.GONE
         binding.editPolygonButton.visibility = View.GONE
         binding.deleteRecordButton.visibility = View.GONE
         clearMeasure()
@@ -1237,59 +1269,6 @@ class MapFragment : Fragment() {
         return str
     }
 
-    private fun toGeoServer() {
-        if (newPolygon.actualPoints.size < 3) {
-            return
-        }
-        val str = createStringFromPoints()
-        val requestBodyText =
-            "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                    "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
-                    "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
-                    "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">" +
-                    "<Insert xmlns=\"http://www.opengis.net/wfs\">" +
-                    "<porasty xmlns=\"http://opengeo.org/geoserver_skuska\">" +
-                    "<nazov xmlns=\"http://opengeo.org/geoserver_skuska\">Android foto</nazov>" +
-                    "<pouzivatel xmlns=\"http://opengeo.org/geoserver_skuska\">dano</pouzivatel>" +
-                    "<geom xmlns=\"http://opengeo.org/geoserver_skuska\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
-                    "<gml:outerBoundaryIs><gml:LinearRing><gml:coordinates cs=\",\" ts=\" \">" +
-                    str +
-                    "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></geom></porasty></Insert></Transaction>"
-        val okHttpClientInterceptor: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(BasicAuthInterceptor("dano", "test"))
-            .connectTimeout(100, TimeUnit.SECONDS)
-            .readTimeout(100, TimeUnit.SECONDS)
-            .writeTimeout(100, TimeUnit.SECONDS)
-            .build()
-        val requestBody: RequestBody =
-            RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
-
-        val service = RetroService.getServiceWithScalarsFactory(okHttpClientInterceptor)
-        CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.VISIBLE
-            }
-            val response = service.postToGeoserver(requestBody)
-            withContext(Dispatchers.Main) {
-                if (response.isSuccessful) {
-                    binding.progressBar.visibility = View.GONE
-                    val r: String? = response.body()
-
-                    Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
-                    if (r != null) {
-                        Log.d("MODELL", r)
-                    }
-
-                    Toast.makeText(context, "Načítané!", Toast.LENGTH_LONG)
-                        .show()
-                    loadWMSPolygons()
-
-                } else
-                    Log.d("MODELL", "Error: ${response.message()}")
-            }
-        }
-    }
-
     private fun loadWMSPolygons() {
         val urlWmsEndpoint =
             "http://212.5.204.126:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
@@ -1332,7 +1311,6 @@ class MapFragment : Fragment() {
                 }
             }
         }
-
     }
 
     /**
