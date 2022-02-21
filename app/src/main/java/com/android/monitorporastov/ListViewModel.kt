@@ -16,22 +16,36 @@ import java.util.concurrent.TimeUnit
 class ListViewModel: ViewModel() {
     //private val service = RetroService.get()
     lateinit var job: Job
-    val staty = MutableLiveData<List<DamageData>>()
-    private val mutableSelectedStat = MutableLiveData<DamageData>()
+    val damageData = MutableLiveData<List<DamageData>>()
+    private val mutableSelectedDamageData = MutableLiveData<DamageData>()
     private val mutableNewItem = MutableLiveData<DamageData>()
-    val selectedItem: LiveData<DamageData> get() = mutableSelectedStat
+    val selectedDamageDataItem: LiveData<DamageData> get() = mutableSelectedDamageData
     val newItem:LiveData<DamageData> get() = mutableNewItem
+    val stringsOfPhotosList = MutableLiveData<List<String>>()
 
-    fun selectStat(item: DamageData) {
-        mutableSelectedStat.value = item
+    fun selectDamageData(item: DamageData) {
+        mutableSelectedDamageData.value = item
     }
 
     fun saveNewItem(item: DamageData) {
         mutableNewItem.value = item
     }
 
-    fun fetch() {
-        val okHttpClientInterceptor: OkHttpClient = OkHttpClient.Builder()
+    fun deletePhotos() {
+        stringsOfPhotosList.value = emptyList()
+    }
+
+    private fun createFilterString(): String {
+        return "<Filter>" +
+                "<PropertyIsEqualTo>" +
+                "<PropertyName>pouzivatel</PropertyName>" +
+                "<Literal>dano</Literal>" +
+                "</PropertyIsEqualTo>" +
+                "</Filter>"
+    }
+
+    private fun createOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
             .addInterceptor(BasicAuthInterceptor("dano", "test"))
             .connectTimeout(100, TimeUnit.SECONDS)
             .readTimeout(100, TimeUnit.SECONDS)
@@ -39,21 +53,47 @@ class ListViewModel: ViewModel() {
             .connectionPool(ConnectionPool(0, 5, TimeUnit.MINUTES))
             .protocols(listOf(Protocol.HTTP_1_1))
             .build()
-        val service = RetroService.getServiceWithGsonFactory(okHttpClientInterceptor)
+    }
+
+    fun fetchUserData() {
+        val okHttpClient: OkHttpClient = Utils.createOkHttpClient()
+        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
+        val filterString = createFilterString()
         job = CoroutineScope(Dispatchers.IO).launch {
-            val response = service.get("meno:dano")
+            val response = service.getUserData("meno:dano")
+            // val response = service.getUsingUrlFilter(filterString)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
                     val res: UsersData? = response.body()
                     val list = mutableListOf<DamageData>()
                     res?.features?.forEach {list.add(it.properties)}
-                    staty.value = list
+                    damageData.value = list
                 }
                 else
                     Log.d("MODEL", "Error: ${response.message()}")
             }
         }
     }
+
+    fun fetchPhotos(item: DamageData) {
+        val okHttpClient: OkHttpClient = createOkHttpClient()
+        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
+        job = CoroutineScope(Dispatchers.IO).launch {
+            val response = service.getPhotos("id:${item.unique_id}")
+            // val response = service.getUsingUrlFilter(filterString)
+            withContext(Dispatchers.Main) {
+                if (response.isSuccessful) {
+                    val res: UsersData? = response.body()
+                    val list = mutableListOf<String>()
+                    res?.features?.forEach {list.add(it.properties.foto)}
+                    stringsOfPhotosList.value = list
+                }
+                else
+                    Log.d("MODELL", "Error: ${response.message()}")
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         job.cancel()

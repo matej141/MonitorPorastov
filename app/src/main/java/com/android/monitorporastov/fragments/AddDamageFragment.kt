@@ -230,8 +230,10 @@ class AddDamageFragment : Fragment() {
         var photoStrings = ""
         photoHexStrings.forEach {
             val line =
-                "   <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
-                        "   <unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>\n"
+                "   <fotografie xmlns=\"http://opengeo.org/geoserver_skuska\">\n" +
+                "       <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
+                        "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>\n" +
+            "       </fotografie>\n"
             photoStrings += line
         }
         return photoStrings
@@ -241,9 +243,7 @@ class AddDamageFragment : Fragment() {
         val photoStrings = createPhotoStrings()
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:fotografie\" version=\"1.0.0\">\n" +
                 "    <Insert xmlns=\"http://www.opengis.net/wfs\">\n" +
-                "        <fotografie xmlns=\"http://opengeo.org/geoserver_skuska\">\n" +
                 "        $photoStrings" +
-                "        </fotografie>\n" +
                 "    </Insert>\n" +
                 "</Transaction>"
     }
@@ -330,6 +330,7 @@ class AddDamageFragment : Fragment() {
     }
 
     private suspend fun sendPhotosToGeoserver(): Boolean {
+        val str = createInsertPhotosTransactionText()
         val requestBody = createRequestBody(createInsertPhotosTransactionText())
         return sendDataToGeoserver(requestBody)
     }

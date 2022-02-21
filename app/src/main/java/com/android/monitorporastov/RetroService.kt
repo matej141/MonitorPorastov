@@ -12,8 +12,11 @@ import retrofit2.http.*
 
 interface RetroInterface {
 //    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&filter=<Filter><And><PropertyIsEqualTo><PropertyName>pouzivatel</PropertyName><Literal>{user}</Literal></PropertyIsEqualTo></And></Filter>")
-    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json")
-    suspend fun get(@Query("viewparams", encoded = true) user: String): Response<UsersData>
+    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&sortBy=id")
+    suspend fun getUserData(@Query("viewparams", encoded = true) user: String): Response<UsersData>
+
+    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=fotografie_sql&outputFormat=application/json")
+    suspend fun getPhotos(@Query("viewparams", encoded = true) uniqueId: String): Response<UsersData>
 
     @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&&srsName=urn:ogc:def:crs:EPSG::4326")
     suspend fun getDetail(@Query("bbox", encoded = true) bbox: String): Response<UsersData>
@@ -22,7 +25,7 @@ interface RetroInterface {
     suspend fun postToGeoserver(@Body body: RequestBody): Response<String>
 
     @GET("wfs?service=WFS&version=1.0.0&request=GetFeature&typeNames=porasty&outputFormat=application/json")
-    suspend fun getDetailUrlFilter(@Query("filter", encoded = true) filter: String): Response<UsersData>
+    suspend fun getUsingUrlFilter(@Query("filter", encoded = true) filter: String): Response<UsersData>
 
 }
 //-------------------------
