@@ -20,20 +20,23 @@ class ListViewModel: ViewModel() {
     private val mutableSelectedDamageData = MutableLiveData<DamageData>()
     private val mutableNewItem = MutableLiveData<DamageData>()
     val selectedDamageDataItem: LiveData<DamageData> get() = mutableSelectedDamageData
-    val newItem:LiveData<DamageData> get() = mutableNewItem
-    val stringsOfPhotosList = MutableLiveData<List<String>>()
+    val damageDataItem:LiveData<DamageData> get() = mutableNewItem
+    var mutableStringsOfPhotosList = MutableLiveData<List<String>>()
+    val mutableIndexesOfPhotosList = MutableLiveData<MutableList<Int>>()
+    val stringsOfPhotosList: MutableLiveData<List<String>> get() = mutableStringsOfPhotosList
+    val indexesOfPhotosList: LiveData<MutableList<Int>> get() = mutableIndexesOfPhotosList
+
 
     fun selectDamageData(item: DamageData) {
         mutableSelectedDamageData.value = item
     }
 
-    fun saveNewItem(item: DamageData) {
+    fun saveItem(item: DamageData) {
         mutableNewItem.value = item
     }
 
-    fun deletePhotos() {
-        stringsOfPhotosList.value = emptyList()
-    }
+    fun clear(){ stringsOfPhotosList.value = null }
+
 
     private fun createFilterString(): String {
         return "<Filter>" +
@@ -80,13 +83,16 @@ class ListViewModel: ViewModel() {
         val service = RetroService.getServiceWithGsonFactory(okHttpClient)
         job = CoroutineScope(Dispatchers.IO).launch {
             val response = service.getPhotos("id:${item.unique_id}")
-            // val response = service.getUsingUrlFilter(filterString)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
                     val res: UsersData? = response.body()
-                    val list = mutableListOf<String>()
-                    res?.features?.forEach {list.add(it.properties.foto)}
-                    stringsOfPhotosList.value = list
+                    val listOfStringsOfPhotos = mutableListOf<String>()
+                    val listOfIndexes = mutableListOf<Int>()
+                    res?.features?.forEach {listOfStringsOfPhotos.add(it.properties.foto)}
+                    res?.features?.forEach {listOfIndexes.add(it.properties.id)}
+                    // mutableStringsOfPhotosList = MutableLiveData<List<String>>()
+                    mutableStringsOfPhotosList.value = listOfStringsOfPhotos
+                    mutableIndexesOfPhotosList.value = listOfIndexes
                 }
                 else
                     Log.d("MODELL", "Error: ${response.message()}")

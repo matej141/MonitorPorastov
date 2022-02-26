@@ -82,6 +82,7 @@
     <string name="end_gps_measure_ad_title">Naozaj chcete ukončiť vyznačovanie krokovaním?</string>
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
     <string name="detail_table_no_photos_txt">Žiadne fotky nie sú k dispozícii</string>
+    <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
     <string-array name="damages">
         <item>Požiar</item>
         <item>Sucho</item>

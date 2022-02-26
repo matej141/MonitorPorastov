@@ -14,13 +14,14 @@ import com.android.monitorporastov.databinding.PhotoListItemBinding
  * RecyclerViewAdapter pre prácu s fotografiami vo fragmente (AddDamageFragment),
  * kde používateľ mení alebo upravuje údaje o poškodení porastov.
  */
-class PhotosRecyclerViewAdapter(
-    var values: MutableList<PhotoItem>,
-) :
-    RecyclerView.Adapter<PhotosRecyclerViewAdapter.ViewHolder>() {
+class AddDamageFragmentPhotosRVAdapter :
+    RecyclerView.Adapter<AddDamageFragmentPhotosRVAdapter.ViewHolder>() {
 
+    var photoItems =  mutableListOf<PhotoItem>()
     val bitmaps = mutableListOf<Bitmap>()
-    val hesStrings = mutableListOf<String>()
+    val hexStrings = mutableListOf<String>()
+    val indexesOfPhotos = mutableListOf<Int>()
+    val deletedIndexes = mutableListOf<Int>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding =
@@ -29,7 +30,7 @@ class PhotosRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = values[position]
+        val item = photoItems[position]
         if (item.image is Uri) {
             holder.photoImage.setImageURI(item.image as Uri?)
             val bitmap = (holder.photoImage.drawable as BitmapDrawable).bitmap
@@ -40,18 +41,21 @@ class PhotosRecyclerViewAdapter(
             bitmaps.add(item.image)
         }
         holder.deleteButton.setOnClickListener {
-            values.removeAt(position)
+            photoItems.removeAt(position)
             bitmaps.removeAt(position)
-            hesStrings.removeAt(position)
+            hexStrings.removeAt(position)
+            val deletedIndex = indexesOfPhotos[position]
+            deletedIndexes.add(deletedIndex)
+            indexesOfPhotos.removeAt(position)
             notifyItemRemoved(position)
         }
     }
 
     fun addHexString(hexString: String) {
-        hesStrings.add(hexString)
+        hexStrings.add(hexString)
     }
 
-    override fun getItemCount() = values.size
+    override fun getItemCount() = photoItems.size
 
     inner class ViewHolder(binding: PhotoListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
