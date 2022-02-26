@@ -41,16 +41,16 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.*
 import okhttp3.Credentials
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
 import org.osmdroid.api.IMapController
+import org.osmdroid.api.IMapView
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.MapTileProviderBasic
 import org.osmdroid.tileprovider.modules.SqlTileWriter
+import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.TileSystem
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
@@ -63,14 +63,13 @@ import org.osmdroid.wms.WMSParser
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
     private val viewModel: ListViewModel by activityViewModels()
-
+    private var job: Job? = null
     private lateinit var mMap: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
     private lateinit var mMapController: IMapController
@@ -202,7 +201,6 @@ class MapFragment : Fragment() {
         // nastavenie listenerov buttonom
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
-
 
 
         // https://www.py4u.net/discuss/616531
@@ -416,6 +414,7 @@ class MapFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        job?.cancel()
     }
 
 
@@ -495,7 +494,9 @@ class MapFragment : Fragment() {
             endGPSMeasureAD()
         }
         binding.deleteRecordButton.setOnClickListener {
-            showDeleteRecordAD()
+            CoroutineScope(Dispatchers.Main).launch {
+                handleDeletingRecord()
+            }
         }
     }
 
@@ -774,7 +775,8 @@ class MapFragment : Fragment() {
         }
 
         if ((countOfFeatures == null || countOfFeatures == 0)
-            && detailShown) {
+            && detailShown
+        ) {
             clearMapFromShownDetail()
         }
     }
@@ -1027,58 +1029,21 @@ class MapFragment : Fragment() {
         binding.backButton.visibility = View.VISIBLE
     }
 
-    private fun showDeleteRecordAD() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Nazoaj chcete vymazať tento záznam?")
-            .setPositiveButton("Áno") { _, _ -> deleteRecord() }
-            .setNegativeButton("Nie") { dialog, _ -> dialog.cancel() }
-            .create()
-            .show()
-    }
+    private suspend fun handleDeletingRecord() {
+        if (selectedRecord == null) {
+            return
+        }
 
-    private fun deleteRecord() {
-        val okHttpClientInterceptor: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(BasicAuthInterceptor("dano", "test"))
-            .connectTimeout(100, TimeUnit.SECONDS)
-            .readTimeout(100, TimeUnit.SECONDS)
-            .writeTimeout(100, TimeUnit.SECONDS)
-            .build()
-        val requestBodyText =
-            "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">\n" +
-                    "    <Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skuska:porasty\">\n" +
-                    "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
-                    "            <PropertyIsEqualTo><PropertyName>id</PropertyName><Literal>${selectedRecord?.id}</Literal></PropertyIsEqualTo>\n" +
-                    "        </Filter>\n" +
-                    "    </Delete>\n" +
-                    "</Transaction>"
-        val requestBody: RequestBody =
-            RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
-        val service = RetroService.getServiceWithScalarsFactory(okHttpClientInterceptor)
-        CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.VISIBLE
+        Utils.setSelectedItem(selectedRecord!!)
+        val resultOfOperation: Boolean =
+            withContext(CoroutineScope(Dispatchers.Main).coroutineContext) {
+                Utils.handleDeletingOfRecord(requireContext(), binding.progressBar)
             }
-
-            val response = service.postToGeoserver(requestBody)
-            withContext(Dispatchers.Main) {
-                if (response.isSuccessful) {
-                    val res: String? = response.body()
-                    Log.d("MODEL", "Success: $res")
-                    if (res != null) {
-                        if (res.contains("SUCCESS")) {
-                            Toast.makeText(context, "Vymazané!", Toast.LENGTH_LONG)
-                                .show()
-                        }
-                    }
-                    val sqlTileWriter = SqlTileWriter()
-                    sqlTileWriter.purgeCache("geoserver_skuska:porasty_pouzivatel_sql")
-                    loadWMSPolygons()
-                    setDefault()
-                } else
-                    Log.d("MODEL", "Error: ${response.message()}")
-
-                binding.progressBar.visibility = View.GONE
-            }
+        if (resultOfOperation) {
+            Toast.makeText(context, "Dáta boli úspešne vymazané",
+                Toast.LENGTH_SHORT).show()
+            setDefault()
+            loadWMSPolygons()
         }
     }
 
@@ -1163,23 +1128,27 @@ class MapFragment : Fragment() {
         mMap.invalidate()  //
     }
 
+    private fun lessThan3PointsAD() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Nezadali ste dostatočný počet bodov")
+            .setMessage("Na uloženie záznamu musíte zadať aspoň 3 body.")
+            .setNegativeButton(getText(R.string.ok_text)) { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
+    }
+
     /**
      * Uloženie poškodenia. Na uloženie treba mať aspoň 3 body na mape určené.
      */
     private fun saveMeasure(v: View) {
         if (polyMarkers.size < 3) {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Nezadali ste dostatočný počet bodov")
-                .setMessage("Na uloženie záznamu musíte zadať aspoň 3 body.")
-                .setNegativeButton(getText(R.string.ok_text)) { dialog, _ -> dialog.cancel() }
-                .create()
-                .show()
+            lessThan3PointsAD()
         } else {
             val damageData = DamageData()
             damageData.obvod = actualPerimeter
             damageData.obsah = actualArea
             damageData.coordinates = newPolygon.actualPoints + newPolygon.actualPoints[0]
-            viewModel.saveNewItem(damageData)
+            viewModel.saveItem(damageData)
             val bundle = Bundle()
             bundle.putDouble(AddDamageFragment.ARG_AREA_ID, actualArea)
             bundle.putDouble(AddDamageFragment.ARG_PERIMETER_ID, actualPerimeter)
@@ -1269,10 +1238,22 @@ class MapFragment : Fragment() {
         return str
     }
 
+    private fun updateTileSizeForDensity(aTileSource: ITileSource) {
+        val mTilesScaleFactor = 1f
+        val tile_size = aTileSource.tileSizePixels
+        val density = resources.displayMetrics.density * 256 / tile_size
+        val size =
+            (tile_size * density * mTilesScaleFactor).toInt()
+        if (Configuration.getInstance().isDebugMapView) Log.d(IMapView.LOGTAG,
+            "Scaling tiles to $size")
+        TileSystem.setTileSize(size)
+    }
+
     private fun loadWMSPolygons() {
+        // mMap.isTilesScaledToDpi = false
         val urlWmsEndpoint =
             "http://212.5.204.126:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
-        CoroutineScope(Dispatchers.IO).launch {
+        job = CoroutineScope(Dispatchers.IO).launch {
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.VISIBLE
             }
@@ -1303,7 +1284,7 @@ class MapFragment : Fragment() {
                     //tileProvider.tileSource = source2
                     val tilesOverlay = TilesOverlay(tileProvider, context)
                     tilesOverlay.loadingBackgroundColor = Color.TRANSPARENT
-
+                    updateTileSizeForDensity(tileProvider.tileSource)
                     mMap.overlays?.add(tilesOverlay)
                     mMap.invalidate()
                 } else {

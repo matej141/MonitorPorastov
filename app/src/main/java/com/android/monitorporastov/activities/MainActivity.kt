@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.nav_my_data), drawerLayout)
+            R.id.nav_map, R.id.data_list_fragment), drawerLayout)
         // this.requestedOrientation= ActivityInfo.SCREEN_ORIENTATION_LOCKED
         setUpActionBarUnLocked()
 
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      */
     private fun setUpActionBarLocked() {
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.nav_my_data))
+            R.id.nav_map, R.id.data_list_fragment))
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      */
     private fun setUpActionBarUnLocked() {
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.nav_my_data), drawerLayout)
+            R.id.nav_map, R.id.data_list_fragment), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
 

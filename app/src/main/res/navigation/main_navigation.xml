@@ -33,7 +33,7 @@
     </fragment>
 
     <fragment
-        android:id="@+id/nav_my_data"
+        android:id="@+id/data_list_fragment"
         android:name="com.android.monitorporastov.fragments.DataListFragment"
         android:label="Záznamy"
         tools:layout="@layout/fragment_data_list">
@@ -50,6 +50,11 @@
         <action
             android:id="@+id/action_data_detail_fragment_TO_add_measure_fragment"
             app:destination="@id/add_measure_fragment"
+            app:popUpTo="@+id/data_detail_fragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_data_detail_fragment_TO_data_list_fragment"
+            app:destination="@id/data_list_fragment"
             app:popUpTo="@+id/data_detail_fragment"
             app:popUpToInclusive="true" />
 

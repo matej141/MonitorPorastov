@@ -3,7 +3,6 @@ package com.android.monitorporastov.fragments
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ContentResolver
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -14,19 +13,19 @@ import android.provider.MediaStore
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
 import android.util.Log
 import android.view.*
-import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
+import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.PhotoItem
-import com.android.monitorporastov.adapters.PhotosRecyclerViewAdapter
+import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.placeholder.PlaceholderContent
 import com.android.monitorporastov.placeholder.PlaceholderItem
 import id.zelory.compressor.Compressor
 import id.zelory.compressor.constraint.format
@@ -36,7 +35,6 @@ import kotlinx.coroutines.*
 import okhttp3.*
 import java.io.*
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 
 /**
@@ -52,31 +50,32 @@ class AddDamageFragment : Fragment() {
     private var _binding: FragmentAddDamageBinding? = null
 
     private val binding get() = _binding!!
-    private var adapterOfPhotos = PhotosRecyclerViewAdapter(mutableListOf())
+    private var adapterOfPhotos = AddDamageFragmentPhotosRVAdapter()
 
     private lateinit var listOfDamageType: Array<String>
 
-    private var perimeter: Double? = null
-    private var area: Double? = null
-    private lateinit var newItem: DamageData
+    private lateinit var damageDataItem: DamageData
     private val maxSizeOfPhoto = 600
+    private lateinit var callback: OnBackPressedCallback
+
 //    private lateinit var userName: String   // dokoncit!!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        arguments?.let {
-            if (it.containsKey(ARG_PERIMETER_ID)) {
-                perimeter = it.getDouble(ARG_PERIMETER_ID)
+        callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (editData) {
+                    checkIfBitmapsChanged()
+                    navigateToItemDetail()
+                }
             }
-            if (it.containsKey(ARG_AREA_ID)) {
-                area = it.getDouble(ARG_AREA_ID)
-            }
-            if (it.containsKey(ARG_DATA_ITEM_ID)) {
-                dataItem =
-                    PlaceholderContent.ITEM_MAP[it.getInt(DataDetailFragment.ARG_DATA_ITEM_ID)]
-                editData = true
-            }
+        }
+    }
+
+    private fun checkIfBitmapsChanged() {
+        if (adapterOfPhotos.bitmaps.size != damageDataItem.bitmaps.size) {
+            damageDataItem.bitmapsLoaded = false
         }
     }
 
@@ -86,6 +85,7 @@ class AddDamageFragment : Fragment() {
     ): View {
         _binding = FragmentAddDamageBinding.inflate(inflater, container, false)
 
+        observeDamageDataItem()
         return binding.root
     }
 
@@ -94,15 +94,9 @@ class AddDamageFragment : Fragment() {
         recyclerView = binding.itemList
         setupRecycleView()
         setUpListeners()
-        if (editData) {
-            setUpExistingContent()
-        }
         listOfDamageType = resources.getStringArray(R.array.damages)
-        viewModel.newItem.observe(viewLifecycleOwner, Observer { newItem ->
-            newItem?.let {
-                this.newItem = it
-            }
-        })
+
+
 //        viewModel.username.observe(viewLifecycleOwner, Observer { username ->
 //            username?.let {
 //                this.username = it
@@ -110,14 +104,29 @@ class AddDamageFragment : Fragment() {
 //        })  // dokoncit!!!
     }
 
+    // https://stackoverflow.com/questions/56649766/trouble-with-navcontroller-inside-onbackpressedcallback
+    override fun onStart() {
+        super.onStart()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        callback.remove()
+    }
+
     /**
      * Ak chceme iba upraviť informácie, pomocou tejto metódy zobrazíme existujúce dáta.
      */
     private fun setUpExistingContent() {
-        binding.addDataName.editText?.setText(dataItem?.name)
-        binding.addDataDamageType.setText(dataItem?.damageType)
-        binding.addDataDescription.editText?.setText(dataItem?.info)
-        dataItem?.photos?.forEach { adapterOfPhotos.values.add(PhotoItem(it)) }
+        binding.addDataName.editText?.setText(damageDataItem.nazov)
+        binding.addDataDamageType.setText(damageDataItem.typ_poskodenia)
+        binding.addDataDescription.editText?.setText(damageDataItem.popis_poskodenia)
+        damageDataItem.bitmaps.forEach {
+            adapterOfPhotos.photoItems.add((PhotoItem(it)))
+            adapterOfPhotos.hexStrings.add("")
+        }
+        damageDataItem.indexesOfPhotos.forEach { adapterOfPhotos.indexesOfPhotos.add(it) }
     }
 
     /**
@@ -130,7 +139,6 @@ class AddDamageFragment : Fragment() {
         binding.cameraButton.setOnClickListener {
             takePhoto()
         }
-
         binding.addDataDamageType.setOnClickListener {
             choiceAD()
         }
@@ -151,28 +159,20 @@ class AddDamageFragment : Fragment() {
             warningAD()
             return
         }
-        val item = createPlaceholderItem()
-        createItem()
+
         // ak používateľ iba upravoval dáta, upravené dáta uloží a naviguje ho naspäť
         // na fragment zobrazujúci detail o poškodení.
         if (editData) {
-            if (item != null) {
-                PlaceholderContent.changeItem(item, item.id)
-            }
-            navigateToItemDetail()
+            updateDataInGeoserver()
             // ak používateľ pridával nové poškodenie, dáta uloží a naviguje ho naspäť
             // na mapový fragment.
         } else {
-            if (item != null) {
-                saveDataToGeoserver()
-                PlaceholderContent.addItem(item)
-            }
-
+            saveDataToGeoserver()
         }
     }
 
     private fun createStringFromPoints(): String {
-        val geoPoints = newItem.coordinates
+        val geoPoints = damageDataItem.coordinates
         var str = ""
         geoPoints.forEach { str += "${it.latitude},${it.longitude} " }
         str += "${geoPoints[0].latitude},${geoPoints[0].longitude}"
@@ -180,7 +180,7 @@ class AddDamageFragment : Fragment() {
         return str
     }
 
-    private fun createInsertDataTransactionText(): String {
+    private fun createInsertDataTransactionString(): String {
         val stringFromPoints = createStringFromPoints()
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                 "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
@@ -188,13 +188,13 @@ class AddDamageFragment : Fragment() {
                 "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">" +
                 "<Insert xmlns=\"http://www.opengis.net/wfs\">" +
                 "<porasty xmlns=\"http://opengeo.org/geoserver_skuska\">" +
-                "<nazov xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.nazov}</nazov>" +
+                "<nazov xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.nazov}</nazov>" +
                 "<pouzivatel xmlns=\"http://opengeo.org/geoserver_skuska\">dano</pouzivatel>" +
-                "<typ_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.typ_poskodenia}</typ_poskodenia>" +
-                "<popis_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.popis_poskodenia}</popis_poskodenia>" +
-                "<obvod xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obvod}</obvod>" +
-                "<obsah xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.obsah}</obsah>" +
-                "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>" +
+                "<typ_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.typ_poskodenia}</typ_poskodenia>" +
+                "<popis_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.popis_poskodenia}</popis_poskodenia>" +
+                "<obvod xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.obvod}</obvod>" +
+                "<obsah xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.obsah}</obsah>" +
+                "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.unique_id}</unique_id>" +
                 "<geom xmlns=\"http://opengeo.org/geoserver_skuska\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
                 "<gml:outerBoundaryIs><gml:LinearRing><gml:coordinates cs=\",\" ts=\" \">" +
                 stringFromPoints +
@@ -204,16 +204,6 @@ class AddDamageFragment : Fragment() {
     private fun createRequestBody(requestBodyText: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
     }
-
-    private fun createOkHttpClient(): OkHttpClient =
-        OkHttpClient.Builder()
-            .addInterceptor(BasicAuthInterceptor("dano", "test"))
-            .connectTimeout(100, TimeUnit.SECONDS)
-            .readTimeout(100, TimeUnit.SECONDS)
-            .writeTimeout(100, TimeUnit.SECONDS)
-            .connectionPool(ConnectionPool(0, 5, TimeUnit.MINUTES))
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
 
     private fun getFeatureIdFromResponseString(responseString: String): Int {
         if (responseString.contains("fid=")) {
@@ -226,42 +216,34 @@ class AddDamageFragment : Fragment() {
     }
 
     private fun createPhotoStrings(): String {
-        val photoHexStrings = adapterOfPhotos.hesStrings
+        val photoHexStrings = adapterOfPhotos.hexStrings.filter { it != "" }
         var photoStrings = ""
         photoHexStrings.forEach {
             val line =
                 "   <fotografie xmlns=\"http://opengeo.org/geoserver_skuska\">\n" +
-                "       <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
-                        "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${newItem.unique_id}</unique_id>\n" +
-            "       </fotografie>\n"
+                        "       <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
+                        "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.unique_id}</unique_id>\n" +
+                        "       </fotografie>\n"
             photoStrings += line
         }
         return photoStrings
     }
 
-    private fun createInsertPhotosTransactionText(): String {
+    private fun createInsertPhotosTransactionString(): String {
         val photoStrings = createPhotoStrings()
-        return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:fotografie\" version=\"1.0.0\">\n" +
+        return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
+                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" " +
+                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
+                "DescribeFeatureType&amp;VERSION=1.0.0&amp;" +
+                "TYPENAME=geoserver_skuska:fotografie\" " +
+                "version=\"1.0.0\">\n" +
                 "    <Insert xmlns=\"http://www.opengis.net/wfs\">\n" +
                 "        $photoStrings" +
                 "    </Insert>\n" +
                 "</Transaction>"
-    }
-
-    // https://dev.to/rohitjakhar/hide-keyboard-in-android-using-kotlin-in-20-second-18gp
-    // mozno uzitocne na editText https://stackoverflow.com/questions/52469649/kotlin-hide-soft-keyboard-on-android-8
-    private fun Fragment.hideKeyboard() {
-        view?.let { activity?.hideKeyboard(it) }
-    }
-
-    fun Activity.hideKeyboard() {
-        hideKeyboard(currentFocus ?: View(this))
-    }
-
-    private fun Context.hideKeyboard(view: View) {
-        val inputMethodManager =
-            getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     private fun createUniqueId(): String {
@@ -269,18 +251,194 @@ class AddDamageFragment : Fragment() {
         return "dano:$uuid"
     }
 
+    private fun updateDataInGeoserver() {
+        CoroutineScope(Dispatchers.Main).launch {
+            binding.progressBar.visibility = View.VISIBLE
+            val list =
+                listOf(
+                    async { updateDamageInfoInGeoserver() },
+                    async { updatePhotosInGeoserver() }
+                )
+            list.awaitAll()
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(context, "Záznam bol aktualizovaný",
+                Toast.LENGTH_SHORT).show()
+            if (!damageDataItem.isItemFromMap) {
+                navigateToItemDetail()
+            } else {
+                navigateToMap()
+            }
+        }
+    }
+
+    private suspend fun updatePhotosInGeoserver(): Boolean {
+        val updatePhotosTransactionString = createUpdatePhotosTransactionString()
+        if (updatePhotosTransactionString.isEmpty()) {
+            return false
+        }
+        // damageDataItem.bitmapsLoaded = false
+        damageDataItem.bitmaps = adapterOfPhotos.bitmaps
+        val requestBody = createRequestBody(updatePhotosTransactionString)
+        return postToGeoserver(requestBody)
+    }
+
+    private fun createUpdatePhotosTransactionString(): String {
+        val deletePhotosString = createDeletePhotosString()
+        val insertPhotosString = createInsertPhotosString()
+        var updatePhotosTransactionString = ""
+        if (deletePhotosString.isEmpty() && insertPhotosString.isEmpty()) {
+            return updatePhotosTransactionString
+        }
+        updatePhotosTransactionString += "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
+                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" " +
+                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
+                "DescribeFeatureType&amp;VERSION=1.0.0&amp;" +
+                "TYPENAME=geoserver_skuska:fotografie\" " +
+                "version=\"1.0.0\">\n"
+        if (deletePhotosString.isNotEmpty()) {
+            updatePhotosTransactionString += deletePhotosString
+        }
+        if (insertPhotosString.isNotEmpty()) {
+            updatePhotosTransactionString += insertPhotosString
+        }
+        updatePhotosTransactionString += "</Transaction>"
+        return updatePhotosTransactionString
+    }
+
+    private fun createInsertPhotosString(): String {
+        val photoStrings = createPhotoStrings()
+        if (photoStrings.isEmpty()) {
+            return ""
+        }
+        return "    <Insert xmlns=\"http://www.opengis.net/wfs\">\n" +
+                "        $photoStrings" +
+                "    </Insert>\n"
+    }
+
+    private fun createDeletePhotosString(): String {
+        val deleteFilterString = createDeleteFilterString()
+        if (deleteFilterString.isEmpty()) {
+            return ""
+        }
+        return "<Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skuska:fotografie\">\n" +
+                "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
+                "            <Or>\n" +
+                "                $deleteFilterString" +
+                "            </Or>\n" +
+                "        </Filter>\n" +
+                "    </Delete>"
+    }
+
+    private fun createDeleteFilterString(): String {
+        val indexes = adapterOfPhotos.deletedIndexes
+        var deleteFilterString = ""
+        indexes.forEach {
+            deleteFilterString +=
+                "       <PropertyIsEqualTo>\n" +
+                        "<PropertyName>id</PropertyName>\n" +
+                        "<Literal>$it</Literal>\n" +
+                        "</PropertyIsEqualTo>\n"
+        }
+        return deleteFilterString
+    }
+
+    private suspend fun updateDamageInfoInGeoserver(): Boolean {
+        val updateDamageDataString = createUpdateDamageDataString()
+        if (updateDamageDataString.isEmpty()) {
+            return false
+        }
+        val requestBody = createRequestBody(updateDamageDataString)
+        return postToGeoserver(requestBody)
+    }
+
+    private fun createUpdatePropertiesString(): String {
+        val name = getDataName()
+        val damageType = getDataDamageType()
+        val description = getDataDescription()
+        var updatePropertiesString = ""
+        if (name != damageDataItem.nazov) {
+            damageDataItem.nazov = name
+            updatePropertiesString +=
+                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "    <Name xmlns=\"http://www.opengis.net/wfs\">nazov</Name>\n" +
+                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "        $name\n" +
+                        "     </Value>\n" +
+                        "</Property>\n"
+        }
+        if (damageType != damageDataItem.typ_poskodenia) {
+            damageDataItem.typ_poskodenia = damageType
+            updatePropertiesString +=
+                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "    <Name xmlns=\"http://www.opengis.net/wfs\">typ_poskodenia</Name>\n" +
+                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "        $damageType\n" +
+                        "     </Value>\n" +
+                        "</Property>\n"
+        }
+        if (description != damageDataItem.popis_poskodenia) {
+            damageDataItem.popis_poskodenia = description
+            updatePropertiesString +=
+                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "    <Name xmlns=\"http://www.opengis.net/wfs\">popis_poskodenia</Name>\n" +
+                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "        $description\n" +
+                        "     </Value>\n" +
+                        "</Property>\n"
+        }
+        if (damageDataItem.isItemFromMap) {
+//            updatePropertiesString +=
+//                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+//                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obvod</Name>\n" +
+//                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+//                        "        ${damageDataItem.obvod}\n" +
+//                        "     </Value>\n" +
+//                        "</Property>\n" +
+//                        "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+//                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obsah</Name>\n" +
+//                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+//                        "        ${damageDataItem.obsah}\n" +
+//                        "     </Value>\n" +
+//                        "</Property>\n"
+        }
+        return updatePropertiesString
+    }
+
+    private fun createUpdateDamageDataString(): String {
+        val updatePropertiesString = createUpdatePropertiesString()
+        if (updatePropertiesString.isEmpty()) {
+            return ""
+        }
+        return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
+                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "http://212.5.204.126:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
+                "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
+                "version=\"1.0.0\" service=\"WFS\" xmlns:gml=\"http://www.opengis.net/gml\">\n" +
+                "    <Update xmlns=\"http://www.opengis.net/wfs\" " +
+                "typeName=\"geoserver_skuska:porasty\">\n" +
+                "        $updatePropertiesString" +
+                "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
+                "            <PropertyIsEqualTo>" +
+                "<PropertyName>id</PropertyName>" +
+                "<Literal>${damageDataItem.id}</Literal></PropertyIsEqualTo>\n" +
+                "        </Filter>\n" +
+                "    </Update>\n" +
+                "</Transaction>"
+    }
+
     private fun saveDataToGeoserver() {
         hideKeyboard()
+        createDamageDataItem()
         val uniqueId = createUniqueId()
-        newItem.unique_id = uniqueId
+        damageDataItem.unique_id = uniqueId
 
         CoroutineScope(Dispatchers.Main).launch {
             binding.progressBar.visibility = View.VISIBLE
-//            val operation = async(Dispatchers.IO) {
-//                sendInfoToGeoserver()
-//                sendPhotosToGeoserver()
-//            }
-//            operation.await()
             val list =
                 listOf(
                     async { sendDetailInfoToGeoserver() },
@@ -295,10 +453,9 @@ class AddDamageFragment : Fragment() {
         }
     }
 
-    private suspend fun sendDataToGeoserver(requestBody: RequestBody): Boolean {
+    private suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean = CompletableDeferred<Boolean>()
-        val okHttpClient = createOkHttpClient()
-        val service = RetroService.getServiceWithScalarsFactory(okHttpClient)
+        val service = RetroService.getServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             val response = service.postToGeoserver(requestBody)
             withContext(Dispatchers.Main) {
@@ -317,7 +474,6 @@ class AddDamageFragment : Fragment() {
                 } else {
                     Log.d("MODELL", "Error: ${response.message()}")
                     deferredBoolean.complete(false)
-
                 }
             }
         }
@@ -325,30 +481,21 @@ class AddDamageFragment : Fragment() {
     }
 
     private suspend fun sendDetailInfoToGeoserver(): Boolean {
-        val requestBody = createRequestBody(createInsertDataTransactionText())
-        return sendDataToGeoserver(requestBody)
+        val requestBody = createRequestBody(createInsertDataTransactionString())
+        return postToGeoserver(requestBody)
     }
 
     private suspend fun sendPhotosToGeoserver(): Boolean {
-        val str = createInsertPhotosTransactionText()
-        val requestBody = createRequestBody(createInsertPhotosTransactionText())
-        return sendDataToGeoserver(requestBody)
+        val requestBody = createRequestBody(createInsertPhotosTransactionString())
+        return postToGeoserver(requestBody)
     }
 
     /**
      * Naviguje používateľa na fragment zobrazujúci detail o poškodení.
      */
     private fun navigateToItemDetail() {
-        val bundle = Bundle()
         val navController = findNavController()
-        dataItem?.let {
-            bundle.putInt(
-                DataDetailFragment.ARG_DATA_ITEM_ID,
-                it.id
-            )
-            navController.navigate(R.id.action_add_measure_fragment_TO_data_detail_fragment,
-                bundle)
-        }
+        navController.navigate(R.id.action_add_measure_fragment_TO_data_detail_fragment)
     }
 
     /**
@@ -360,45 +507,23 @@ class AddDamageFragment : Fragment() {
         navController.popBackStack()
     }
 
-    private fun createItem() {
-        val name = binding.addDataName.editText?.text.toString()
-        val damageType = binding.addDataDamageType.text.toString()
-        val info = binding.addDataDescription.editText?.text.toString()
-        newItem.nazov = name
-        newItem.typ_poskodenia = damageType
-        newItem.popis_poskodenia = info
+    private fun getDataName(): String {
+        return binding.addDataName.editText?.text.toString()
     }
 
-    /**
-     * Zo zadaných údajov vytvorí PlaceholderItem .
-     */
-    private fun createPlaceholderItem(): PlaceholderItem? {
-        val name = binding.addDataName.editText?.text.toString()
-        val damageType = binding.addDataDamageType.text.toString()
-        val info = binding.addDataDescription.editText?.text.toString()
-        val photos = adapterOfPhotos.bitmaps
-        val id = PlaceholderContent.ITEMS_COUNT
-        if (editData) {
-            return dataItem?.let {
-                PlaceholderItem(it.id,
-                    name,
-                    damageType,
-                    info,
-                    photos,
-                    it.perimeter,
-                    it.area)
-            }
-        }
+    private fun getDataDamageType(): String {
+        return binding.addDataDamageType.text.toString()
+    }
 
-        val placeholderItem =
-            perimeter?.let {
-                area?.let { it1 ->
-                    PlaceholderItem(id, name, damageType, info, photos, it,
-                        it1)
-                }
-            }
+    private fun getDataDescription(): String {
+        return binding.addDataDescription.editText?.text.toString()
+    }
 
-        return placeholderItem
+    private fun createDamageDataItem() {
+        damageDataItem.nazov = getDataName()
+        damageDataItem.typ_poskodenia = getDataDamageType()
+        damageDataItem.popis_poskodenia = getDataDescription()
+        damageDataItem.isNew = false
     }
 
     /**
@@ -426,7 +551,6 @@ class AddDamageFragment : Fragment() {
             .create()
             .show()
     }
-
 
     /**
      * Použitie fotoaparátu - launcher.
@@ -467,8 +591,8 @@ class AddDamageFragment : Fragment() {
     private fun addBitmapToAdapter(bitmap: Bitmap) {
         val resizedBitmap = getResizedBitmap(bitmap, maxSizeOfPhoto)
         val item = PhotoItem(resizedBitmap)
-        adapterOfPhotos.values.add(item)
-        adapterOfPhotos.notifyItemInserted(adapterOfPhotos.values.size - 1)
+        adapterOfPhotos.photoItems.add(item)
+        adapterOfPhotos.notifyItemInserted(adapterOfPhotos.photoItems.size - 1)
         CoroutineScope(Dispatchers.Main).launch {
             addBitmapHex(resizedBitmap)
         }
@@ -478,6 +602,7 @@ class AddDamageFragment : Fragment() {
         val compressedByteArray = createCompressedByteArray(bitmap)
         val hexStringOfByteArray = createHexStringFromByteArray(compressedByteArray)
         adapterOfPhotos.addHexString(hexStringOfByteArray)
+        adapterOfPhotos.indexesOfPhotos.add(-1)
     }
 
     private suspend fun createCompressedByteArray(bitmap: Bitmap): ByteArray {
@@ -581,11 +706,27 @@ class AddDamageFragment : Fragment() {
         _binding = null
     }
 
+    override fun onDetach() {
+        super.onDetach()
+        hideKeyboard()
+    }
+
+    private fun observeDamageDataItem() {
+        viewModel.damageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
+            damageDataItem?.let {
+                this.damageDataItem = it
+                if (!it.isNew) {
+                    editData = true
+                    setUpExistingContent()
+                }
+            }
+        }
+    }
+
     /**
      * Výber fotiek z galérie.
      */
     private fun choosePhoto() {
-
         val galleryIntent = Intent(
             Intent.ACTION_PICK,
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -602,7 +743,6 @@ class AddDamageFragment : Fragment() {
         )
         resultTakePhotoLauncher.launch(cameraIntent)
     }
-
 
     companion object {
         const val ARG_PERIMETER_ID = "perimeter_id"
