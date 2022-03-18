@@ -5,6 +5,7 @@
       <map>
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_camera.xml" value="0.26481481481481484" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_edit.xml" value="0.169" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_gallery.xml" value="0.1095" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_gps.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_gps_colored.xml" value="0.22777777777777777" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/drawable-anydpi/ic_layers.xml" value="0.1" />
@@ -40,9 +41,9 @@
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_add_damage.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_add_drawing.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_blank.xml" value="0.17097264437689969" />
-        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_data_detail.xml" value="0.136" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_data_detail.xml" value="0.10884353741496598" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_data_list.xml" value="0.1" />
-        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_map.xml" value="0.18055555555555555" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_map.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/fragment_test.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/layout_container.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/main_fragment.xml" value="0.13677811550151975" />
@@ -53,6 +54,7 @@
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/photo_list_item.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/layout/toolbar.xml" value="0.20871327254305977" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/activity_main_drawer.xml" value="0.24739583333333334" />
+        <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/data_detail_menu.xml" value="0.16" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/main.xml" value="0.1" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/main_menu.xml" value="0.2713541666666667" />
         <entry key="..\:/Subversions/Android/Monitorporastov/app/src/main/res/menu/map_menu.xml" value="0.1" />

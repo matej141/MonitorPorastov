@@ -190,11 +190,26 @@
             android:layout_marginEnd="@dimen/fab_margin"
             android:layout_marginBottom="20dp"
             android:clickable="true"
-            android:contentDescription="@string/delete_point_button_desc"
+            android:contentDescription="@string/edit_polygon_button_desc"
             android:focusable="true"
             app:layout_constraintBottom_toTopOf="@id/saveButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@drawable/ic_edit"
+            app:tint="@android:color/white"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/detailRecordButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/fab_margin"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+            android:contentDescription="@string/detail_record_button_desc"
+            android:focusable="true"
+            app:layout_constraintBottom_toTopOf="@id/editPolygonButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_info"
             app:tint="@android:color/white"
             android:visibility="gone"/>
 

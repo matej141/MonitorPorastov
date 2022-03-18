@@ -2,12 +2,14 @@ package com.android.monitorporastov.fragments
 
 import android.os.Bundle
 import android.view.*
+import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.ListViewModel
+import com.android.monitorporastov.MapSharedViewModel
 import com.android.monitorporastov.adapters.DataListItemRecyclerViewAdapter
 import com.android.monitorporastov.R
 import com.android.monitorporastov.databinding.FragmentDataListBinding
@@ -22,7 +24,7 @@ class DataListFragment : Fragment() {
 
     private val binding get() = _binding!!
 
-    private val viewModel: ListViewModel by activityViewModels()
+    private val viewModel: MapSharedViewModel by activityViewModels()
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: DataListItemRecyclerViewAdapter
@@ -47,12 +49,22 @@ class DataListFragment : Fragment() {
         recyclerView = binding.dataItemList
         setUpAdapter()
         observeViewModel()
+        setUpBackStackCallback()
+    }
+
+    private fun setUpBackStackCallback() {
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            navigateToMapFragment()
+        }
+    }
+
+    private fun navigateToMapFragment() {
+        findNavController().navigate(R.id.action_data_list_fragment_TO_map_fragment)
     }
 
     private fun setUpAdapter() {
         val onClickListener = createOnclickListener()
         adapter = DataListItemRecyclerViewAdapter(
-            listOf(),
             onClickListener
         )
         setupRecycleViewAdapter()
@@ -84,9 +96,8 @@ class DataListFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        viewModel.damageData.observe(viewLifecycleOwner, Observer { damageData ->
-            adapter.values = damageData
-            adapter.notifyItemRangeChanged(0, damageData.size)
+        viewModel.damageDataList.observe(viewLifecycleOwner, Observer { damageData ->
+            adapter.setDataListItem(damageData)
             binding.progressBar.visibility = View.GONE
         })
     }

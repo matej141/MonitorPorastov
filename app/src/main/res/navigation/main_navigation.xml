@@ -2,34 +2,39 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_map">
+    android:id="@+id/main_navigation"
+    app:startDestination="@+id/map_fragment">
 
     <fragment
-        android:id="@+id/nav_map"
+        android:id="@+id/map_fragment"
         android:name="com.android.monitorporastov.fragments.MapFragment"
         android:label="@string/menu_map_txt"
-        tools:layout="@layout/fragment_map">
+        tools:layout="@layout/fragment_map"
+        >
         <action
-            android:id="@+id/action_mapFragment_to_addDrawingFragment"
-            app:destination="@id/add_measure_fragment" />
+            android:id="@+id/action_map_fragment_TO_add_damage_fragment"
+            app:destination="@id/add_damage_fragment" />
+        <action
+            android:id="@+id/action_map_fragment_TO_data_detail_fragment"
+            app:destination="@id/data_detail_fragment"
+            />
     </fragment>
 
     <fragment
-        android:id="@+id/add_measure_fragment"
+        android:id="@+id/add_damage_fragment"
         android:name="com.android.monitorporastov.fragments.AddDamageFragment"
         android:label="Informácie o poškodení"
         tools:layout="@layout/fragment_add_damage">
         <action
-            android:id="@+id/action_addMeasureFragment_to_nav_map"
-            app:destination="@id/nav_map"
-            app:popUpTo="@+id/add_measure_fragment"
+            android:id="@+id/action_add_damage_fragment_TO_map_fragment"
+            app:destination="@id/map_fragment"
+            app:popUpTo="@+id/map_fragment"
             app:popUpToInclusive="true" />
         <action
-            android:id="@+id/action_add_measure_fragment_TO_data_detail_fragment"
+            android:id="@+id/action_add_damage_fragment_TO_data_detail_fragment"
             app:destination="@id/data_detail_fragment"
-            app:popUpTo="@+id/add_measure_fragment"
-            app:popUpToInclusive="true"/>
+            app:popUpTo="@+id/data_detail_fragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -40,6 +45,12 @@
         <action
             android:id="@+id/show_data_detail"
             app:destination="@id/data_detail_fragment" />
+
+        <action
+            android:id="@+id/action_data_list_fragment_TO_map_fragment"
+            app:destination="@id/map_fragment"
+            app:popUpTo="@+id/map_fragment"
+            />
     </fragment>
 
     <fragment
@@ -47,16 +58,19 @@
         android:name="com.android.monitorporastov.fragments.DataDetailFragment"
         android:label="Detail"
         tools:layout="@layout/fragment_data_detail">
+
         <action
             android:id="@+id/action_data_detail_fragment_TO_add_measure_fragment"
-            app:destination="@id/add_measure_fragment"
-            app:popUpTo="@+id/data_detail_fragment"
-            app:popUpToInclusive="true" />
+            app:destination="@id/add_damage_fragment" />
+
         <action
             android:id="@+id/action_data_detail_fragment_TO_data_list_fragment"
             app:destination="@id/data_list_fragment"
-            app:popUpTo="@+id/data_detail_fragment"
-            app:popUpToInclusive="true" />
+            />
+
+        <action
+            android:id="@+id/action_data_detail_fragment_TO_map_fragment"
+            app:destination="@id/map_fragment" />
 
     </fragment>
 

@@ -12,12 +12,12 @@
         tools:layout="@layout/fragment_map" >
         <action
             android:id="@+id/action_mapFragment_to_addDrawingFragment1"
-            app:destination="@id/add_measure_fragment"
-            app:popUpTo="@id/add_measure_fragment"
+            app:destination="@id/add_damage_fragment"
+            app:popUpTo="@id/add_damage_fragment"
             app:popUpToInclusive="true"/>
     </fragment>
     <fragment
-        android:id="@+id/add_measure_fragment"
+        android:id="@+id/add_damage_fragment"
         android:name="com.android.monitorporastov.fragments.AddDamageFragment"
         android:label="Informácie o poškodení"
         tools:layout="@layout/fragment_add_damage" />

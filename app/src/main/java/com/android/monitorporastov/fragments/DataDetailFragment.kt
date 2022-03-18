@@ -1,13 +1,12 @@
 package com.android.monitorporastov.fragments
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
-import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -19,34 +18,27 @@ import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.DataDetailPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentDataDetailBinding
 import com.android.monitorporastov.model.DamageData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import org.osmdroid.tileprovider.modules.SqlTileWriter
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.*
 
 /**
  * Fragment zobrazujúci detail poškodenia.
  */
 class DataDetailFragment : Fragment() {
 
-    private var item: DamageData? = null
+    private var damageDataItem: DamageData? = null
     private lateinit var recyclerView: RecyclerView
 
     private var _binding: FragmentDataDetailBinding? = null
 
     private val binding get() = _binding!!
 
-    private val viewModel: ListViewModel by activityViewModels()
+    private val viewModel: MapSharedViewModel by activityViewModels()
     private var stringsOfPhotosList = listOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        setUpBackStackCallback()
     }
 
     override fun onCreateView(
@@ -69,13 +61,25 @@ class DataDetailFragment : Fragment() {
         inflater.inflate(R.menu.data_detail_menu, menu)
     }
 
+    /**
+     * Umelo vytvorene spravanie backpressed aktivity...
+     * zabranuje tomu, aby sa cycklicky pri backpressed stlaceni buttonu opakovalo
+     * map fragment -> data detail fragment a zaroven zabranuje tomu,
+     * aby sa z backstacku vyhodil MapFragment
+     */
+    private fun setUpBackStackCallback() {
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            navigateToDataListFragment()
+        }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (id == R.id.menu_edit_data) {
-            this.item?.let {
-                it.isNew = false
-                it.isItemFromMap = false
-                viewModel.saveItem(this.item!!)
+            damageDataItem?.let {
+                it.isInGeoserver = true
+                it.isUpdatingDirectlyFromMap = false
+                //viewModel.saveNewItem(damageDataItem!!)
                 findNavController().navigate(
                     R.id.action_data_detail_fragment_TO_add_measure_fragment)
             }
@@ -84,30 +88,63 @@ class DataDetailFragment : Fragment() {
             CoroutineScope(Dispatchers.Main).launch {
                 handleDeletingRecord()
             }
+        }
 
-
+        if (id == R.id.menu_show_on_map_data) {
+            // damageDataItem?.showThisItemOnMap = true
+            handleToMapFragment()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private suspend fun handleDeletingRecord() {
-        if (item == null) {
-            return
-        }
-
-        Utils.setSelectedItem(item!!)
-        val resultOfOperation: Boolean =
-            withContext(CoroutineScope(Dispatchers.Main).coroutineContext) {
-                Utils.handleDeletingOfRecord(requireContext(), binding.progressBar)
-            }
-        if (resultOfOperation) {
-            Toast.makeText(context, "Dáta boli úspešne vymazané",
+    private fun handleToMapFragment() {
+        if (damageDataItem == null) {
+            Toast.makeText(context, "Dáta ešte neboli načítané, počkajte prosím",
                 Toast.LENGTH_SHORT).show()
-            navigateToDataListFragment()
+        } else {
+            navigateToMapFragment()
         }
     }
 
+    private fun navigateToMapFragment() {
+        findNavController().navigate(R.id.action_data_detail_fragment_TO_map_fragment)
+    }
+
+    private suspend fun handleDeletingRecord(): Boolean {
+        val deferredBoolean = CompletableDeferred<Boolean>()
+        if (damageDataItem == null) {
+            return false
+        }
+        AlertDialog.Builder(requireContext())  //
+            .setTitle(R.string.if_delete_record_title)
+            .setPositiveButton(R.string.button_positive_text) { _, _ ->
+                CoroutineScope(Dispatchers.Main).launch {
+                    binding.progressBar.visibility = View.VISIBLE
+                    deferredBoolean.complete(viewModel.deleteItem(damageDataItem!!))
+                }
+            }
+            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
+                deferredBoolean.complete(false)
+                dialog.cancel()
+            }
+            .create()
+            .show()
+
+        if (deferredBoolean.await()) {
+
+            Toast.makeText(context, "Dáta boli úspešne vymazané",
+                Toast.LENGTH_SHORT).show()
+            Utils.navigateToPreviousFragment(findNavController())
+            navigateToDataListFragment()
+        }
+        binding.progressBar.visibility = View.GONE
+        return deferredBoolean.await()
+    }
+
     private fun navigateToDataListFragment() {
+        //findNavController().popBackStack()
+
+//        findNavController().popBackStack(R.id.data_detail_fragment, true)
         findNavController().navigate(
             R.id.action_data_detail_fragment_TO_data_list_fragment)
     }
@@ -116,7 +153,7 @@ class DataDetailFragment : Fragment() {
      * Naplní tabuľku údajmi.
      */
     private fun setupContent() {
-        item?.let {
+        damageDataItem?.let {
             val txtPerimeter = "${
                 "%.${3}f".format(it.obvod)
             } m"
@@ -136,13 +173,14 @@ class DataDetailFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        viewModel.clearStringsOfPhotosList()
         //activity?.viewModelStore?.clear()
     }
 
     private fun setUpPreviouslyLoadedPhotos() {
         binding.progressBar.visibility = View.GONE
-        if (item?.bitmaps?.isNotEmpty() == true) {
-            recyclerView.adapter = DataDetailPhotosRVAdapter(item!!.bitmaps)
+        if (damageDataItem?.bitmaps?.isNotEmpty() == true) {
+            recyclerView.adapter = DataDetailPhotosRVAdapter(damageDataItem!!.bitmaps)
         } else {
             binding.dataDetailPhotoNoPhotos.visibility = View.VISIBLE
         }
@@ -162,7 +200,7 @@ class DataDetailFragment : Fragment() {
                 val imageBytes: ByteArray = Base64.decode(it, 0)
                 val image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 bitmaps.add(image)
-                item?.bitmaps?.add(image)
+                damageDataItem?.bitmaps?.add(image)
             }
             withContext(Dispatchers.Main) {
                 recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
@@ -172,7 +210,7 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun setUpPhotos() {
-        if (item != null && item?.bitmapsLoaded == true) {
+        if (damageDataItem != null && damageDataItem?.bitmapsLoaded == true) {
             setUpPreviouslyLoadedPhotos()
             return
         }
@@ -180,20 +218,37 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun observeDamageDataFromViewModel() {
+        if (viewModel.selectedDamageDataItemFromMap.value == null) {
+            observeSelectedDamageDataFromViewModel()
+            return
+        }
+        observeSelectedItemFromMap()
+    }
+
+    private fun observeSelectedItemFromMap() {
+        viewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner,
+            Observer { selectedItemFromMap ->
+                selectedItemFromMap?.let {
+                    setUpDamageData(it)
+                }
+            })
+    }
+
+    private fun setUpDamageData(damageData: DamageData) {
+        damageDataItem = damageData
+        setupContent()
+        if (!damageDataItem?.bitmapsLoaded!!) {
+            damageDataItem?.let { item -> viewModel.fetchPhotos(item) }
+            observePhotosFromViewModel()
+        } else {
+            setUpPhotos()
+        }
+    }
+
+    private fun observeSelectedDamageDataFromViewModel() {
         viewModel.selectedDamageDataItem.observe(viewLifecycleOwner, Observer { selectedItem ->
             selectedItem?.let {
-                item = it
-//                Toast.makeText(context, "${it.id}",
-//                    Toast.LENGTH_SHORT).show()
-//                 id 104
-                setupContent()
-                if (!it.bitmapsLoaded) {
-                    item?.let { item -> viewModel.fetchPhotos(item) }
-                    observePhotosFromViewModel()
-                } else {
-                    setUpPhotos()
-                }
-
+                setUpDamageData(it)
             }
         })
     }
@@ -204,22 +259,23 @@ class DataDetailFragment : Fragment() {
                 this.stringsOfPhotosList = it
                 setUpPhotos()
                 observeIndexesOfPhotos()
-                item?.bitmapsLoaded = true
+                damageDataItem?.bitmapsLoaded = true
+            }
+        }
+    }
+
+    private fun observeIndexesOfPhotos() {
+        viewModel.indexesOfPhotosList.observe(viewLifecycleOwner) { indexesOfPhotosList ->
+            indexesOfPhotosList?.let {
+                damageDataItem?.indexesOfPhotos = it
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        viewModel.clear()
-    }
-
-    private fun observeIndexesOfPhotos() {
-        viewModel.indexesOfPhotosList.observe(viewLifecycleOwner) { indexesOfPhotosList ->
-            indexesOfPhotosList?.let {
-                item?.indexesOfPhotos = it
-            }
-        }
+        viewModel.clearStringsOfPhotosList()
+        //viewModel.clearSelectedDamageDataItemFromMap()
     }
 
     companion object {

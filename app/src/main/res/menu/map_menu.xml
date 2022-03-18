@@ -15,11 +15,36 @@
                 <item
                     android:id="@+id/menu_default_map"
                     android:checked="true"
-                    android:title="@string/menu_default_map" />
+                    android:title="@string/menu_default_map_txt" />
                 <item
                     android:id="@+id/menu_ortofoto"
                     android:title="@string/menu_ortofoto_txt" />
+                <item
+                    android:id="@+id/menu_BPEJ"
+                    android:title="@string/menu_BPEJ_txt" />
+                <item
+                    android:id="@+id/menu_hunting_territories"
+                    android:title="@string/menu_hunting_territories_txt" />
+            </group>
+            <group
+                android:id="@+id/menu_vrstva"
+                android:checkableBehavior="all">
+                <item
+                    android:id="@+id/menu_JPRL"
+                    android:title="@string/menu_JPRL_txt" />
+                <item
+                    android:id="@+id/menu_LPIS"
+                    android:title="@string/menu_LPIS_txt" />
+                <item
+                    android:id="@+id/menu_C_parcel"
+                    android:title="@string/menu_C_parcel_txt" />
+                <item
+                    android:id="@+id/menu_E_parcel"
+                    android:title="@string/menu_E_parcel_txt" />
 
+                <item
+                    android:id="@+id/menu_watercourse"
+                    android:title="@string/menu_watercourse_txt" />
 
             </group>
         </menu>

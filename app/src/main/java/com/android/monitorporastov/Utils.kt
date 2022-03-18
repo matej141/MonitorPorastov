@@ -6,13 +6,9 @@ import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.databinding.DataBindingUtil
-import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
-import com.android.monitorporastov.databinding.FragmentMapBinding
-import com.android.monitorporastov.fragments.MapFragment
+import androidx.navigation.NavController
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 import okhttp3.*
@@ -39,20 +35,20 @@ object Utils {
         this.selectedRecord = selectedItem
     }
 
-    private fun createRequestBody(requestBodyText: String): RequestBody {
+    fun createRequestBody(requestBodyText: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
     }
 
-    private fun createDeleteRecordTransactionString(): String {
+    fun createDeleteRecordTransactionString(): String {
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skeagis " +
                 "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
-                "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
+                "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skeagis:porasty\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
-                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">\n" +
+                "xmlns:geoserver_skeagis=\"http://opengeo.org/geoserver_skeagis\">\n" +
                 "    <Delete xmlns=\"http://www.opengis.net/wfs\" " +
-                "typeName=\"geoserver_skuska:porasty\">\n" +
+                "typeName=\"geoserver_skeagis:porasty\">\n" +
                 "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
                 "            <PropertyIsEqualTo>" +
                 "<PropertyName>id</PropertyName>" +
@@ -70,7 +66,7 @@ object Utils {
                 deferredBoolean.complete(false)
             }
             progressBar.visibility = View.VISIBLE
-            val resultAwaiting = async { deleteRecord()}
+            val resultAwaiting = async { deleteRecord() }
             val result = resultAwaiting.await()
             deferredBoolean.complete(result)
             progressBar.visibility = View.GONE
@@ -84,10 +80,12 @@ object Utils {
             AlertDialog.Builder(context)  //
                 .setTitle(R.string.if_delete_record_title)
                 .setPositiveButton(R.string.button_positive_text) { _, _ ->
-                      deferredBoolean.complete(true)  }
+                    deferredBoolean.complete(true)
+                }
                 .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
                     deferredBoolean.complete(false)
-                    dialog.cancel() }
+                    dialog.cancel()
+                }
                 .create()
                 .show()
         }
@@ -108,24 +106,29 @@ object Utils {
         val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
         val service = RetroService.getServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
-            val response = service.postToGeoserver(requestBody)
-            withContext(Dispatchers.Main) {
-                if (response.isSuccessful) {
-                    // binding.progressBar.visibility = View.GONE
-                    val r: String? = response.body()
+            try {
+                val response = service.postToGeoserver(requestBody)
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful) {
+                        // binding.progressBar.visibility = View.GONE
+                        val r: String? = response.body()
 
-                    Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
-                    if (r != null) {
-                        Log.d("MODELL", r)
+                        Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
+                        if (r != null) {
+                            Log.d("MODELL", r)
+                        }
+                        if (r != null && r.contains("SUCCESS")) {
+                            Log.d("MODELL", "Fotky úspešné....")
+                        }
+                        deferredBoolean.complete(true)
+                    } else {
+                        Log.d("MODELL", "Error: ${response.message()}")
+                        deferredBoolean.complete(false)
                     }
-                    if (r != null && r.contains("SUCCESS")) {
-                        Log.d("MODELL", "Fotky úspešné....")
-                    }
-                    deferredBoolean.complete(true)
-                } else {
-                    Log.d("MODELL", "Error: ${response.message()}")
-                    deferredBoolean.complete(false)
                 }
+            }
+            catch (e: Throwable) {
+
             }
         }
         return deferredBoolean.await()
@@ -145,6 +148,10 @@ object Utils {
         val inputMethodManager =
             getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    fun navigateToPreviousFragment(navController: NavController) {
+        //navController.popBackStack()
     }
 
 }

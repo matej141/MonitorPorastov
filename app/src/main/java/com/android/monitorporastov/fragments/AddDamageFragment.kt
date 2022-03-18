@@ -5,16 +5,17 @@ import android.app.AlertDialog
 import android.content.ContentResolver
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
+import android.util.Base64
 import android.util.Log
 import android.view.*
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -45,32 +46,34 @@ class AddDamageFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var dataItem: PlaceholderItem? = null
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
-    private val viewModel: ListViewModel by activityViewModels()
+    private val viewModel: MapSharedViewModel by activityViewModels()
 
     private var _binding: FragmentAddDamageBinding? = null
 
     private val binding get() = _binding!!
-    private var adapterOfPhotos = AddDamageFragmentPhotosRVAdapter()
+    private var adapterOfPhotos = AddDamageFragmentPhotosRVAdapter(mutableListOf())
 
     private lateinit var listOfDamageType: Array<String>
 
     private lateinit var damageDataItem: DamageData
     private val maxSizeOfPhoto = 600
-    private lateinit var callback: OnBackPressedCallback
+    private var stringsOfPhotosList = listOf<String>()
+
+//    private lateinit var callback: OnBackPressedCallback
 
 //    private lateinit var userName: String   // dokoncit!!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (editData) {
-                    checkIfBitmapsChanged()
-                    navigateToItemDetail()
-                }
-            }
-        }
+//        callback = object : OnBackPressedCallback(true) {
+//            override fun handleOnBackPressed() {
+//                if (editData) {
+//                    checkIfBitmapsChanged()
+//                    navigateToItemDetail()
+//                }
+//            }
+//        }
     }
 
     private fun checkIfBitmapsChanged() {
@@ -85,17 +88,17 @@ class AddDamageFragment : Fragment() {
     ): View {
         _binding = FragmentAddDamageBinding.inflate(inflater, container, false)
 
-        observeDamageDataItem()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        recyclerView = binding.itemList
+        recyclerView = binding.recycleViewOfPhotos
         setupRecycleView()
         setUpListeners()
         listOfDamageType = resources.getStringArray(R.array.damages)
-
+        observeDamageDataItem()
+        // ViewCompat.setNestedScrollingEnabled(recyclerView, false)
 
 //        viewModel.username.observe(viewLifecycleOwner, Observer { username ->
 //            username?.let {
@@ -107,12 +110,12 @@ class AddDamageFragment : Fragment() {
     // https://stackoverflow.com/questions/56649766/trouble-with-navcontroller-inside-onbackpressedcallback
     override fun onStart() {
         super.onStart()
-        requireActivity().onBackPressedDispatcher.addCallback(callback)
+//        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     override fun onStop() {
         super.onStop()
-        callback.remove()
+//        callback.remove()
     }
 
     /**
@@ -122,6 +125,10 @@ class AddDamageFragment : Fragment() {
         binding.addDataName.editText?.setText(damageDataItem.nazov)
         binding.addDataDamageType.setText(damageDataItem.typ_poskodenia)
         binding.addDataDescription.editText?.setText(damageDataItem.popis_poskodenia)
+
+    }
+
+    private fun setUpExistingBitmaps() {
         damageDataItem.bitmaps.forEach {
             adapterOfPhotos.photoItems.add((PhotoItem(it)))
             adapterOfPhotos.hexStrings.add("")
@@ -173,29 +180,29 @@ class AddDamageFragment : Fragment() {
 
     private fun createStringFromPoints(): String {
         val geoPoints = damageDataItem.coordinates
-        var str = ""
-        geoPoints.forEach { str += "${it.latitude},${it.longitude} " }
-        str += "${geoPoints[0].latitude},${geoPoints[0].longitude}"
+        var stringFromPoints = ""
+        geoPoints.forEach { stringFromPoints += "${it.latitude},${it.longitude} " }
+        // str += "${geoPoints[0].latitude},${geoPoints[0].longitude}"  // toto robilo chybu trebalo sa rozhodnut, ci toto robit v mape, alebo tu
 
-        return str
+        return stringFromPoints
     }
 
     private fun createInsertDataTransactionString(): String {
         val stringFromPoints = createStringFromPoints()
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
+                "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skeagis:porasty\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
-                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\">" +
+                "xmlns:geoserver_skeagis=\"http://geoserver.org/geoserver_skeagis\">" +
                 "<Insert xmlns=\"http://www.opengis.net/wfs\">" +
-                "<porasty xmlns=\"http://opengeo.org/geoserver_skuska\">" +
-                "<nazov xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.nazov}</nazov>" +
-                "<pouzivatel xmlns=\"http://opengeo.org/geoserver_skuska\">dano</pouzivatel>" +
-                "<typ_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.typ_poskodenia}</typ_poskodenia>" +
-                "<popis_poskodenia xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.popis_poskodenia}</popis_poskodenia>" +
-                "<obvod xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.obvod}</obvod>" +
-                "<obsah xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.obsah}</obsah>" +
-                "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.unique_id}</unique_id>" +
-                "<geom xmlns=\"http://opengeo.org/geoserver_skuska\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
+                "<porasty xmlns=\"http://geoserver.org/geoserver_skeagis\">" +
+                "<nazov xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.nazov}</nazov>" +
+                "<pouzivatel xmlns=\"http://geoserver.org/geoserver_skeagis\">dano</pouzivatel>" +
+                "<typ_poskodenia xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.typ_poskodenia}</typ_poskodenia>" +
+                "<popis_poskodenia xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.popis_poskodenia}</popis_poskodenia>" +
+                "<obvod xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.obvod}</obvod>" +
+                "<obsah xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.obsah}</obsah>" +
+                "<unique_id xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.unique_id}</unique_id>" +
+                "<geom xmlns=\"http://geoserver.org/geoserver_skeagis\"><gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
                 "<gml:outerBoundaryIs><gml:LinearRing><gml:coordinates cs=\",\" ts=\" \">" +
                 stringFromPoints +
                 "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></geom></porasty></Insert></Transaction>"
@@ -220,9 +227,9 @@ class AddDamageFragment : Fragment() {
         var photoStrings = ""
         photoHexStrings.forEach {
             val line =
-                "   <fotografie xmlns=\"http://opengeo.org/geoserver_skuska\">\n" +
-                        "       <fotografia xmlns=\"http://opengeo.org/geoserver_skuska\">$it</fotografia>\n " +
-                        "<unique_id xmlns=\"http://opengeo.org/geoserver_skuska\">${damageDataItem.unique_id}</unique_id>\n" +
+                "   <fotografie xmlns=\"http://geoserver.org/geoserver_skeagis\">\n" +
+                        "       <fotografia xmlns=\"http://geoserver.org/geoserver_skeagis\">$it</fotografia>\n " +
+                        "<unique_id xmlns=\"http://geoserver.org/geoserver_skeagis\">${damageDataItem.unique_id}</unique_id>\n" +
                         "       </fotografie>\n"
             photoStrings += line
         }
@@ -233,12 +240,12 @@ class AddDamageFragment : Fragment() {
         val photoStrings = createPhotoStrings()
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:geoserver_skeagis=\"http://geoserver.org/geoserver_skeagis\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis " +
                 "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
                 "DescribeFeatureType&amp;VERSION=1.0.0&amp;" +
-                "TYPENAME=geoserver_skuska:fotografie\" " +
+                "TYPENAME=geoserver_skeagis:fotografie\" " +
                 "version=\"1.0.0\">\n" +
                 "    <Insert xmlns=\"http://www.opengis.net/wfs\">\n" +
                 "        $photoStrings" +
@@ -260,15 +267,20 @@ class AddDamageFragment : Fragment() {
                     async { updatePhotosInGeoserver() }
                 )
             list.awaitAll()
-            binding.progressBar.visibility = View.GONE
+            binding.progressBar.visibility = View.INVISIBLE
             Toast.makeText(context, "Záznam bol aktualizovaný",
                 Toast.LENGTH_SHORT).show()
-            if (!damageDataItem.isItemFromMap) {
+            updateDataInSharedViewModel()
+            if (!damageDataItem.isUpdatingDirectlyFromMap) {
                 navigateToItemDetail()
             } else {
                 navigateToMap()
             }
         }
+    }
+
+    private fun updateDataInSharedViewModel() {
+        viewModel.updateSelectedItems(damageDataItem)
     }
 
     private suspend fun updatePhotosInGeoserver(): Boolean {
@@ -291,12 +303,12 @@ class AddDamageFragment : Fragment() {
         }
         updatePhotosTransactionString += "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:geoserver_skeagis=\"http://geoserver.org/geoserver_skeagis\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" service=\"WFS\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis " +
                 "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
                 "DescribeFeatureType&amp;VERSION=1.0.0&amp;" +
-                "TYPENAME=geoserver_skuska:fotografie\" " +
+                "TYPENAME=geoserver_skeagis:fotografie\" " +
                 "version=\"1.0.0\">\n"
         if (deletePhotosString.isNotEmpty()) {
             updatePhotosTransactionString += deletePhotosString
@@ -323,7 +335,7 @@ class AddDamageFragment : Fragment() {
         if (deleteFilterString.isEmpty()) {
             return ""
         }
-        return "<Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skuska:fotografie\">\n" +
+        return "<Delete xmlns=\"http://www.opengis.net/wfs\" typeName=\"geoserver_skeagis:fotografie\">\n" +
                 "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
                 "            <Or>\n" +
                 "                $deleteFilterString" +
@@ -389,20 +401,34 @@ class AddDamageFragment : Fragment() {
                         "     </Value>\n" +
                         "</Property>\n"
         }
-        if (damageDataItem.isItemFromMap) {
-//            updatePropertiesString +=
-//                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
-//                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obvod</Name>\n" +
-//                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
-//                        "        ${damageDataItem.obvod}\n" +
-//                        "     </Value>\n" +
-//                        "</Property>\n" +
-//                        "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
-//                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obsah</Name>\n" +
-//                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
-//                        "        ${damageDataItem.obsah}\n" +
-//                        "     </Value>\n" +
-//                        "</Property>\n"
+        if (damageDataItem.changedShapeOfPolygon) {
+            updatePropertiesString +=
+                "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obvod</Name>\n" +
+                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "        ${damageDataItem.obvod}\n" +
+                        "     </Value>\n" +
+                        "</Property>\n" +
+                        "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "    <Name xmlns=\"http://www.opengis.net/wfs\">obsah</Name>\n" +
+                        "    <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                        "        ${damageDataItem.obsah}\n" +
+                        "     </Value>\n" +
+                        "</Property>\n"
+            updatePropertiesString += "<Property xmlns=\"http://www.opengis.net/wfs\">\n" +
+                    "            <Name xmlns=\"http://www.opengis.net/wfs\">geom</Name>\n" +
+                    "            <Value xmlns=\"http://www.opengis.net/wfs\">\n" +
+                    "                <gml:Polygon srsName=\"urn:ogc:def:crs:EPSG::4326\">\n" +
+                    "                    <gml:outerBoundaryIs>\n" +
+                    "                        <gml:LinearRing>\n" +
+                    "                            <gml:coordinates cs=\",\" ts=\" \">" +
+                    createStringFromPoints() +
+                    "                            </gml:coordinates>\n" +
+                    "                        </gml:LinearRing>\n" +
+                    "                    </gml:outerBoundaryIs>\n" +
+                    "                </gml:Polygon>\n" +
+                    "            </Value>\n" +
+                    "        </Property>\n"
         }
         return updatePropertiesString
     }
@@ -413,14 +439,14 @@ class AddDamageFragment : Fragment() {
             return ""
         }
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
-                "xmlns:geoserver_skuska=\"http://opengeo.org/geoserver_skuska\" " +
+                "xmlns:geoserver_skeagis=\"http://geoserver.org/geoserver_skeagis\" " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skuska " +
+                "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis " +
                 "http://212.5.204.126:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
-                "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skuska:porasty\" " +
+                "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skeagis:porasty\" " +
                 "version=\"1.0.0\" service=\"WFS\" xmlns:gml=\"http://www.opengis.net/gml\">\n" +
                 "    <Update xmlns=\"http://www.opengis.net/wfs\" " +
-                "typeName=\"geoserver_skuska:porasty\">\n" +
+                "typeName=\"geoserver_skeagis:porasty\">\n" +
                 "        $updatePropertiesString" +
                 "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
                 "            <PropertyIsEqualTo>" +
@@ -448,7 +474,7 @@ class AddDamageFragment : Fragment() {
                         }
                     })
             list.awaitAll()
-            binding.progressBar.visibility = View.GONE
+            binding.progressBar.visibility = View.INVISIBLE
             navigateToMap()
         }
     }
@@ -495,7 +521,7 @@ class AddDamageFragment : Fragment() {
      */
     private fun navigateToItemDetail() {
         val navController = findNavController()
-        navController.navigate(R.id.action_add_measure_fragment_TO_data_detail_fragment)
+        navController.navigate(R.id.action_add_damage_fragment_TO_data_detail_fragment)
     }
 
     /**
@@ -523,7 +549,7 @@ class AddDamageFragment : Fragment() {
         damageDataItem.nazov = getDataName()
         damageDataItem.typ_poskodenia = getDataDamageType()
         damageDataItem.popis_poskodenia = getDataDescription()
-        damageDataItem.isNew = false
+        damageDataItem.isInGeoserver = false
     }
 
     /**
@@ -704,6 +730,8 @@ class AddDamageFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        viewModel.clearStringsOfPhotosList()
+        viewModel.clearSelectedDamageDataItemFromMap()
     }
 
     override fun onDetach() {
@@ -712,13 +740,85 @@ class AddDamageFragment : Fragment() {
     }
 
     private fun observeDamageDataItem() {
-        viewModel.damageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
+        if (viewModel.selectedDamageDataItemFromMap.value == null) {
+            observeSelectedDamageDataItem()
+            return
+        }
+        observeSelectedItemFromMap()
+    }
+
+    private fun observeSelectedDamageDataItem() {
+        viewModel.selectedDamageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
             damageDataItem?.let {
                 this.damageDataItem = it
-                if (!it.isNew) {
+                editData = true
+                setUpExistingContent()
+                setUpExistingBitmaps()
+            }
+        }
+    }
+
+    private fun observeSelectedItemFromMap() {
+        viewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner) {
+                selectedDamageDataItemFromMap ->
+            selectedDamageDataItemFromMap?.let {
+                this.damageDataItem = it
+                if (it.isInGeoserver) {
                     editData = true
                     setUpExistingContent()
+                    if (!it.bitmapsLoaded) {
+                        viewModel.fetchPhotos(it)
+                        observePhotosFromViewModel()
+                    }
+                    else {
+                        setUpExistingBitmaps()
+                    }
+
                 }
+            }
+        }
+    }
+
+    private fun observePhotosFromViewModel() {
+        viewModel.stringsOfPhotosList.observe(viewLifecycleOwner) { stringsOfPhotosList ->
+            stringsOfPhotosList?.let {
+                this.stringsOfPhotosList = it
+                binding.progressBarPhotos.visibility = View.VISIBLE
+                setUpPhotos()
+                observeIndexesOfPhotos()
+                damageDataItem.bitmapsLoaded = true
+                binding.progressBarPhotos.visibility = View.INVISIBLE
+            }
+        }
+    }
+
+    private fun observeIndexesOfPhotos() {
+        viewModel.indexesOfPhotosList.observe(viewLifecycleOwner) { indexesOfPhotosList ->
+            indexesOfPhotosList?.let {
+                damageDataItem.indexesOfPhotos = it
+            }
+        }
+    }
+
+    private fun setUpPhotos() {
+        if (stringsOfPhotosList.isEmpty()) {
+            binding.progressBarPhotos.visibility = View.INVISIBLE
+            return
+        }
+
+        val bitmaps = mutableListOf<Bitmap>()
+        CoroutineScope(Dispatchers.Default).launch {
+            stringsOfPhotosList.forEach {
+                val imageBytes: ByteArray = Base64.decode(it, 0)
+                val image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                bitmaps.add(image)
+                damageDataItem.bitmaps.add(image)
+            }
+            withContext(Dispatchers.Main) {
+                // recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
+                setUpExistingBitmaps()
+                setupRecycleView()
+                binding.progressBarPhotos.visibility = View.INVISIBLE
             }
         }
     }

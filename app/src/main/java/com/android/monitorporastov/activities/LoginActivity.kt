@@ -32,7 +32,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private val unauthorisedCode = 401;
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityLoginBinding.inflate(layoutInflater)

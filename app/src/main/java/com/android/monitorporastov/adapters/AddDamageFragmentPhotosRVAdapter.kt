@@ -14,10 +14,11 @@ import com.android.monitorporastov.databinding.PhotoListItemBinding
  * RecyclerViewAdapter pre prácu s fotografiami vo fragmente (AddDamageFragment),
  * kde používateľ mení alebo upravuje údaje o poškodení porastov.
  */
-class AddDamageFragmentPhotosRVAdapter :
+class AddDamageFragmentPhotosRVAdapter(
+    var photoItems: MutableList<PhotoItem>
+) :
     RecyclerView.Adapter<AddDamageFragmentPhotosRVAdapter.ViewHolder>() {
 
-    var photoItems =  mutableListOf<PhotoItem>()
     val bitmaps = mutableListOf<Bitmap>()
     val hexStrings = mutableListOf<String>()
     val indexesOfPhotos = mutableListOf<Int>()

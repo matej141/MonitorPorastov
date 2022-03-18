@@ -42,21 +42,18 @@ import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.*
 import okhttp3.Credentials
 import org.osmdroid.api.IMapController
-import org.osmdroid.api.IMapView
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.MapTileProviderBasic
 import org.osmdroid.tileprovider.modules.SqlTileWriter
-import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.util.TileSystem
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
-import org.osmdroid.views.overlay.TilesOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.wms.WMSEndpoint
 import org.osmdroid.wms.WMSParser
@@ -68,7 +65,7 @@ import java.net.URL
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
-    private val viewModel: ListViewModel by activityViewModels()
+    private val sharedViewModel: MapSharedViewModel by activityViewModels()
     private var job: Job? = null
     private lateinit var mMap: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
@@ -98,7 +95,7 @@ class MapFragment : Fragment() {
     private val polygonFillColorStr = "#33EA3535"  // farba vnútra polygónu
     private var actualPerimeter = 0.0  // aktuálny obvod polygónu
     private var actualArea = 0.0  // aktuálna rozloha polygónu
-    private var mapTypeStr = ""  // typ mapy (default, orto...)
+    private var mapLayerStr = ""  // typ mapy (default, orto...)
 
     private var activityResultLauncher: ActivityResultLauncher<Array<String>>
 
@@ -112,7 +109,7 @@ class MapFragment : Fragment() {
 
     private var selectedRecord: DamageData? = null
     private val detailPolygonId = "DetailPoly"
-
+    private var listOfGeopointsOfSelectedRecord: MutableList<GeoPoint> = mutableListOf()
 
     companion object {
         private const val PREFS_NAME = "MAP_FRAGMENT_PREFS"
@@ -137,11 +134,10 @@ class MapFragment : Fragment() {
             if (allPermissionsAreGranted) {
                 startLocationUpdates()
             } else {
-                showExplainAD()
+                showExplainPermissionsAD()
             }
         }
     }
-
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -161,7 +157,7 @@ class MapFragment : Fragment() {
 //                lastLocation = location
 //            }
 //        }
-        setUpCallback()
+        setUpBackStackCallback()
 
         requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
     }
@@ -202,7 +198,7 @@ class MapFragment : Fragment() {
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
 
-
+        sharedViewModel.clearSelectedDamageDataItemFromMap()
         // https://www.py4u.net/discuss/616531
         // riešenie navcontrolleru, keď sa používateľ z fragmentu vráti do tohto fragmentu
         val navController = findNavController()
@@ -210,13 +206,13 @@ class MapFragment : Fragment() {
             viewLifecycleOwner) { result ->
             if (result) {
                 // pridanie vytvoreného polygónu do zoznamu existujúcich polygónov
-                val polygon = Polygon()
-                polygon.points = newPolygon.actualPoints
-                newPolygon.actualPoints.clear()
-                polygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
-                polygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
-                polygons.add(polygon)
-                drawExistingPolygons()  // vykreslenie všetkých existujúcich polygónov
+//                val polygon = Polygon()
+//                polygon.points = newPolygon.actualPoints
+//                newPolygon.actualPoints.clear()
+//                polygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
+//                polygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
+//                polygons.add(polygon)
+//                drawExistingPolygons()  // vykreslenie všetkých existujúcich polygónov
                 setDefault()  // nastavenie defaultneho zobrazenia mapy (bez buttonov
                 // zobrazených počas vyznačovania poškodeného územia)
                 navController.currentBackStackEntry?.savedStateHandle?.set("key", false)
@@ -243,25 +239,66 @@ class MapFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
         MenuCompat.setGroupDividerEnabled(menu, true)
         inflater.inflate(R.menu.map_menu, menu)
-        when (mapTypeStr) {
+        when (mapLayerStr) {
             getString(R.string.map_ortofoto) -> menu.findItem(R.id.menu_ortofoto).isChecked = true
         }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if (id == R.id.menu_default_map && mapTypeStr != getString(R.string.map_default)) {
-            mapTypeStr = getString(R.string.map_default)
+        var loadBase = false
+        if (id == 0) {
+            return super.onOptionsItemSelected(item)
+        }
+        if (id == R.id.menu_default_map && mapLayerStr != getString(R.string.map_default)) {
+            mapLayerStr = getString(R.string.map_default)
             loadDefaultLayer()
             item.isChecked = true
-        } else if (id == R.id.menu_ortofoto && mapTypeStr != getString(R.string.map_ortofoto)) {
-            mapTypeStr = getString(R.string.map_ortofoto)
-            val urlWmsEndpoint =
-                "http://services.skeagis.sk:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
-            // loadLayer(getString(R.string.ortofoto_url))
-            loadLayer(urlWmsEndpoint)
-            item.isChecked = true
+            return super.onOptionsItemSelected(item)
         }
+        if (id == R.id.menu_ortofoto && mapLayerStr != getString(R.string.ortofoto_layer_name)) {
+            mapLayerStr = getString(R.string.ortofoto_layer_name)
+            loadBase = true
+        } else if (id == R.id.menu_BPEJ && mapLayerStr != getString(R.string.BPEJ_layer_name)) {
+            mapLayerStr = getString(R.string.BPEJ_layer_name)
+            loadBase = true
+        } else if (id == R.id.menu_hunting_territories && mapLayerStr != getString(R.string.hunting_territories_layer_name)) {
+            mapLayerStr = getString(R.string.JPRL_layer_name)
+            loadBase = true
+        }
+
+        if (loadBase) {
+            loadBaseLayer(mapLayerStr, item)
+            return super.onOptionsItemSelected(item)
+        }
+
+        var layerName = ""
+
+        when (id) {
+            R.id.menu_C_parcel -> {
+                layerName = getString(R.string.C_parcel_layer_name)
+            }
+            R.id.menu_E_parcel -> {
+                layerName = getString(R.string.E_parcel_layer_name)
+            }
+            R.id.menu_LPIS -> {
+                layerName = getString(R.string.LPIS_layer_name)
+            }
+            R.id.menu_JPRL -> {
+                layerName = getString(R.string.JPRL_layer_name)
+            }
+            R.id.menu_watercourse -> {
+                layerName = getString(R.string.watercourse_layer_name)
+            }
+        }
+
+        if (item.isChecked) {
+            item.isChecked = false
+            deleteLayerFromMap(layerName)
+            return super.onOptionsItemSelected(item)
+        }
+
+        loadMapLayer(layerName, item)
 
         return super.onOptionsItemSelected(item)
     }
@@ -281,13 +318,15 @@ class MapFragment : Fragment() {
                 centerMap()
                 mMapController.setZoom(defaultZoomLevel)
                 firstLoad = false
+                observeDamageDataItem()
+
             }
 
             updateMarkerLocation(locationResult.lastLocation)
         }
     }
 
-    private fun showExplainAD() {
+    private fun showExplainPermissionsAD() {
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.explanation_ad_title))
             .setMessage(getString(R.string.explanation_ad_message))
@@ -362,7 +401,7 @@ class MapFragment : Fragment() {
             }
             val mapTypeStr = mPrefs!!.getString(PREFS_MAP_TYPE, getString(R.string.map_default))
             if (mapTypeStr != null) {
-                this.mapTypeStr = mapTypeStr
+                this.mapLayerStr = mapTypeStr
             }
         }
     }
@@ -386,7 +425,7 @@ class MapFragment : Fragment() {
             edit.putString(PREFS_LATITUDE_STRING, mMap.mapCenter.latitude.toString())
             edit.putString(PREFS_LONGITUDE_STRING, mMap.mapCenter.longitude.toString())
             edit.putFloat(PREFS_ZOOM_LEVEL_DOUBLE, mMap.zoomLevelDouble.toFloat())
-            edit.putString(PREFS_MAP_TYPE, mapTypeStr)
+            edit.putString(PREFS_MAP_TYPE, mapLayerStr)
             edit.apply()
         }
         mMap.onPause()
@@ -411,35 +450,43 @@ class MapFragment : Fragment() {
         stopLocationUpdates()
     }
 
+    override fun onDetach() {
+        super.onDetach()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         job?.cancel()
     }
 
-
     /**
      * Nastavenie callbacku. Rieši prípady, keď používateľ klikne na "back button".
      */
-    private fun setUpCallback() {
+    private fun setUpBackStackCallback() {
         requireActivity().onBackPressedDispatcher.addCallback(this) {
-
-            if (manualMeasure) {
-                // ak používateľ merá plochu, opýta sa ho, či chce prestať vyznačovať územia a
-                // či chce zahodiť vyznačovanie územia
-                clearMeasureAlert()
-            } else {
-                // ak nemerá nič, opýta sa ho, či chce ukončít aplikáciu.
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.exit_app_ad_title))
-                    .setPositiveButton(getString(R.string.button_positive_text)) { _, _ ->
-                        requireActivity().finish()
-                    }
-                    .setNegativeButton(getString(R.string.button_negative_text)) { dialog, _ ->
-                        dialog.cancel()
-                    }
-                    .create()
-                    .show()
+            when {
+                manualMeasure -> {
+                    // ak používateľ merá plochu, opýta sa ho, či chce prestať vyznačovať územia a
+                    // či chce zahodiť vyznačovanie územia
+                    clearMeasureAlert()
+                }
+                checkIfPreviousFragmentIsDataDetailFragment() -> {
+                    navigateToDetailFragment()
+                }
+                else -> {
+                    // ak nemerá nič, opýta sa ho, či chce ukončít aplikáciu.
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.exit_app_ad_title))
+                        .setPositiveButton(getString(R.string.button_positive_text)) { _, _ ->
+                            requireActivity().finish()
+                        }
+                        .setNegativeButton(getString(R.string.button_negative_text)) { dialog, _ ->
+                            dialog.cancel()
+                        }
+                        .create()
+                        .show()
+                }
             }
         }
     }
@@ -479,7 +526,7 @@ class MapFragment : Fragment() {
             clearMeasureAlert()
         }
         binding.saveButton.setOnClickListener {
-            saveMeasure(it)
+            saveDamageData(it)
         }
         binding.addPointButton.setOnClickListener {
             addPoint()
@@ -498,6 +545,17 @@ class MapFragment : Fragment() {
                 handleDeletingRecord()
             }
         }
+        binding.detailRecordButton.setOnClickListener {
+            navigateToDetailFragment()
+        }
+        binding.editPolygonButton.setOnClickListener {
+            setUpForEditingPolygon()
+        }
+    }
+
+
+    private fun navigateToDetailFragment() {
+        findNavController().navigate(R.id.action_map_fragment_TO_data_detail_fragment)
     }
 
     /**
@@ -597,35 +655,107 @@ class MapFragment : Fragment() {
     /**
      * Asynchrónne spustí načítavanie vrstvy z WMS endpointu a nasledne vrstvu zobrazí v mape.
      */
-    private fun loadLayer(urlString: String) {
+    private fun loadBaseLayer(layerName: String, item: MenuItem?) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val wmsTileSource = getWMSTileSource(layerName)
+            if (wmsTileSource != null) {
+                if (item != null) {
+                    item.isChecked = true
+                }
+                mMap.setTileSource(wmsTileSource)
+            }
+        }
+    }
 
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun loadMapLayer(layerName: String, item: MenuItem?) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val wmsTileSource = getWMSTileSource(layerName)
+            if (wmsTileSource != null) {
+                // removeTilesOverlays(withUserData)
+                val tileProvider = createMapTileProvider(wmsTileSource)
+
+                val tilesOverlay = TilesOverlayRepaired(tileProvider, context)
+                tilesOverlay.loadingBackgroundColor =
+                    ContextCompat.getColor(requireContext(), R.color.semi_transparent_white)
+                //tilesOverlay.loadingLineColor = Color.TRANSPARENT
+                tilesOverlay.isHorizontalWrapEnabled = true
+                tilesOverlay.isVerticalWrapEnabled = true
+                tilesOverlay.layerName = layerName
+                // updateTileSizeForDensity(tileProvider.tileSource)
+                mMap.overlays?.add(0, tilesOverlay)
+                redrawPolygon()
+                //mMap.setTileSource(source)
+                mMap.invalidate()
+                if (item != null) {
+                    item.isChecked = true
+                }
+            }
+
+        }
+    }
+
+    private fun createMapTileProvider(wmsTileSource: WMSTileSourceRepaired) =
+        MapTileProviderBasic(context, wmsTileSource)
+
+
+    private fun loadWMSPolygons() {
+        clearMapCache()
+        deleteLayerFromMap(getString(R.string.damage_polygon_layer_name))
+        loadMapLayer(getString(R.string.damage_polygon_layer_name), null)
+    }
+
+    private fun deleteLayerFromMap(layerName: String) {
+        mMap.overlays.forEach {
+            if (it is TilesOverlayRepaired && it.layerName == layerName)
+                mMap.overlays.remove(it)
+        }
+    }
+
+    private fun clearMapCache() {
+        val sqlTileWriter = SqlTileWriter()
+        sqlTileWriter.purgeCache(getString(R.string.damage_polygon_layer_name))
+    }
+
+
+    private fun removeTilesOverlays(withUserData: Boolean) {
+        mMap.overlays.forEach {
+            if (it is TilesOverlayRepaired && it.withUserData == withUserData)
+                mMap.overlays.remove(it)
+        }
+    }
+
+    private suspend fun getWMSTileSource(layerName: String): WMSTileSourceRepaired? {
+        val deferredSource = CompletableDeferred<WMSTileSourceRepaired?>()
+        val getCapabilitiesUrl = getString(R.string.georserver_get_capabilities_url)
+        getCapabilitiesUrl.replace("amp;", "")
+
+        job = CoroutineScope(Dispatchers.IO).launch {
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.VISIBLE
             }
-
-            val wmsEndpoint: WMSEndpoint? = loadWmsEndpoint(urlString)
+            val wmsEndpoint: WMSEndpoint? = loadWmsEndpoint(getCapabilitiesUrl)
 
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.GONE
                 if (wmsEndpoint != null) {
-                    val layer = wmsEndpoint.layers[2]
+                    val layer = wmsEndpoint.layers.filter { it.name == layerName }[0]
                     val source =
                         WMSTileSourceRepaired.createFrom(wmsEndpoint, layer)
+                    // authorization dat iba raz:
                     val credential = Credentials.basic("dano", "test")
                     Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
                         credential
-                    if (layer.bbox != null) {
-                        //center map on this location
-                        mMap.zoomToBoundingBox(layer.bbox, true)
-                    }
-                    mMap.setTileSource(source)
+                    deferredSource.complete(source)
+
                 } else {
+                    deferredSource.complete(null)
                     unloadLayerAD()
                 }
             }
         }
+        return deferredSource.await()
     }
+
 
     /**
      * Načíta do mapy defaultnú vrstvu od Mapniku.
@@ -636,7 +766,7 @@ class MapFragment : Fragment() {
 
     /**
      * Metóda načítava mapový komponent do aplikácie, nastaví pre neho všetko potrebné,
-     * ňako napríklad mapový podklad, maximálny a minimálny zóómm level...
+     * ňako napríklad mapový podklad, maximálny a minimálny zoomm level...
      */
     private fun setUpMap() {
         mMap = binding.mapView
@@ -644,9 +774,10 @@ class MapFragment : Fragment() {
         val credential = Credentials.basic(UserData.username, String(UserData.password))
         Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
             credential
-        when (mapTypeStr) {
+        when (mapLayerStr) {
             getString(R.string.map_default) -> loadDefaultLayer()
-            getString(R.string.map_ortofoto) -> loadLayer(getString(R.string.ortofoto_url))
+            getString(R.string.map_ortofoto) -> loadBaseLayer(getString(R.string.ortofoto_layer_name),
+                null)
         }
 
         mMap.setMultiTouchControls(true)
@@ -654,8 +785,8 @@ class MapFragment : Fragment() {
         mMap.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
         mMapController = mMap.controller
-        mMap.maxZoomLevel = 30.0
-        mMap.minZoomLevel = 4.0
+        mMap.maxZoomLevel = 30.0  // 30.0
+        mMap.minZoomLevel = 4.0  // 4.0
 
         val startZoomLevel = 10.0
         // súradnice Bratislavy:
@@ -673,13 +804,53 @@ class MapFragment : Fragment() {
         mRotationGestureOverlay.isEnabled = true
 
         mMap.overlays.add(mRotationGestureOverlay)
+        loadWMSPolygons()
         // https://github.com/osmdroid/osmdroid/issues/295
         setUpMapReceiver()
-        redrawPolygon()  // ak boli nejaké polygóny
+        // redrawPolygon()  // ak boli nejaké polygóny
         if (mainMarker != null) {
             mMap.overlays.add(mainMarker)
         }
-        loadWMSPolygons()
+    }
+
+    private fun handleOfShowingSomePolygon() {
+        if (!checkIfPreviousFragmentIsDataDetailFragment()) {
+            centerMap()
+            return
+        }
+        observeDamageDataItem()
+    }
+
+    private fun zoomToBoundingBox(damageData: DamageData) {
+        if (damageData.coordinates.isEmpty()) {
+            return
+        }
+        val boundingBox = BoundingBox.fromGeoPoints(damageData.coordinates)
+        mMap.zoomToBoundingBox(boundingBox, true, 100)
+    }
+
+    private fun observeDamageDataItem() {
+        sharedViewModel.selectedDamageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
+            damageDataItem?.let {
+//                if (it.showThisItemOnMap) {
+//                    zoomToBoundingBox(it)
+//                    viewModel.clearItem()
+//                    viewModel.damageDataItem.removeObservers(this)
+//                }
+                zoomToBoundingBox(it)
+            }
+        }
+    }
+
+    private fun checkIfPreviousFragmentIsDataDetailFragment(): Boolean {
+        val previousFragment = findNavController()
+            .previousBackStackEntry?.destination?.id ?: return false
+        if (previousFragment != R.id.data_detail_fragment) {
+
+            return false
+
+        }
+        return true
     }
 
     /**
@@ -715,12 +886,18 @@ class MapFragment : Fragment() {
         val coordinateString = createCoordinateString(p)
         return "<Filter xmlns:ogc=\"http://www.opengis.net/ogc\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\">" +
+                "<And>" +
                 "<Intersects>" +
                 "<PropertyName>geom</PropertyName>" +
                 "<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
                 "<gml:coordinates>$coordinateString</gml:coordinates>" +
                 "</gml:Point>" +
-                "</Intersects></Filter>"
+                "</Intersects>\n" +
+                "<PropertyIsEqualTo>\n" +
+                "<PropertyName>pouzivatel</PropertyName>\n" +
+                "<Literal>dano</Literal>\n" +   // zmenit pouzivatela
+                "</PropertyIsEqualTo>" +
+                "</And></Filter>"
     }
 
     private fun getDetailOfPolygonOnMap(p: GeoPoint) {
@@ -732,15 +909,21 @@ class MapFragment : Fragment() {
         val okHttpClient = Utils.createOkHttpClient()
         val service = RetroService.getServiceWithGsonFactory(okHttpClient)
         CoroutineScope(Dispatchers.IO).launch {
-            val response = service.getUsingUrlFilter(filterString)
-            withContext(Dispatchers.Main) {
-                if (response.isSuccessful) {
-                    val usersData: UsersData? = response.body()
-                    handleIfShowDetailOfPolygon(usersData)
+            try {
+                val response = service.getUsingUrlFilter(filterString)
+                withContext(Dispatchers.Main) {
 
-                } else {
-                    Log.d(MAP_TAG, "Response error: ${response.message()}")
+
+                    if (response.isSuccessful) {
+                        val usersData: UsersData? = response.body()
+                        handleIfShowDetailOfPolygon(usersData)
+
+                    } else {
+                        Log.d(MAP_TAG, "Response error: ${response.message()}")
+                    }
                 }
+            } catch (e: Throwable) {
+                Log.e("ERRORUS", e.toString())
             }
         }
     }
@@ -757,14 +940,30 @@ class MapFragment : Fragment() {
 
     private fun showDetailOfPolygonOnMap(usersData: UsersData) {
         val data: DamageData = usersData.features[0].properties
-        val listOfGeopoints = createListOfGeopoints(usersData)
-
+        sharedViewModel.selectDamageDataFromMap(data)
+        listOfGeopointsOfSelectedRecord = createListOfGeopoints(usersData)
+        data.coordinates = listOfGeopointsOfSelectedRecord
         Log.d(MAP_TAG, "Response was successful, data was received.")
-        listOfGeopoints.removeLast()
+        listOfGeopointsOfSelectedRecord.removeLast()
         showDetailInfo(data)
         setSelectedRecord(data)
-        showDetailPolygon(listOfGeopoints)
+        showDetailPolygon(listOfGeopointsOfSelectedRecord)
         setUpForDetail()
+    }
+
+    private fun setUpForEditingPolygon() {
+        clearMapFromShownDetail()
+        setUpForManualMeasure()
+        addMarkersOfEditedPolygon()
+        drawPolygon()
+    }
+
+    private fun addMarkersOfEditedPolygon() {
+        listOfGeopointsOfSelectedRecord.forEach {
+            val marker = createMarker(it)
+            polyMarkers.add(marker)
+            mMap.overlays.add(marker)
+        }
     }
 
     private fun handleIfShowDetailOfPolygon(usersData: UsersData?) {
@@ -778,6 +977,7 @@ class MapFragment : Fragment() {
             && detailShown
         ) {
             clearMapFromShownDetail()
+            setSelectedRecordAsNull()
         }
     }
 
@@ -785,7 +985,7 @@ class MapFragment : Fragment() {
         detailShown = false
         mMap.overlays.removeLast()
         mMap.invalidate()
-        setDefault()
+        hideLayoutOfDetail()
     }
 
     private fun addMarkerToMapOnClick(p: GeoPoint) {
@@ -797,7 +997,7 @@ class MapFragment : Fragment() {
         drawPolygon()
     }
 
-    private fun setInvisibilityOfDetailInformationLayout() {
+    private fun hideVisibilityOfDetailInformationLayout() {
         binding.layoutContainer.detailInformationLayout.root.visibility = View.GONE
     }
 
@@ -805,7 +1005,7 @@ class MapFragment : Fragment() {
         binding.layoutContainer.detailInformationLayout.root.visibility = View.VISIBLE
     }
 
-    private fun setInvisibilityOfAreaCalculationsLayout() {
+    private fun hideVisibilityOfAreaCalculationsLayout() {
         binding.layoutContainer.areaCalculationsLayout.root.visibility = View.GONE
     }
 
@@ -828,12 +1028,14 @@ class MapFragment : Fragment() {
             if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.perimeter.text = txtPerimeter
         binding.layoutContainer.detailInformationLayout.area.text = txtArea
-
-
     }
 
     private fun setSelectedRecord(data: DamageData) {
         selectedRecord = data
+    }
+
+    private fun setSelectedRecordAsNull() {
+        selectedRecord = null
     }
 
     private fun showDetailPolygon(list: MutableList<GeoPoint>) {
@@ -997,7 +1199,17 @@ class MapFragment : Fragment() {
         binding.startDrawingButton.visibility = View.GONE
         binding.editPolygonButton.visibility = View.VISIBLE
         binding.deleteRecordButton.visibility = View.VISIBLE
+        binding.detailRecordButton.visibility = View.VISIBLE
         setVisibilityOfDetailInformationLayout()
+    }
+
+    private fun hideLayoutOfDetail() {
+        detailShown = false
+        binding.startDrawingButton.visibility = View.VISIBLE
+        binding.editPolygonButton.visibility = View.GONE
+        binding.deleteRecordButton.visibility = View.GONE
+        binding.detailRecordButton.visibility = View.GONE
+        hideVisibilityOfDetailInformationLayout()
     }
 
     /**
@@ -1066,18 +1278,18 @@ class MapFragment : Fragment() {
     private fun setDefault() {
         manualMeasure = false
         gpsMeasure = false
-        detailShown = false
+//        detailShown = false
         binding.startDrawingButton.visibility = View.VISIBLE
-        setInvisibilityOfAreaCalculationsLayout()
-        setInvisibilityOfDetailInformationLayout()
+        hideVisibilityOfAreaCalculationsLayout()
         binding.backButton.visibility = View.GONE
         binding.deleteButton.visibility = View.GONE
         binding.saveButton.visibility = View.GONE
         binding.addPointButton.visibility = View.GONE
         binding.deletePointButton.visibility = View.GONE
         binding.doneGPSMeasureButton.visibility = View.GONE
-        binding.editPolygonButton.visibility = View.GONE
-        binding.deleteRecordButton.visibility = View.GONE
+//        binding.editPolygonButton.visibility = View.GONE
+//        binding.deleteRecordButton.visibility = View.GONE
+//        binding.detailRecordButton.visibility = View.GONE
         clearMeasure()
         drawerLockInterface.unlockDrawer()
     }
@@ -1106,7 +1318,10 @@ class MapFragment : Fragment() {
     private fun clearMeasureAlert() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.clear_measure_ad_title)
-            .setPositiveButton(R.string.button_positive_text) { _, _ -> setDefault() }
+            .setPositiveButton(R.string.button_positive_text) { _, _ ->
+                setDefault()
+                setSelectedRecordAsNull()
+            }
             .setNegativeButton(R.string.button_negative_text) { dialog, _ -> dialog.cancel() }
             .create()
             .show()
@@ -1140,21 +1355,76 @@ class MapFragment : Fragment() {
     /**
      * Uloženie poškodenia. Na uloženie treba mať aspoň 3 body na mape určené.
      */
-    private fun saveMeasure(v: View) {
+    private fun saveDamageData(v: View) {
+        if (!checkIfMoreThan3PointsAdded()) {
+            return
+        }
+        sendDamageDataToAddFragment(v)
+    }
+
+    private fun checkIfMoreThan3PointsAdded(): Boolean {
         if (polyMarkers.size < 3) {
             lessThan3PointsAD()
-        } else {
-            val damageData = DamageData()
-            damageData.obvod = actualPerimeter
-            damageData.obsah = actualArea
-            damageData.coordinates = newPolygon.actualPoints + newPolygon.actualPoints[0]
-            viewModel.saveItem(damageData)
-            val bundle = Bundle()
-            bundle.putDouble(AddDamageFragment.ARG_AREA_ID, actualArea)
-            bundle.putDouble(AddDamageFragment.ARG_PERIMETER_ID, actualPerimeter)
-            Navigation.findNavController(v)
-                .navigate(R.id.action_mapFragment_to_addDrawingFragment, bundle)
+            return false
         }
+        return true
+    }
+
+    private fun createListOfPointsFromMapProperToSaveInGeoserver(): List<GeoPoint> {
+        return newPolygon.actualPoints + newPolygon.actualPoints[0]
+    }
+
+    private fun sendDamageDataToAddFragment(v: View) {
+        if (selectedRecord != null) {
+            sendDamageDataToUpdateInGeoserver()
+        } else {
+            sendNewDamageDataToSaveInGeoserver()
+        }
+        navigateToAddDamageFragment(v)
+    }
+
+    private fun navigateToAddDamageFragment(v: View) {
+        Navigation.findNavController(v)
+            .navigate(R.id.action_map_fragment_TO_add_damage_fragment)
+    }
+
+    private fun sendDamageDataToUpdateInGeoserver() {
+        val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
+        selectedRecord?.isInGeoserver = true
+        selectedRecord?.isUpdatingDirectlyFromMap = true
+        if (!checkIfPolygonShapeWasChanged(listOfGeoPoints)) {
+            changeInfoAboutPolygonOfSelectedRecord()
+        }
+        selectedRecord?.let { setDamageDataFromMapInViewModel(it) }
+        setSelectedRecordAsNull()
+    }
+
+    private fun changeInfoAboutPolygonOfSelectedRecord() {
+        val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
+        selectedRecord?.coordinates = listOfGeoPoints
+        selectedRecord?.changedShapeOfPolygon = true
+        selectedRecord?.obvod = actualPerimeter
+        selectedRecord?.obsah = actualArea
+    }
+
+    private fun sendNewDamageDataToSaveInGeoserver() {
+        val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
+        val damageData = DamageData()
+        damageData.obvod = actualPerimeter
+        damageData.obsah = actualArea
+        damageData.coordinates = listOfGeoPoints
+        setDamageDataFromMapInViewModel(damageData)
+    }
+
+    private fun setDamageDataFromMapInViewModel(damageData: DamageData) {
+        sharedViewModel.selectDamageDataFromMap(damageData)
+    }
+
+    private fun checkIfPolygonShapeWasChanged(listOfGeoPoints: List<GeoPoint>): Boolean {
+        if (selectedRecord?.coordinates == listOfGeoPoints) {
+            return false
+        }
+        return true
     }
 
     /**
@@ -1238,61 +1508,16 @@ class MapFragment : Fragment() {
         return str
     }
 
-    private fun updateTileSizeForDensity(aTileSource: ITileSource) {
-        val mTilesScaleFactor = 1f
-        val tile_size = aTileSource.tileSizePixels
-        val density = resources.displayMetrics.density * 256 / tile_size
-        val size =
-            (tile_size * density * mTilesScaleFactor).toInt()
-        if (Configuration.getInstance().isDebugMapView) Log.d(IMapView.LOGTAG,
-            "Scaling tiles to $size")
-        TileSystem.setTileSize(size)
-    }
-
-    private fun loadWMSPolygons() {
-        // mMap.isTilesScaledToDpi = false
-        val urlWmsEndpoint =
-            "http://212.5.204.126:7492/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
-        job = CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.VISIBLE
-            }
-
-            val wmsEndpoint: WMSEndpoint? = loadWmsEndpoint(urlWmsEndpoint)
-
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.GONE
-                if (wmsEndpoint != null) {
-                    val layer = wmsEndpoint.layers[15]
-                    val source =
-                        WMSTileSourceRepaired.createFrom(wmsEndpoint, layer)
-                    val credential = Credentials.basic("dano", "test")
-                    Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
-                        credential
-                    if (layer.bbox != null) {
-                        //center map on this location
-                        mMap.zoomToBoundingBox(layer.bbox, true)
-                    }
-                    mMap.overlays.forEach {
-                        if (it is TilesOverlay
-                        ) mMap.overlays.remove(it)
-                    }
-                    val sqlTileWriter = SqlTileWriter()
-                    sqlTileWriter.purgeCache("geoserver_skuska:porasty_pouzivatel_sql")
-                    val tileProvider = MapTileProviderBasic(context, source)
-
-                    //tileProvider.tileSource = source2
-                    val tilesOverlay = TilesOverlay(tileProvider, context)
-                    tilesOverlay.loadingBackgroundColor = Color.TRANSPARENT
-                    updateTileSizeForDensity(tileProvider.tileSource)
-                    mMap.overlays?.add(tilesOverlay)
-                    mMap.invalidate()
-                } else {
-                    unloadLayerAD()
-                }
-            }
-        }
-    }
+//    private fun updateTileSizeForDensity(aTileSource: ITileSource) {
+//        val mTilesScaleFactor = 1f
+//        val tile_size = aTileSource.tileSizePixels
+//        val density = resources.displayMetrics.density * 256 / tile_size
+//        val size =
+//            (tile_size * density * mTilesScaleFactor).toInt()
+//        if (Configuration.getInstance().isDebugMapView) Log.d(IMapView.LOGTAG,
+//            "Scaling tiles to $size")
+//        TileSystem.setTileSize(size)
+//    }
 
     /**
      * Metódou vypočítame obdvod a obsah polygónu.
@@ -1328,5 +1553,4 @@ class MapFragment : Fragment() {
         binding.layoutContainer.areaCalculationsLayout.area.text = displayedTextArea
 
     }
-
 }

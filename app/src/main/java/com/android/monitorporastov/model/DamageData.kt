@@ -16,7 +16,9 @@ data class DamageData(
     var unique_id: String = "",
     var bitmaps: MutableList<Bitmap> = mutableListOf(),
     var indexesOfPhotos: MutableList<Int> = mutableListOf(),
-    var isNew: Boolean = true,
+    var isInGeoserver: Boolean = false,
+    var changedShapeOfPolygon:Boolean = false,
     var bitmapsLoaded:Boolean = false,
-    var isItemFromMap:Boolean = true
+    var isUpdatingDirectlyFromMap:Boolean = false,
+   //  var showThisItemOnMap:Boolean = false,
 )

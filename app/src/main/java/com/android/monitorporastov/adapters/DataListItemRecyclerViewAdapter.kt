@@ -12,11 +12,16 @@ import com.android.monitorporastov.model.DamageData
  * RecyclerViewAdapter určený na prácu s placeholder prvkami,
  */
 class DataListItemRecyclerViewAdapter(
-    var values: List<DamageData>,
     private val onClickListener: View.OnClickListener,
-
     ) :
     RecyclerView.Adapter<DataListItemRecyclerViewAdapter.ViewHolder>() {
+
+    private var damageDataList =  listOf<DamageData>()
+
+    fun setDataListItem(newDamageDataList: List<DamageData>) {
+        this.damageDataList = newDamageDataList
+        notifyItemRangeChanged(0, newDamageDataList.size)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 
@@ -27,7 +32,7 @@ class DataListItemRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = values[position]
+        val item = damageDataList[position]
         holder.bind(item)
 
         with(holder.itemView) {
@@ -36,7 +41,7 @@ class DataListItemRecyclerViewAdapter(
         }
     }
 
-    override fun getItemCount() = values.size
+    override fun getItemCount() = damageDataList.size
 
     inner class ViewHolder(binding: DataListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {

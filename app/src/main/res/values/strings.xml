@@ -16,20 +16,23 @@
     <string name="menu_e_parcely_txt">E parcely</string>
     <string name="menu_gnss_txt">GNSS</string>
 
+    <string name="menu_default_map_txt">Základná mapa</string>
+    <string name="menu_BPEJ_txt">BPEJ</string>
+    <string name="menu_JPRL_txt">JPRL</string>
+    <string name="menu_LPIS_txt">LPIS</string>
     <string name="menu_ortofoto_txt">Ortofoto</string>
-    <string name="menu_svahovitost_txt">Svahovitosť</string>
+    <string name="menu_C_parcel_txt">Parcely registra C</string>
+    <string name="menu_E_parcel_txt">Parcely registra E</string>
+    <string name="menu_hunting_territories_txt">Poľovné revíry</string>
+    <string name="menu_watercourse_txt">Vodné toky</string>
+
+
     <string name="menu_nadm_zakl_txt">Nadmorské výšky - základná</string>
     <string name="menu_nadm_rozs_txt">Nadmorské výšky - rozšírená</string>
     <string name="default_test_text">aaaa</string>
+
     <string name="title_activity_login">LoginActivity</string>
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="welcome">"Welcome !"</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
+
     <string name="save_button_desc">Save button</string>
     <string name="delete_point_button_desc">Delete point button</string>
     <string name="delete_button_desc">Delete button</string>
@@ -39,7 +42,6 @@
     <string name="start_drawing_button_desc">Start drawing button</string>
     <string name="compass_button_desc">Compass button</string>
     <string name="center_button_desc">Center button</string>
-    <string name="menu_default_map">Základná mapa</string>
     <string name="map_menu_title">menu</string>
 
     <string name="logo_skeagis_desc">Logo Skeagis</string>
@@ -62,8 +64,21 @@
 
     <string name="map_default">default</string>
     <string name="map_ortofoto">ortofoto</string>
+    <string name="georserver_get_capabilities_url">http://services.skeagis.sk:7492/geoserver/ows?service=wms&amp;version=1.3.0&amp;request=GetCapabilities</string>
 
-    <string name="ortofoto_url">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>
+<!--    <string name="ortofoto_layer_name">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>-->
+
+    <string name="BPEJ_layer_name">geoserver_skeagis:BPEJ</string>
+    <string name="JPRL_layer_name">geoserver_skeagis:JPRL</string>
+    <string name="LPIS_layer_name">geoserver_skeagis:LPIS</string>
+    <string name="ortofoto_layer_name">geoserver_skeagis:Ortofoto</string>
+    <string name="C_parcel_layer_name">geoserver_skeagis:ParcelyRegistraC</string>
+    <string name="E_parcel_layer_name">geoserver_skeagis:ParcelyRegistraE</string>
+    <string name="hunting_territories_layer_name">geoserver_skeagis:PolovnickeReviry</string>
+    <string name="watercourse_layer_name">geoserver_skeagis:VodneToky</string>
+    <string name="damage_polygon_layer_name">geoserver_skeagis:porasty_pouzivatel_sql</string>
+
+    <string name="user_polygons_layer_name">geoserver_skuska:porasty_pouzivatel_sql</string>
 
 <!--    texty v alert dialógoch-->
     <string name="gps_ad_title">Zrejme máte vypnuté GPS. Chcete ho zapnúť?</string>
@@ -83,6 +98,8 @@
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
     <string name="detail_table_no_photos_txt">Žiadne fotky nie sú k dispozícii</string>
     <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
+    <string name="detail_record_button_desc">Detail record button desc</string>
+    <string name="edit_polygon_button_desc">Edit polygon button desc</string>
     <string-array name="damages">
         <item>Požiar</item>
         <item>Sucho</item>

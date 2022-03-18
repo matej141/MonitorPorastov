@@ -2,22 +2,31 @@ package com.android.monitorporastov.activities
 
 import android.content.*
 import android.location.LocationManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Message
 import android.provider.Settings
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.commit
+import androidx.fragment.app.replace
+import androidx.lifecycle.Observer
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import com.android.monitorporastov.databinding.ActivityMainBinding
-import com.google.android.material.navigation.NavigationView
-
-import android.view.MenuItem
-import androidx.core.view.GravityCompat
 import androidx.navigation.ui.*
-import androidx.navigation.NavController
+import com.android.monitorporastov.ConnectionLiveData
 import com.android.monitorporastov.DrawerLockInterface
+import com.android.monitorporastov.MapSharedViewModel
 import com.android.monitorporastov.R
+import com.android.monitorporastov.databinding.ActivityMainBinding
+import com.android.monitorporastov.fragments.DataListFragment
+import com.google.android.material.navigation.NavigationView
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
@@ -29,8 +38,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var navController: NavController
+    private val viewModel: MapSharedViewModel by viewModels()
 
     private val binding get() = _binding!!
+    private lateinit var connectionLiveData: ConnectionLiveData
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +57,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.data_list_fragment), drawerLayout)
+            R.id.map_fragment, R.id.data_list_fragment), drawerLayout)
         // this.requestedOrientation= ActivityInfo.SCREEN_ORIENTATION_LOCKED
         setUpActionBarUnLocked()
 
@@ -55,14 +66,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // týmto znemožníme viacnásobné načítavanie mapového fragmentu:
         navView.setNavigationItemSelectedListener {
             drawerLayout.closeDrawer(GravityCompat.START)
-            if (it.itemId == R.id.nav_map) {
-                navController.popBackStack(R.id.nav_map, false)
+            if (it.itemId == R.id.map_fragment) {
+                navController.popBackStack(R.id.map_fragment, false)
                 true
-            } else
-
+            } else {
                 NavigationUI.onNavDestinationSelected(it, navController)
+
+//                val fragmentManager: FragmentManager = supportFragmentManager
+//                fragmentManager.beginTransaction().replace(R.id.map_fragment, DataListFragment())
+//                    .addToBackStack(null).commit()
+//                supportFragmentManager.commit {
+//                    replace<DataListFragment>(R.id.nav_host_fragment_content_main)
+//                    setReorderingAllowed(true)
+//                    addToBackStack("name") // name can be null
+//                }
+                true
+            }
         }
+
+        setUpConnectionLiveData()
+        observeNetwork()
+        observeErrorMessage()
     }
+
+
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         return true
@@ -117,7 +144,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      */
     private fun setUpActionBarLocked() {
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.data_list_fragment))
+            R.id.map_fragment, R.id.data_list_fragment))
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
@@ -126,9 +153,58 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      */
     private fun setUpActionBarUnLocked() {
         appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.nav_map, R.id.data_list_fragment), drawerLayout)
+            R.id.map_fragment, R.id.data_list_fragment), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
+    private fun setUpConnectionLiveData() {
+        connectionLiveData = ConnectionLiveData(this)
+        setUpConnectionStatusReceiver()
+    }
 
+    private fun setUpConnectionStatusReceiver() {
+        connectionLiveData.observe(this) {
+            viewModel.isNetworkAvailable.value = it
+        }
+    }
+
+    private fun observeNetwork() {
+        viewModel.isNetworkAvailable.observe(this) { isAvailable ->
+            if (!isAvailable) {
+                AlertDialog.Builder(this)
+                    .setTitle("Nemáte prístup na internet")
+                    .setMessage("Skontrolujte, prosím, pripojenie do siete.")
+                    .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+                    .create()
+                    .show()
+                //viewModel.loaded.value = false
+            }
+            if (isAvailable && viewModel.loaded.value == false) {
+//                Toast.makeText(context, "Znova načítavame dáta!", Toast.LENGTH_LONG).show()
+//                viewModel.fetch()
+//                viewModel.loaded.value = true
+            }
+        }
+    }
+
+    private fun observeErrorMessage() {
+        viewModel.errorMessage.observe(this) { errorMessage ->
+            val errorMessageTxt = createErrorMessageText(errorMessage)
+            AlertDialog.Builder(this)
+                .setTitle("Vyskytla sa chyba")
+                .setMessage(errorMessageTxt)
+                .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+                .create()
+                .show()
+
+        }
+    }
+
+    private fun createErrorMessageText(errorMessage: String): String {
+        val completeErrorMessage = "Ak problém pretrváva, kontaktuje podporu."
+        if (errorMessage.isEmpty()) {
+            return completeErrorMessage
+        }
+        return "Vyskytla sa chyba: $errorMessage\n$completeErrorMessage"
+    }
 }
