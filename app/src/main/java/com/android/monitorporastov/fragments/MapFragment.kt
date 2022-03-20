@@ -28,12 +28,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.MenuCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.android.monitorporastov.*
 import com.android.monitorporastov.R
 import com.android.monitorporastov.databinding.FragmentMapBinding
+import com.android.monitorporastov.fragments.viewmodels.MapFragmentViewModel
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 import com.google.android.gms.location.*
@@ -60,12 +62,15 @@ import org.osmdroid.wms.WMSParser
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
     private val sharedViewModel: MapSharedViewModel by activityViewModels()
+    private val viewModel: MapFragmentViewModel by activityViewModels()
     private var job: Job? = null
     private lateinit var mMap: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
@@ -158,6 +163,8 @@ class MapFragment : Fragment() {
 //            }
 //        }
         setUpBackStackCallback()
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val currentDateAndTime: String = sdf.format(Date())
 
         requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
     }
@@ -177,8 +184,10 @@ class MapFragment : Fragment() {
      */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(
-            context))
+        Configuration.getInstance().load(context, context?.let {
+            PreferenceManager.getDefaultSharedPreferences(
+                it)
+        })
         // volanie kontroly povolené
         checkForPermissions()
 
@@ -221,6 +230,7 @@ class MapFragment : Fragment() {
 
         // vykreslenie už existujúcich polygónov
         drawExistingPolygons()
+        observeItemFromPokus()
     }
 
 
@@ -240,16 +250,32 @@ class MapFragment : Fragment() {
         MenuCompat.setGroupDividerEnabled(menu, true)
         inflater.inflate(R.menu.map_menu, menu)
         when (mapLayerStr) {
-            getString(R.string.map_ortofoto) -> menu.findItem(R.id.menu_ortofoto).isChecked = true
+            getString(R.string.ortofoto_layer_name) -> menu.findItem(R.id.menu_ortofoto).isChecked =
+                true
+            getString(R.string.BPEJ_layer_name) -> menu.findItem(R.id.menu_BPEJ).isChecked = true
+        }
+        for (layer in checkedLayers) {
+            when (layer) {
+                getString(R.string.JPRL_layer_name) -> menu.findItem(R.id.menu_JPRL).isChecked =
+                    true
+                getString(R.string.LPIS_layer_name) -> menu.findItem(R.id.menu_LPIS).isChecked =
+                    true
+                getString(R.string.C_parcel_layer_name) -> menu.findItem(R.string.C_parcel_layer_name).isChecked =
+                    true
+                getString(R.string.E_parcel_layer_name) -> menu.findItem(R.string.E_parcel_layer_name).isChecked =
+                    true
+                getString(R.string.watercourse_layer_name) -> menu.findItem(R.string.watercourse_layer_name).isChecked =
+                    true
+            }
         }
     }
+
+    private var checkedLayers = mutableListOf<String>()
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         var loadBase = false
-        if (id == 0) {
-            return super.onOptionsItemSelected(item)
-        }
+
         if (id == R.id.menu_default_map && mapLayerStr != getString(R.string.map_default)) {
             mapLayerStr = getString(R.string.map_default)
             loadDefaultLayer()
@@ -262,10 +288,11 @@ class MapFragment : Fragment() {
         } else if (id == R.id.menu_BPEJ && mapLayerStr != getString(R.string.BPEJ_layer_name)) {
             mapLayerStr = getString(R.string.BPEJ_layer_name)
             loadBase = true
-        } else if (id == R.id.menu_hunting_territories && mapLayerStr != getString(R.string.hunting_territories_layer_name)) {
-            mapLayerStr = getString(R.string.JPRL_layer_name)
-            loadBase = true
         }
+//        else if (id == R.id.menu_hunting_territories && mapLayerStr != getString(R.string.hunting_territories_layer_name)) {
+//            mapLayerStr = getString(R.string.hunting_territories_layer_name)
+//            loadBase = true
+//        }
 
         if (loadBase) {
             loadBaseLayer(mapLayerStr, item)
@@ -292,12 +319,18 @@ class MapFragment : Fragment() {
             }
         }
 
-        if (item.isChecked) {
-            item.isChecked = false
-            deleteLayerFromMap(layerName)
+        if (layerName.isEmpty()) {
             return super.onOptionsItemSelected(item)
         }
 
+        if (item.isChecked) {
+            item.isChecked = false
+            deleteLayerFromMap(layerName)
+            checkedLayers.remove(layerName)
+            return super.onOptionsItemSelected(item)
+        }
+
+        checkedLayers.add(layerName)
         loadMapLayer(layerName, item)
 
         return super.onOptionsItemSelected(item)
@@ -444,9 +477,14 @@ class MapFragment : Fragment() {
      */
     override fun onDestroy() {
         super.onDestroy()
-        context?.getSharedPreferences(PREFS_NAME, 0)?.edit()?.clear()?.apply()
-        val preferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        preferences.edit().clear().apply()
+        if (!noToDestroy) {
+            context?.getSharedPreferences(PREFS_NAME, 0)?.edit()?.clear()?.apply()
+            val preferences =
+                requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            preferences.edit().clear().apply()
+        }
+
+        noToDestroy = false
         stopLocationUpdates()
     }
 
@@ -457,8 +495,13 @@ class MapFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+//        if (!noToDestroy)  {
+//            viewModel.onCleared()
+//        }
         job?.cancel()
     }
+
+    private var noToDestroy = false
 
     /**
      * Nastavenie callbacku. Rieši prípady, keď používateľ klikne na "back button".
@@ -472,7 +515,9 @@ class MapFragment : Fragment() {
                     clearMeasureAlert()
                 }
                 checkIfPreviousFragmentIsDataDetailFragment() -> {
-                    navigateToDetailFragment()
+                    // navigateToDetailFragment()
+                    findNavController().navigateUp()
+                    noToDestroy = true
                 }
                 else -> {
                     // ak nemerá nič, opýta sa ho, či chce ukončít aplikáciu.
@@ -514,7 +559,7 @@ class MapFragment : Fragment() {
      */
     private fun setUpButtonsListeners() {
         binding.startDrawingButton.setOnClickListener {
-            showMeasureAD()
+            showNewRecordAD()
         }
         binding.buttonCenter.setOnClickListener {
             centerMap()
@@ -563,9 +608,10 @@ class MapFragment : Fragment() {
      * (keď klikne na to určené tlačidlo).
      *  Opýta sa ho, aký typ vyznačovania územia chce začať.
      */
-    private fun showMeasureAD() {
+    private fun showNewRecordAD() {
         // najskôr skontroluje, či už bola načítaná poloha a udelené povolenia.
         // Ak nie, alert dialog sa nezobrazí.
+        viewModel.iAmHere.value = true
         if (!locationCheck()) {
             return
         }
@@ -776,8 +822,13 @@ class MapFragment : Fragment() {
             credential
         when (mapLayerStr) {
             getString(R.string.map_default) -> loadDefaultLayer()
-            getString(R.string.map_ortofoto) -> loadBaseLayer(getString(R.string.ortofoto_layer_name),
+            getString(R.string.ortofoto_layer_name) -> loadBaseLayer(getString(R.string.ortofoto_layer_name),
                 null)
+            getString(R.string.BPEJ_layer_name) -> loadBaseLayer(getString(R.string.BPEJ_layer_name),
+                null)
+        }
+        for (layer in checkedLayers) {
+            loadMapLayer(layer, null)
         }
 
         mMap.setMultiTouchControls(true)
@@ -830,7 +881,7 @@ class MapFragment : Fragment() {
     }
 
     private fun observeDamageDataItem() {
-        sharedViewModel.selectedDamageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
+        sharedViewModel.selectedDamageDataItemToShowInMap.observe(viewLifecycleOwner) { damageDataItem ->
             damageDataItem?.let {
 //                if (it.showThisItemOnMap) {
 //                    zoomToBoundingBox(it)
@@ -838,7 +889,15 @@ class MapFragment : Fragment() {
 //                    viewModel.damageDataItem.removeObservers(this)
 //                }
                 zoomToBoundingBox(it)
+                sharedViewModel.clearSelectedDamageDataItemToShowInMap()
+
             }
+        }
+    }
+
+    private fun observeItemFromPokus() {
+        viewModel.iAmHere.observe(viewLifecycleOwner) { value ->
+            val pp = value
         }
     }
 

@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- <!– Required only when requesting background location access on Android 10 (API level 29) –> -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -22,14 +21,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MonitorPorastov"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".activities.LoginActivity"
-            android:exported="true"
-            android:theme="@style/Theme.MonitorPorastov.NoActionBar">
 
-        </activity>
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".activities.LauncherActivity"
             android:exported="true"
             android:theme="@style/Theme.MonitorPorastov.NoActionBar">
             <intent-filter>
@@ -37,6 +31,17 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MonitorPorastov.NoActionBar" />
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MonitorPorastov.NoActionBar">
 
         </activity>
     </application>

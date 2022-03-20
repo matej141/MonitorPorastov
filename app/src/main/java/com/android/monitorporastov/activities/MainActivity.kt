@@ -3,29 +3,27 @@ package com.android.monitorporastov.activities
 import android.content.*
 import android.location.LocationManager
 import android.os.Bundle
-import android.os.Message
 import android.provider.Settings
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.commit
-import androidx.fragment.app.replace
-import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
-import com.android.monitorporastov.ConnectionLiveData
-import com.android.monitorporastov.DrawerLockInterface
-import com.android.monitorporastov.MapSharedViewModel
+import androidx.preference.PreferenceManager
+import com.android.monitorporastov.*
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfLoggedInValue
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfRememberCredentialsValue
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInValue
 import com.android.monitorporastov.R
+import com.android.monitorporastov.Utils.createErrorMessageAD
+import com.android.monitorporastov.Utils.noNetworkAvailable
 import com.android.monitorporastov.databinding.ActivityMainBinding
-import com.android.monitorporastov.fragments.DataListFragment
 import com.google.android.material.navigation.NavigationView
 
 
@@ -42,6 +40,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val binding get() = _binding!!
     private lateinit var connectionLiveData: ConnectionLiveData
+    private val sharedPreferences by lazy {
+        createEncryptedSharedPreferences(applicationContext)
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,22 +66,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // týmto znemožníme viacnásobné načítavanie mapového fragmentu:
         navView.setNavigationItemSelectedListener {
-            drawerLayout.closeDrawer(GravityCompat.START)
-            if (it.itemId == R.id.map_fragment) {
-                navController.popBackStack(R.id.map_fragment, false)
-                true
-            } else {
-                NavigationUI.onNavDestinationSelected(it, navController)
-
-//                val fragmentManager: FragmentManager = supportFragmentManager
-//                fragmentManager.beginTransaction().replace(R.id.map_fragment, DataListFragment())
-//                    .addToBackStack(null).commit()
-//                supportFragmentManager.commit {
-//                    replace<DataListFragment>(R.id.nav_host_fragment_content_main)
-//                    setReorderingAllowed(true)
-//                    addToBackStack("name") // name can be null
-//                }
-                true
+           // drawerLayout.closeDrawer(GravityCompat.START)
+            when (it.itemId) {
+                R.id.map_fragment -> {
+                    navController.popBackStack(R.id.map_fragment, false)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.log_out -> {
+                    askIfLogOut()
+                    false
+                }
+                else -> {
+                    NavigationUI.onNavDestinationSelected(it, navController)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
             }
         }
 
@@ -88,8 +89,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         observeNetwork()
         observeErrorMessage()
     }
-
-
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         return true
@@ -171,40 +170,49 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun observeNetwork() {
         viewModel.isNetworkAvailable.observe(this) { isAvailable ->
             if (!isAvailable) {
-                AlertDialog.Builder(this)
-                    .setTitle("Nemáte prístup na internet")
-                    .setMessage("Skontrolujte, prosím, pripojenie do siete.")
-                    .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
-                    .create()
-                    .show()
-                //viewModel.loaded.value = false
-            }
-            if (isAvailable && viewModel.loaded.value == false) {
-//                Toast.makeText(context, "Znova načítavame dáta!", Toast.LENGTH_LONG).show()
-//                viewModel.fetch()
-//                viewModel.loaded.value = true
+                noNetworkAvailable(this)
             }
         }
     }
 
     private fun observeErrorMessage() {
         viewModel.errorMessage.observe(this) { errorMessage ->
-            val errorMessageTxt = createErrorMessageText(errorMessage)
-            AlertDialog.Builder(this)
-                .setTitle("Vyskytla sa chyba")
-                .setMessage(errorMessageTxt)
-                .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
-                .create()
-                .show()
+            createErrorMessageAD(this, errorMessage)
 
         }
     }
 
-    private fun createErrorMessageText(errorMessage: String): String {
-        val completeErrorMessage = "Ak problém pretrváva, kontaktuje podporu."
-        if (errorMessage.isEmpty()) {
-            return completeErrorMessage
+    private fun askIfLogOut() {
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.ask_if_log_out_title))
+            .setPositiveButton(getString(R.string.button_positive_text)) { _, _ ->
+                logOut()
+            }
+            .setNegativeButton(getString(R.string.button_negative_text)) { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
+    }
+
+    private fun logOut() {
+        sharedPreferences.setLoggedInValue(false)
+        wipeSharedPreferences()
+        startLoginActivity()
+    }
+
+    private fun wipeSharedPreferences() {
+        if (!sharedPreferences.getIfRememberCredentialsValue() && !sharedPreferences.getIfLoggedInValue()) {
+            sharedPreferences.edit().clear().apply()
         }
-        return "Vyskytla sa chyba: $errorMessage\n$completeErrorMessage"
+    }
+
+    private fun startLoginActivity() {
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    override fun onDestroy() {
+        wipeSharedPreferences()
+        super.onDestroy()
     }
 }

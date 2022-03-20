@@ -34,6 +34,7 @@ class DataDetailFragment : Fragment() {
 
     private val viewModel: MapSharedViewModel by activityViewModels()
     private var stringsOfPhotosList = listOf<String>()
+    private var photosLoaded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,13 +69,18 @@ class DataDetailFragment : Fragment() {
      * aby sa z backstacku vyhodil MapFragment
      */
     private fun setUpBackStackCallback() {
-        requireActivity().onBackPressedDispatcher.addCallback(this) {
-            navigateToDataListFragment()
-        }
+//        requireActivity().onBackPressedDispatcher.addCallback(this) {
+//            navigateToDataListFragment()
+//        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
+        if (!photosLoaded) {
+            Toast.makeText(context, "Fotografie ešte neboli načítané, počkajte prosím",
+                Toast.LENGTH_SHORT).show()
+            return false
+        }
         if (id == R.id.menu_edit_data) {
             damageDataItem?.let {
                 it.isInGeoserver = true
@@ -102,7 +108,9 @@ class DataDetailFragment : Fragment() {
             Toast.makeText(context, "Dáta ešte neboli načítané, počkajte prosím",
                 Toast.LENGTH_SHORT).show()
         } else {
+            viewModel.selectDamageDataToShowInMap(damageDataItem!!)
             navigateToMapFragment()
+
         }
     }
 
@@ -184,16 +192,18 @@ class DataDetailFragment : Fragment() {
         } else {
             binding.dataDetailPhotoNoPhotos.visibility = View.VISIBLE
         }
+        photosLoaded = true
     }
 
     private fun setNewlyLoadedPhotos() {
         if (stringsOfPhotosList.isEmpty()) {
             binding.dataDetailPhotoNoPhotos.visibility = View.VISIBLE
             binding.progressBar.visibility = View.GONE
+            photosLoaded = true
             return
         }
         binding.dataDetailPhotoNoPhotos.visibility = View.GONE
-
+        photosLoaded = true
         val bitmaps = mutableListOf<Bitmap>()
         CoroutineScope(Dispatchers.Default).launch {
             stringsOfPhotosList.forEach {

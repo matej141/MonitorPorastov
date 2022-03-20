@@ -22,9 +22,9 @@
                 <item
                     android:id="@+id/menu_BPEJ"
                     android:title="@string/menu_BPEJ_txt" />
-                <item
-                    android:id="@+id/menu_hunting_territories"
-                    android:title="@string/menu_hunting_territories_txt" />
+<!--                <item-->
+<!--                    android:id="@+id/menu_hunting_territories"-->
+<!--                    android:title="@string/menu_hunting_territories_txt" />-->
             </group>
             <group
                 android:id="@+id/menu_vrstva"
