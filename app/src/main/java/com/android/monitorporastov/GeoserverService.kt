@@ -1,5 +1,6 @@
 package com.android.monitorporastov
 
+import androidx.annotation.Keep
 import com.android.monitorporastov.model.UsersData
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -25,4 +26,6 @@ interface GeoserverService {
     @GET("wfs?service=WFS&version=1.0.0&request=GetFeature&typeNames=porasty&outputFormat=application/json")
     suspend fun getUsingUrlFilter(@Query("filter", encoded = true) filter: String): Response<UsersData>
 
+    @GET(".")  // tu bola chyba: https://stackoverflow.com/questions/40062564/retrofit-error-missing-either-get-url-or-url-parameter
+    suspend fun login(): Response<String>
 }

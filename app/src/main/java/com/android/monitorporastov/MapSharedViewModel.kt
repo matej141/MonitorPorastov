@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit
 
 class MapSharedViewModel : ViewModel() {
     //private val service = RetroService.get()
-    lateinit var job: Job
+    var job: Job = Job()
     val damageDataList = MutableLiveData<List<DamageData>>()
     private val mutableDamageDataItem = MutableLiveData<DamageData?>()
     private val mutableSelectedDamageDataItem = MutableLiveData<DamageData?>()
 
-    val selectedDamageDataItem: LiveData<DamageData?> get() = mutableDamageDataItem
+    val selectedDamageDataItem: LiveData<DamageData?> get() = mutableSelectedDamageDataItem
     private var mutableStringsOfPhotosList = MutableLiveData<List<String>?>()
     private val mutableIndexesOfPhotosList = MutableLiveData<MutableList<Int>>()
     val stringsOfPhotosList: LiveData<List<String>?> get() = mutableStringsOfPhotosList
@@ -34,6 +34,11 @@ class MapSharedViewModel : ViewModel() {
         get() =
             mutableSelectedDamageDataItemFromMap
 
+    private val _selectedDamageDataItemToShowInMap = MutableLiveData<DamageData?>()
+    val selectedDamageDataItemToShowInMap: LiveData<DamageData?>
+        get() =
+            _selectedDamageDataItemToShowInMap
+
     val isNetworkAvailable = MutableLiveData<Boolean>()
     val errorMessage = MutableLiveData<String>()
     val loaded = MutableLiveData<Boolean>()
@@ -43,7 +48,11 @@ class MapSharedViewModel : ViewModel() {
     }
 
     fun selectDamageData(item: DamageData) {
-        mutableDamageDataItem.value = item
+        mutableSelectedDamageDataItem.value = item
+    }
+
+    fun selectDamageDataToShowInMap(damageData: DamageData) {
+        _selectedDamageDataItemToShowInMap.value = damageData
     }
 
     fun clearStringsOfPhotosList() {
@@ -52,7 +61,14 @@ class MapSharedViewModel : ViewModel() {
 
     fun clearSelectedDamageDataItemFromMap() {
         mutableSelectedDamageDataItemFromMap.value = null
+    }
 
+    fun clearSelectedDamageDataItemToShowInMap() {
+        _selectedDamageDataItemToShowInMap.value = null
+    }
+
+    fun clearSelectedDamageDataItem() {
+        mutableSelectedDamageDataItem.value = null
     }
 
     fun updateSelectedItems(damageData: DamageData) {
@@ -68,10 +84,6 @@ class MapSharedViewModel : ViewModel() {
             return true
         }
         return false
-    }
-
-    fun clearItem() {
-        mutableDamageDataItem.value = null
     }
 
     private fun createFilterString(): String {
@@ -99,9 +111,10 @@ class MapSharedViewModel : ViewModel() {
         val service = RetroService.getServiceWithGsonFactory(okHttpClient)
         val filterString = createFilterString()
         job = CoroutineScope(Dispatchers.IO).launch {
-            val response = service.getUserData("meno:dano")
-            // val response = service.getUsingUrlFilter(filterString)
             try {
+                val response = service.getUserData("meno:dano")
+                // val response = service.getUsingUrlFilter(filterString)
+
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         val res: UsersData? = response.body()
@@ -164,8 +177,7 @@ class MapSharedViewModel : ViewModel() {
                         errorMessage.postValue(response.message())
                     }
                 }
-            }
-            catch (e: Throwable) {
+            } catch (e: Throwable) {
                 if (isNetworkAvailable.value == true) {
                     errorMessage.postValue(e.toString())
                 }
@@ -227,8 +239,7 @@ class MapSharedViewModel : ViewModel() {
                         deferredBoolean.complete(false)
                     }
                 }
-            }
-            catch (e: Throwable) {
+            } catch (e: Throwable) {
                 if (isNetworkAvailable.value == true) {
                     errorMessage.postValue(e.toString())
                 }
@@ -237,7 +248,7 @@ class MapSharedViewModel : ViewModel() {
         return deferredBoolean.await()
     }
 
-    override fun onCleared() {
+    public override fun onCleared() {
         super.onCleared()
         job.cancel()
     }

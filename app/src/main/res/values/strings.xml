@@ -25,7 +25,8 @@
     <string name="menu_E_parcel_txt">Parcely registra E</string>
     <string name="menu_hunting_territories_txt">Poľovné revíry</string>
     <string name="menu_watercourse_txt">Vodné toky</string>
-
+    <string name="stay_logged">zostať prihlásený</string>
+    <string name="menu_log_out_txt">Odhlásiť sa</string>
 
     <string name="menu_nadm_zakl_txt">Nadmorské výšky - základná</string>
     <string name="menu_nadm_rozs_txt">Nadmorské výšky - rozšírená</string>
@@ -47,7 +48,7 @@
     <string name="logo_skeagis_desc">Logo Skeagis</string>
     <string name="user_name_txt">Prihlasovacie meno</string>
     <string name="password_txt">Heslo</string>
-    <string name="remember_crededials_txt">zapamätať prihlasovacie údaje</string>
+    <string name="remember_credentials_txt">zapamätať prihlasovacie údaje</string>
     <string name="login_button_txt">Prihlásiť</string>
     <string name="perimeter_txt">Obvod:</string>
     <string name="perimeter_default_val">0.000 m</string>
@@ -61,12 +62,14 @@
     <string name="detail_table_info_txt">Poznámky</string>
     <string name="detail_table_photos_txt">Fotografie:</string>
     <string name="delete_photo_ib_desc">delete image button</string>
+    <string name="detail_record_button_desc">Detail record button desc</string>
+    <string name="edit_polygon_button_desc">Edit polygon button desc</string>
 
     <string name="map_default">default</string>
     <string name="map_ortofoto">ortofoto</string>
     <string name="georserver_get_capabilities_url">http://services.skeagis.sk:7492/geoserver/ows?service=wms&amp;version=1.3.0&amp;request=GetCapabilities</string>
 
-<!--    <string name="ortofoto_layer_name">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>-->
+    <!--    <string name="ortofoto_layer_name">https://zbgisws.skgeodesy.sk/zbgis_ortofoto_wms/service.svc/get?request=GetCapabilities&amp;service=WMS</string>-->
 
     <string name="BPEJ_layer_name">geoserver_skeagis:BPEJ</string>
     <string name="JPRL_layer_name">geoserver_skeagis:JPRL</string>
@@ -74,13 +77,13 @@
     <string name="ortofoto_layer_name">geoserver_skeagis:Ortofoto</string>
     <string name="C_parcel_layer_name">geoserver_skeagis:ParcelyRegistraC</string>
     <string name="E_parcel_layer_name">geoserver_skeagis:ParcelyRegistraE</string>
-    <string name="hunting_territories_layer_name">geoserver_skeagis:PolovnickeReviry</string>
+    <string name="hunting_territories_layer_name">geoserver_skeagis:PolovneReviry</string>
     <string name="watercourse_layer_name">geoserver_skeagis:VodneToky</string>
     <string name="damage_polygon_layer_name">geoserver_skeagis:porasty_pouzivatel_sql</string>
 
     <string name="user_polygons_layer_name">geoserver_skuska:porasty_pouzivatel_sql</string>
 
-<!--    texty v alert dialógoch-->
+    <!--    texty v alert dialógoch-->
     <string name="gps_ad_title">Zrejme máte vypnuté GPS. Chcete ho zapnúť?</string>
     <string name="button_positive_text">Áno</string>
     <string name="button_negative_text">Nie</string>
@@ -98,8 +101,8 @@
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
     <string name="detail_table_no_photos_txt">Žiadne fotky nie sú k dispozícii</string>
     <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
-    <string name="detail_record_button_desc">Detail record button desc</string>
-    <string name="edit_polygon_button_desc">Edit polygon button desc</string>
+    <string name="ask_if_log_out_title">Naozaj sa chcete odhlásiť?</string>
+
     <string-array name="damages">
         <item>Požiar</item>
         <item>Sucho</item>
@@ -109,4 +112,11 @@
         <item>Poškodenie srnčou zverou</item>
         <item>Napadnutie škodcom</item>
     </string-array>
+
+    <!--    Other-->
+    <string name="no_username_added">Nezadali ste prihlasovacie meno</string>
+    <string name="no_password_added">Nezadali ste heslo</string>
+
+    <!--    Toast-->
+    <string name="must_be_password_before_login">Na prihlásenie sa do aplikácie musíte mať prístup na internet</string>
 </resources>

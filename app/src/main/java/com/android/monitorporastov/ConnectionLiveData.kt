@@ -7,7 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.lifecycle.LiveData
 
-
+// https://deepmodi.com/2021/10/13/check-internet-connectivity-and-availability-android-ko/
 class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -29,7 +29,7 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
         }
     }
 
-    private fun checkInternet() {
+    fun checkInternet() {
         // we can user activeNetwork because our min sdk version is 23 if our min sdk version is less than 23
         // then we have to user connectivityManager.activeNetworkInfo (Note: Deperated)
 

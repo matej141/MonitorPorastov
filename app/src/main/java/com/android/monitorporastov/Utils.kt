@@ -2,6 +2,7 @@ package com.android.monitorporastov
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -9,10 +10,16 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import com.android.monitorporastov.activities.LauncherActivity
+import com.android.monitorporastov.activities.LoginActivity
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.util.concurrent.TimeUnit
+import com.android.monitorporastov.R
+
 
 
 // https://stackoverflow.com/questions/39489887/call-method-from-kotlin-class
@@ -42,11 +49,11 @@ object Utils {
     fun createDeleteRecordTransactionString(): String {
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xsi:schemaLocation=\"http://opengeo.org/geoserver_skeagis " +
+                "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis " +
                 "http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=" +
                 "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skeagis:porasty\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
-                "xmlns:geoserver_skeagis=\"http://opengeo.org/geoserver_skeagis\">\n" +
+                "xmlns:geoserver_skeagis=\"http://geoserver.org/geoserver_skeagis\">\n" +
                 "    <Delete xmlns=\"http://www.opengis.net/wfs\" " +
                 "typeName=\"geoserver_skeagis:porasty\">\n" +
                 "        <Filter xmlns=\"http://www.opengis.net/ogc\">\n" +
@@ -152,6 +159,33 @@ object Utils {
 
     fun navigateToPreviousFragment(navController: NavController) {
         //navController.popBackStack()
+    }
+
+    private fun createErrorMessageText(errorMessage: String): String {
+        val completeErrorMessage = "Ak problém pretrváva, kontaktuje podporu."
+        if (errorMessage.isEmpty()) {
+            return completeErrorMessage
+        }
+        return "Vyskytla sa chyba: $errorMessage\n$completeErrorMessage"
+    }
+
+    fun createErrorMessageAD(context: Context, errorMessage: String) {
+        val errorMessageTxt = createErrorMessageText(errorMessage)
+        AlertDialog.Builder(context)
+            .setTitle("Vyskytla sa chyba")
+            .setMessage(errorMessageTxt)
+            .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
+    }
+
+    fun noNetworkAvailable(context: Context) {
+        AlertDialog.Builder(context)
+            .setTitle("Nemáte prístup na internet")
+            .setMessage("Pre správne fungovanie aplikácie skontrolujte, prosím, pripojenie do siete.")
+            .setNegativeButton(R.string.ok_text) { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
     }
 
 }

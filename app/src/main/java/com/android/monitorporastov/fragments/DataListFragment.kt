@@ -53,9 +53,9 @@ class DataListFragment : Fragment() {
     }
 
     private fun setUpBackStackCallback() {
-        requireActivity().onBackPressedDispatcher.addCallback(this) {
-            navigateToMapFragment()
-        }
+//        requireActivity().onBackPressedDispatcher.addCallback(this) {
+//            navigateToMapFragment()
+//        }
     }
 
     private fun navigateToMapFragment() {
@@ -92,6 +92,7 @@ class DataListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+       // viewModel.clearSelectedDamageDataItem()
         _binding = null
     }
 

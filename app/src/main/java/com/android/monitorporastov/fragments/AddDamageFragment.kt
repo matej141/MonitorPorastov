@@ -23,11 +23,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
 import com.android.monitorporastov.Utils.hideKeyboard
-import com.android.monitorporastov.adapters.PhotoItem
 import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
+import com.android.monitorporastov.adapters.PhotoItem
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.placeholder.PlaceholderItem
 import id.zelory.compressor.Compressor
 import id.zelory.compressor.constraint.format
 import id.zelory.compressor.constraint.quality
@@ -35,6 +34,7 @@ import id.zelory.compressor.constraint.size
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.io.*
+import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -44,7 +44,6 @@ import java.util.*
 class AddDamageFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private var dataItem: PlaceholderItem? = null
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
     private val viewModel: MapSharedViewModel by activityViewModels()
 
@@ -189,6 +188,7 @@ class AddDamageFragment : Fragment() {
 
     private fun createInsertDataTransactionString(): String {
         val stringFromPoints = createStringFromPoints()
+
         return "<Transaction xmlns=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                 "xsi:schemaLocation=\"http://geoserver.org/geoserver_skeagis http://services.skeagis.sk:7492/geoserver/wfs?SERVICE=WFS&amp;REQUEST=DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME=geoserver_skeagis:porasty\" " +
                 "xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\" service=\"WFS\" " +
@@ -507,6 +507,7 @@ class AddDamageFragment : Fragment() {
     }
 
     private suspend fun sendDetailInfoToGeoserver(): Boolean {
+        val str = createInsertDataTransactionString()
         val requestBody = createRequestBody(createInsertDataTransactionString())
         return postToGeoserver(requestBody)
     }
@@ -767,6 +768,7 @@ class AddDamageFragment : Fragment() {
                     editData = true
                     setUpExistingContent()
                     if (!it.bitmapsLoaded) {
+                        binding.progressBarPhotos.visibility = View.VISIBLE
                         viewModel.fetchPhotos(it)
                         observePhotosFromViewModel()
                     }
