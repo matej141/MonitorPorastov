@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.databinding.PhotoListItemBinding
 
 /**
@@ -65,5 +66,3 @@ class AddDamageFragmentPhotosRVAdapter(
     }
 
 }
-
-data class PhotoItem(val image: Any?)

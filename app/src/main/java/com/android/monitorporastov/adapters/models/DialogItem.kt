@@ -1,4 +1,4 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.adapters.models
 
 /**
  * Trieda, ktorú využívame na vytvorenie adaptéru do

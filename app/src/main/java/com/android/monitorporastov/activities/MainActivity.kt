@@ -1,6 +1,7 @@
 package com.android.monitorporastov.activities
 
-import android.content.*
+import android.content.Context
+import android.content.Intent
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
@@ -14,12 +15,13 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
-import androidx.preference.PreferenceManager
-import com.android.monitorporastov.*
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfLoggedInValue
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfRememberCredentialsValue
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInValue
+import com.android.monitorporastov.ConnectionLiveData
+import com.android.monitorporastov.DrawerLockInterface
+import com.android.monitorporastov.MainSharedViewModel
 import com.android.monitorporastov.R
 import com.android.monitorporastov.Utils.createErrorMessageAD
 import com.android.monitorporastov.Utils.noNetworkAvailable
@@ -36,7 +38,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var navController: NavController
-    private val viewModel: MapSharedViewModel by viewModels()
+    private val viewModel: MainSharedViewModel by viewModels()
 
     private val binding get() = _binding!!
     private lateinit var connectionLiveData: ConnectionLiveData
@@ -66,7 +68,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // týmto znemožníme viacnásobné načítavanie mapového fragmentu:
         navView.setNavigationItemSelectedListener {
-           // drawerLayout.closeDrawer(GravityCompat.START)
+            // drawerLayout.closeDrawer(GravityCompat.START)
             when (it.itemId) {
                 R.id.map_fragment -> {
                     navController.popBackStack(R.id.map_fragment, false)

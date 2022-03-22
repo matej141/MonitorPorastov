@@ -6,14 +6,15 @@ import android.os.Bundle
 import android.util.Base64
 import android.view.*
 import android.widget.Toast
-import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.*
+import com.android.monitorporastov.MainSharedViewModel
+import com.android.monitorporastov.R
+import com.android.monitorporastov.Utils
 import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.DataDetailPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentDataDetailBinding
@@ -32,7 +33,7 @@ class DataDetailFragment : Fragment() {
 
     private val binding get() = _binding!!
 
-    private val viewModel: MapSharedViewModel by activityViewModels()
+    private val viewModel: MainSharedViewModel by activityViewModels()
     private var stringsOfPhotosList = listOf<String>()
     private var photosLoaded = false
 

@@ -24,7 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
 import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
-import com.android.monitorporastov.adapters.PhotoItem
+import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.model.DamageData
 import id.zelory.compressor.Compressor
@@ -45,7 +45,7 @@ class AddDamageFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
-    private val viewModel: MapSharedViewModel by activityViewModels()
+    private val viewModel: MainSharedViewModel by activityViewModels()
 
     private var _binding: FragmentAddDamageBinding? = null
 
