@@ -15,7 +15,7 @@ import okhttp3.RequestBody
 import org.osmdroid.util.GeoPoint
 import java.util.concurrent.TimeUnit
 
-class MapSharedViewModel : ViewModel() {
+class MainSharedViewModel : ViewModel() {
     //private val service = RetroService.get()
     var job: Job = Job()
     val damageDataList = MutableLiveData<List<DamageData>>()

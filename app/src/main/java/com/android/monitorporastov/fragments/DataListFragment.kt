@@ -2,14 +2,13 @@ package com.android.monitorporastov.fragments
 
 import android.os.Bundle
 import android.view.*
-import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.MapSharedViewModel
+import com.android.monitorporastov.MainSharedViewModel
 import com.android.monitorporastov.adapters.DataListItemRecyclerViewAdapter
 import com.android.monitorporastov.R
 import com.android.monitorporastov.databinding.FragmentDataListBinding
@@ -24,7 +23,7 @@ class DataListFragment : Fragment() {
 
     private val binding get() = _binding!!
 
-    private val viewModel: MapSharedViewModel by activityViewModels()
+    private val viewModel: MainSharedViewModel by activityViewModels()
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: DataListItemRecyclerViewAdapter
@@ -92,7 +91,7 @@ class DataListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-       // viewModel.clearSelectedDamageDataItem()
+        // viewModel.clearSelectedDamageDataItem()
         _binding = null
     }
 

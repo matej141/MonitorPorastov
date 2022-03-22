@@ -34,6 +34,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.android.monitorporastov.*
 import com.android.monitorporastov.R
+import com.android.monitorporastov.adapters.models.DialogItem
 import com.android.monitorporastov.databinding.FragmentMapBinding
 import com.android.monitorporastov.fragments.viewmodels.MapFragmentViewModel
 import com.android.monitorporastov.model.DamageData
@@ -69,7 +70,7 @@ import java.util.*
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
-    private val sharedViewModel: MapSharedViewModel by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: MapFragmentViewModel by activityViewModels()
     private var job: Job? = null
     private lateinit var mMap: MapView
