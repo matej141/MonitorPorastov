@@ -9,7 +9,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface GeoserverService {
+interface GeoserverServiceAPI {
     //    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&filter=<Filter><And><PropertyIsEqualTo><PropertyName>pouzivatel</PropertyName><Literal>{user}</Literal></PropertyIsEqualTo></And></Filter>")
     @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&sortBy=id")
     suspend fun getUserData(@Query("viewparams", encoded = true) user: String): Response<UsersData>

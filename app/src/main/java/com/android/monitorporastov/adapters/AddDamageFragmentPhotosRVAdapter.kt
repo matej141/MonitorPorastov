@@ -16,7 +16,7 @@ import com.android.monitorporastov.databinding.PhotoListItemBinding
  * kde používateľ mení alebo upravuje údaje o poškodení porastov.
  */
 class AddDamageFragmentPhotosRVAdapter(
-    var photoItems: MutableList<PhotoItem>
+    var photoItems: MutableList<PhotoItem>,
 ) :
     RecyclerView.Adapter<AddDamageFragmentPhotosRVAdapter.ViewHolder>() {
 
@@ -43,13 +43,14 @@ class AddDamageFragmentPhotosRVAdapter(
             bitmaps.add(item.image)
         }
         holder.deleteButton.setOnClickListener {
-            photoItems.removeAt(position)
-            bitmaps.removeAt(position)
-            hexStrings.removeAt(position)
-            val deletedIndex = indexesOfPhotos[position]
+            photoItems.removeAt(holder.adapterPosition)
+            bitmaps.removeAt(holder.adapterPosition)
+            hexStrings.removeAt(holder.adapterPosition)
+            val deletedIndex = indexesOfPhotos[holder.adapterPosition]
             deletedIndexes.add(deletedIndex)
-            indexesOfPhotos.removeAt(position)
-            notifyItemRemoved(position)
+            indexesOfPhotos.removeAt(holder.adapterPosition)
+            notifyItemRemoved(holder.adapterPosition)
+            //notifyItemRangeChanged(0, photoItems.size)
         }
     }
 

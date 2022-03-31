@@ -119,4 +119,5 @@
 
     <!--    Toast-->
     <string name="must_be_password_before_login">Na prihlásenie sa do aplikácie musíte mať prístup na internet</string>
+      <string name="geoserver_url_filter_username_parameter">meno</string>
 </resources>

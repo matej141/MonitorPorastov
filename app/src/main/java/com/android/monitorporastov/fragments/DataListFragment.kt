@@ -4,26 +4,29 @@ import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.MainSharedViewModel
+import com.android.monitorporastov.*
 import com.android.monitorporastov.adapters.DataListItemRecyclerViewAdapter
-import com.android.monitorporastov.R
 import com.android.monitorporastov.databinding.FragmentDataListBinding
+import com.android.monitorporastov.fragments.viewmodels.DataListFragmentViewModel
 import com.android.monitorporastov.model.DamageData
+import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import kotlinx.coroutines.launch
 
 /**
  * Fragment zobrazujúci zoznam poškodení.
  */
-class DataListFragment : Fragment() {
+class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDelegate() {
 
     private var _binding: FragmentDataListBinding? = null
 
     private val binding get() = _binding!!
 
-    private val viewModel: MainSharedViewModel by activityViewModels()
+    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+
+    private val viewModel: DataListFragmentViewModel by activityViewModels()
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: DataListItemRecyclerViewAdapter
@@ -43,12 +46,14 @@ class DataListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        viewModel.fetchUserData()
+        launch {
+            // sharedViewModel.fetchUserData()
+        }
         recyclerView = binding.dataItemList
         setUpAdapter()
-        observeViewModel()
-        setUpBackStackCallback()
+        observeDamageDataList()
+        // setCredentials()
+        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
     }
 
     private fun setUpBackStackCallback() {
@@ -77,7 +82,7 @@ class DataListFragment : Fragment() {
         val onClickListener = View.OnClickListener { itemView ->
             val item = itemView.tag as DamageData
 
-            viewModel.selectDamageData(item)
+            sharedViewModel.selectDamageData(item)
 
             itemView.findNavController().navigate(R.id.show_data_detail)
         }
@@ -95,11 +100,23 @@ class DataListFragment : Fragment() {
         _binding = null
     }
 
-    private fun observeViewModel() {
-        viewModel.damageDataList.observe(viewLifecycleOwner, Observer { damageData ->
-            adapter.setDataListItem(damageData)
-            binding.progressBar.visibility = View.GONE
-        })
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
+
+    private fun observeDamageDataList() {
+        viewModel.damageDataList.observe(viewLifecycleOwner) { damageData ->
+            adapter.setDataList(damageData)
+            binding.progressBar.visibility = View.GONE
+        }
+    }
+
+//    private fun observeIfDataLoaded() {
+//        sharedViewModel.loadedUserData.observe(viewLifecycleOwner) { loadedUserData ->
+//            viewModel.
+//        }
+//    }
+
 
 }
