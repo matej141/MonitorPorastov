@@ -15,17 +15,18 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
+import com.android.monitorporastov.*
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfLoggedInValue
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfRememberCredentialsValue
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedPasswordCharArray
+import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedUsernameCharArray
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInValue
-import com.android.monitorporastov.ConnectionLiveData
-import com.android.monitorporastov.DrawerLockInterface
-import com.android.monitorporastov.MainSharedViewModel
 import com.android.monitorporastov.R
 import com.android.monitorporastov.Utils.createErrorMessageAD
 import com.android.monitorporastov.Utils.noNetworkAvailable
 import com.android.monitorporastov.databinding.ActivityMainBinding
+import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import com.google.android.material.navigation.NavigationView
 
 
@@ -38,7 +39,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var navController: NavController
-    private val viewModel: MainSharedViewModel by viewModels()
+    private val sharedViewModel: MainSharedViewModelNew by viewModels()
 
     private val binding get() = _binding!!
     private lateinit var connectionLiveData: ConnectionLiveData
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         createEncryptedSharedPreferences(applicationContext)
     }
 
+    private lateinit var noNetworkAvailableAD :AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,16 +63,35 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(setOf(
             R.id.map_fragment, R.id.data_list_fragment), drawerLayout)
-        // this.requestedOrientation= ActivityInfo.SCREEN_ORIENTATION_LOCKED
         setUpActionBarUnLocked()
 
         navView.setupWithNavController(navController)
 
-        // týmto znemožníme viacnásobné načítavanie mapového fragmentu:
+        setMainNavigationBehaviour(navView)
+        setUpConnectionLiveData()
+        setUserCredentialsInSharedViewModel()
+        observeNetwork()
+        observeErrorMessage()
+        observeUnauthorisedError()
+        sharedViewModel.clearErrorMessage()
+        noNetworkAvailableAD = noNetworkAvailable(this)
+    }
+
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        return true
+    }
+
+    override fun onStart() {
+        checkForGPSProvider()
+        super.onStart()
+    }
+
+    private fun setMainNavigationBehaviour(navView: NavigationView) {
         navView.setNavigationItemSelectedListener {
-            // drawerLayout.closeDrawer(GravityCompat.START)
             when (it.itemId) {
                 R.id.map_fragment -> {
+                    // týmto znemožníme viacnásobné načítavanie mapového fragmentu:
                     navController.popBackStack(R.id.map_fragment, false)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
@@ -86,19 +107,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
             }
         }
-
-        setUpConnectionLiveData()
-        observeNetwork()
-        observeErrorMessage()
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        return true
-    }
-
-    override fun onStart() {
-        checkForGPSProvider()
-        super.onStart()
     }
 
     /**
@@ -165,23 +173,52 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun setUpConnectionStatusReceiver() {
         connectionLiveData.observe(this) {
-            viewModel.isNetworkAvailable.value = it
+            sharedViewModel.setNetworkAvailability(it)
         }
     }
 
     private fun observeNetwork() {
-        viewModel.isNetworkAvailable.observe(this) { isAvailable ->
+        sharedViewModel.isNetworkAvailable.observe(this) { isAvailable ->
             if (!isAvailable) {
-                noNetworkAvailable(this)
+                noNetworkAvailableAD.show()
+            }
+            else {
+                noNetworkAvailableAD.dismiss()
+//                Toast.makeText(this,
+//                    "Pripojenie k sieti sa obnovilo",
+//                    Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun observeErrorMessage() {
-        viewModel.errorMessage.observe(this) { errorMessage ->
-            createErrorMessageAD(this, errorMessage)
+        sharedViewModel.errorMessage.observe(this) { errorMessage ->
+            if (errorMessage != null) {
+                createErrorMessageAD(this, errorMessage)
+            }
 
         }
+    }
+
+    private fun observeUnauthorisedError() {
+        sharedViewModel.unauthorisedErrorIsOccurred.observe(this) {
+            createWrongCredentialsWarningAD()
+        }
+    }
+
+    private fun createWrongCredentialsWarningAD() {
+        AlertDialog.Builder(this)
+            .setTitle("Nesprávne prihlasovacie údaje")
+            .setMessage("Vaše prihlasovecie údaje uložené v aplikácii zrejme nie sú správne.\n" +
+                    "Pre správne fungovanie aplikácie sa prosím odhláste a prihláste sa s " +
+                    "aktualizovanými prihlasovacími údajmi.\n" +
+                    "Prípadne kontaktuje podporu.")
+            .setPositiveButton("Odhlásiť sa") { _, _ ->
+                logOut()
+            }
+            .setNeutralButton(getString(R.string.button_cancel_text)) { dialog, _ -> dialog.cancel() }
+            .create()
+            .show()
     }
 
     private fun askIfLogOut() {
@@ -202,7 +239,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun wipeSharedPreferences() {
-        if (!sharedPreferences.getIfRememberCredentialsValue() && !sharedPreferences.getIfLoggedInValue()) {
+        if (!sharedPreferences.getIfRememberCredentialsValue()
+            && !sharedPreferences.getIfLoggedInValue()
+        ) {
             sharedPreferences.edit().clear().apply()
         }
     }
@@ -211,6 +250,34 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun setUserCredentialsInSharedViewModel() {
+        val usernameCharArray = sharedPreferences.getSavedUsernameCharArray()
+        val passwordCharArray = sharedPreferences.getSavedPasswordCharArray()
+        if ((usernameCharArray == null || passwordCharArray == null) ||
+            (usernameCharArray.isEmpty() || passwordCharArray.isEmpty())
+        ) {
+            unableToLoadUserCredentialsFromMemoryAD()
+            return
+        }
+        sharedViewModel.setUsernameCharArray(usernameCharArray)
+        sharedViewModel.setPasswordCharArray(passwordCharArray)
+    }
+
+    private fun unableToLoadUserCredentialsFromMemoryAD() {
+        AlertDialog.Builder(this)
+            .setTitle("Nepodarilo sa načítať uložené meno a heslo v aplikácii")
+            .setMessage("Pre správne fungovanie aplikácie sa prosím odhláste sa a " +
+                    "zadajte svoje prihlasovacie údaje znovu.")
+            .setPositiveButton("Odhlásiť sa") { _, _ ->
+                logOut()
+            }
+            .setNeutralButton(getString(R.string.button_cancel_text)) { dialog, _ ->
+                dialog.cancel()
+            }
+            .create()
+            .show()
     }
 
     override fun onDestroy() {

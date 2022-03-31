@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -28,7 +27,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.MenuCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
@@ -39,6 +37,7 @@ import com.android.monitorporastov.databinding.FragmentMapBinding
 import com.android.monitorporastov.fragments.viewmodels.MapFragmentViewModel
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
@@ -167,7 +166,7 @@ class MapFragment : Fragment() {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val currentDateAndTime: String = sdf.format(Date())
 
-        requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+        //requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
     }
 
     override fun onCreateView(
@@ -967,7 +966,7 @@ class MapFragment : Fragment() {
 
     private fun getDetailFromOfPolygonFromGeoserver(filterString: String) {
         val okHttpClient = Utils.createOkHttpClient()
-        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
+        val service = RetroService.createServiceWithGsonFactory(okHttpClient)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.getUsingUrlFilter(filterString)

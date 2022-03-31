@@ -7,7 +7,6 @@ import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
@@ -23,12 +22,14 @@ import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedPasswo
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedUsernameCharArray
 import com.android.monitorporastov.ConnectionLiveData
 import com.android.monitorporastov.R
+import com.android.monitorporastov.Utils.afterTextChanged
 import com.android.monitorporastov.Utils.createErrorMessageAD
 import com.android.monitorporastov.Utils.noNetworkAvailable
 import com.android.monitorporastov.activities.viewmodels.LoginActivityViewModel
 import com.android.monitorporastov.databinding.ActivityLoginBinding
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.*
+import java.net.InetAddress
 
 
 class LoginActivity : AppCompatActivity() {
@@ -70,7 +71,10 @@ class LoginActivity : AppCompatActivity() {
         viewModel.errorMessage.observe(this) { errorMessage ->
             //connectionLiveData.checkInternet()
             if (isOnline(this)) {
-                createErrorMessageAD(this, errorMessage)
+                if (errorMessage != null) {
+                    createErrorMessageAD(this, errorMessage)
+                    viewModel.clearErrorMessage()
+                }
             }
             else {
                 showNoInternetToastMessage()
@@ -88,21 +92,20 @@ class LoginActivity : AppCompatActivity() {
         if (capabilities != null) {
             when {
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
                     return true
                 }
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
                     return true
                 }
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
                     return true
                 }
             }
         }
         return false
     }
+
+
 
     private fun waitAWhile() {
         runBlocking {
@@ -290,18 +293,6 @@ class LoginActivity : AppCompatActivity() {
             }
         })
 
-    }
-
-    private fun EditText.afterTextChanged(afterTextChanged: (Editable) -> Unit) {
-        this.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(editable: Editable) {
-                afterTextChanged.invoke(editable)
-            }
-
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-        })
     }
 
     /**

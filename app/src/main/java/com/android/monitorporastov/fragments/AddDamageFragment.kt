@@ -19,22 +19,20 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
+import com.android.monitorporastov.Utils.afterTextChanged
 import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
 import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
+import com.android.monitorporastov.fragments.viewmodels.AddDamageFragmentViewModel
 import com.android.monitorporastov.model.DamageData
-import id.zelory.compressor.Compressor
-import id.zelory.compressor.constraint.format
-import id.zelory.compressor.constraint.quality
-import id.zelory.compressor.constraint.size
+import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import kotlinx.coroutines.*
 import okhttp3.*
-import java.io.*
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -45,7 +43,8 @@ class AddDamageFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
-    private val viewModel: MainSharedViewModel by activityViewModels()
+    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val viewModel: AddDamageFragmentViewModel by viewModels()
 
     private var _binding: FragmentAddDamageBinding? = null
 
@@ -55,7 +54,7 @@ class AddDamageFragment : Fragment() {
     private lateinit var listOfDamageType: Array<String>
 
     private lateinit var damageDataItem: DamageData
-    private val maxSizeOfPhoto = 600
+
     private var stringsOfPhotosList = listOf<String>()
 
 //    private lateinit var callback: OnBackPressedCallback
@@ -93,17 +92,36 @@ class AddDamageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.recycleViewOfPhotos
-        setupRecycleView()
         setUpListeners()
+        setTextChangeListeners()
         listOfDamageType = resources.getStringArray(R.array.damages)
-        observeDamageDataItem()
-        // ViewCompat.setNestedScrollingEnabled(recyclerView, false)
+        observeDamageDataItemFromSharedViewModel()
+        observeAdapterOfPhotos()
+        observeIfEditing()
+        observeUncompletedNameWarning()
+        observeIfUpdateSucceeded()
+        observeLoadingValue()
+        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
 
-//        viewModel.username.observe(viewLifecycleOwner, Observer { username ->
-//            username?.let {
-//                this.username = it
-//            }
-//        })  // dokoncit!!!
+
+    }
+
+    private fun setTextChangeListeners() {
+        binding.addDataName.editText?.apply {
+            afterTextChanged {
+                viewModel.setNameOfDamageDataRecord(it.toString())
+            }
+        }
+        binding.addDataDamageTypeText.editText?.apply {
+            afterTextChanged {
+                viewModel.setDamageType(it.toString())
+            }
+        }
+        binding.addDataDescription.editText?.apply {
+            afterTextChanged {
+                viewModel.setDescriptionOfDamageDataRecord(it.toString())
+            }
+        }
     }
 
     // https://stackoverflow.com/questions/56649766/trouble-with-navcontroller-inside-onbackpressedcallback
@@ -120,7 +138,7 @@ class AddDamageFragment : Fragment() {
     /**
      * Ak chceme iba upraviť informácie, pomocou tejto metódy zobrazíme existujúce dáta.
      */
-    private fun setUpExistingContent() {
+    private fun setUpExistingContent(damageDataItem: DamageData) {
         binding.addDataName.editText?.setText(damageDataItem.nazov)
         binding.addDataDamageType.setText(damageDataItem.typ_poskodenia)
         binding.addDataDescription.editText?.setText(damageDataItem.popis_poskodenia)
@@ -149,13 +167,13 @@ class AddDamageFragment : Fragment() {
             choiceAD()
         }
         binding.saveDamage.setOnClickListener {
-            saveData()
+            viewModel.saveData()
         }
     }
 
-    private fun setupRecycleView() {
-        recyclerView.adapter = adapterOfPhotos
-    }
+//    private fun setupRecycleView() {
+//        recyclerView.adapter = adapterOfPhotos
+//    }
 
     /**
      * Uloženie dát.
@@ -272,15 +290,15 @@ class AddDamageFragment : Fragment() {
                 Toast.LENGTH_SHORT).show()
             updateDataInSharedViewModel()
             if (!damageDataItem.isUpdatingDirectlyFromMap) {
-                navigateToItemDetail()
+                navigateToDataDetailFragment()
             } else {
-                navigateToMap()
+                navigateToMapFragment()
             }
         }
     }
 
     private fun updateDataInSharedViewModel() {
-        viewModel.updateSelectedItems(damageDataItem)
+       // sharedViewModel.updateSelectedItems(damageDataItem)
     }
 
     private suspend fun updatePhotosInGeoserver(): Boolean {
@@ -475,13 +493,13 @@ class AddDamageFragment : Fragment() {
                     })
             list.awaitAll()
             binding.progressBar.visibility = View.INVISIBLE
-            navigateToMap()
+            navigateToMapFragment()
         }
     }
 
     private suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean = CompletableDeferred<Boolean>()
-        val service = RetroService.getServiceWithScalarsFactory(Utils.createOkHttpClient())
+        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             val response = service.postToGeoserver(requestBody)
             withContext(Dispatchers.Main) {
@@ -515,23 +533,6 @@ class AddDamageFragment : Fragment() {
     private suspend fun sendPhotosToGeoserver(): Boolean {
         val requestBody = createRequestBody(createInsertPhotosTransactionString())
         return postToGeoserver(requestBody)
-    }
-
-    /**
-     * Naviguje používateľa na fragment zobrazujúci detail o poškodení.
-     */
-    private fun navigateToItemDetail() {
-        val navController = findNavController()
-        navController.navigate(R.id.action_add_damage_fragment_TO_data_detail_fragment)
-    }
-
-    /**
-     * Naviguje používateľa na naspäť na mapový fragment.
-     */
-    private fun navigateToMap() {
-        val navController = findNavController()
-        navController.previousBackStackEntry?.savedStateHandle?.set("key", true)
-        navController.popBackStack()
     }
 
     private fun getDataName(): String {
@@ -588,7 +589,7 @@ class AddDamageFragment : Fragment() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val bitmap = data?.extras?.get("data") as Bitmap
-                addBitmapToAdapter(bitmap)
+                viewModel.addBitmapToAdapter(bitmap, requireContext())
             }
         }
 
@@ -610,129 +611,16 @@ class AddDamageFragment : Fragment() {
                         ImageDecoder.decodeBitmap(source)
                     }
 
-                    addBitmapToAdapter(bitmap)
+                    viewModel.addBitmapToAdapter(bitmap, requireContext())
                 }
             }
         }
 
-    private fun addBitmapToAdapter(bitmap: Bitmap) {
-        val resizedBitmap = getResizedBitmap(bitmap, maxSizeOfPhoto)
-        val item = PhotoItem(resizedBitmap)
-        adapterOfPhotos.photoItems.add(item)
-        adapterOfPhotos.notifyItemInserted(adapterOfPhotos.photoItems.size - 1)
-        CoroutineScope(Dispatchers.Main).launch {
-            addBitmapHex(resizedBitmap)
-        }
-    }
-
-    private suspend fun addBitmapHex(bitmap: Bitmap) {
-        val compressedByteArray = createCompressedByteArray(bitmap)
-        val hexStringOfByteArray = createHexStringFromByteArray(compressedByteArray)
-        adapterOfPhotos.addHexString(hexStringOfByteArray)
-        adapterOfPhotos.indexesOfPhotos.add(-1)
-    }
-
-    private suspend fun createCompressedByteArray(bitmap: Bitmap): ByteArray {
-        val imageFile = createImageFile(bitmap)
-        val compressedFile = createCompressedFile(imageFile)
-        val byteArrayFromFile = createByteArrayFromFile(compressedFile)
-        deleteFiles(imageFile, compressedFile)
-        return byteArrayFromFile
-    }
-
-    private fun createHexStringFromByteArray(bytes: ByteArray): String {
-        // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
-        val hexArray = "0123456789ABCDEF".toCharArray()
-        val hexChars = CharArray(bytes.size * 2)
-        for (j in bytes.indices) {
-            val v = bytes[j].toInt() and 0xFF
-
-            hexChars[j * 2] = hexArray[v ushr 4]
-            hexChars[j * 2 + 1] = hexArray[v and 0x0F]
-        }
-        return String(hexChars)
-    }
-
-    private fun deleteFiles(vararg files: File) {
-        files.forEach { it.delete() }
-    }
-
-    private suspend fun createCompressedFile(imageFile: File): File {
-        val compressedImageFileDeferred = CompletableDeferred<File>()
-        CoroutineScope(Dispatchers.Main).launch {
-            // https://github.com/zetbaitsu/Compressor
-            val compressedImageFile: File = Compressor.compress(requireContext(), imageFile) {
-                // resolution(1280, 720)
-                quality(80)
-                format(Bitmap.CompressFormat.JPEG)
-                size(1_097_152)
-            }
-            imageFile.delete()
-            compressedImageFileDeferred.complete(compressedImageFile)
-
-        }
-        return compressedImageFileDeferred.await()
-    }
-
-    private suspend fun createByteArrayFromFile(file: File): ByteArray {
-        // https://stackoverflow.com/questions/10039672/android-how-to-read-file-in-bytes
-        val size: Long = file.length()
-        val byteArrayDeferred = CompletableDeferred<ByteArray>()
-        val byteArray = ByteArray(size.toInt())
-        CoroutineScope(Dispatchers.IO).launch {
-            kotlin.runCatching {
-                val buf = BufferedInputStream(FileInputStream(file))
-                buf.read(byteArray, 0, byteArray.size)
-                buf.close()
-            }
-            byteArrayDeferred.complete(byteArray)
-        }
-
-        return byteArrayDeferred.await()
-    }
-
-    private fun createImageFile(bitmap: Bitmap): File {
-        val childName = "filename"
-        val newImageFile = File(requireContext().cacheDir, childName)
-        newImageFile.createNewFile()
-        // newImageFile.deleteOnExit() // vyskusat potom
-        val byteArray = createByteArrayFromBitmap(bitmap)
-        // https://stackoverflow.com/questions/11274715/save-bitmap-to-file-function
-        val fileOutputStream = FileOutputStream(newImageFile)
-        fileOutputStream.write(byteArray)
-        fileOutputStream.flush()
-        fileOutputStream.close()
-        return newImageFile
-    }
-
-    private fun createByteArrayFromBitmap(bitmap: Bitmap): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
-        val byteArray = byteArrayOutputStream.toByteArray()
-        byteArrayOutputStream.close()
-        return byteArray
-    }
-
-    // https://stackoverflow.com/questions/16954109/reduce-the-size-of-a-bitmap-to-a-specified-size-in-android
-    private fun getResizedBitmap(image: Bitmap, maxSize: Int): Bitmap {
-        var width = image.width
-        var height = image.height
-        val bitmapRatio = width.toFloat() / height.toFloat()
-        if (bitmapRatio > 1) {
-            width = maxSize
-            height = (width / bitmapRatio).toInt()
-        } else {
-            height = maxSize
-            width = (height * bitmapRatio).toInt()
-        }
-        return Bitmap.createScaledBitmap(image, width, height, true)
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        viewModel.clearStringsOfPhotosList()
-        viewModel.clearSelectedDamageDataItemFromMap()
+//        sharedViewModel.clearStringsOfPhotosList()
+//        sharedViewModel.clearSelectedDamageDataItemFromMap()
     }
 
     override fun onDetach() {
@@ -740,8 +628,8 @@ class AddDamageFragment : Fragment() {
         hideKeyboard()
     }
 
-    private fun observeDamageDataItem() {
-        if (viewModel.selectedDamageDataItemFromMap.value == null) {
+    private fun observeDamageDataItemFromSharedViewModel() {
+        if (sharedViewModel.selectedDamageDataItemFromMap.value == null) {
             observeSelectedDamageDataItem()
             return
         }
@@ -749,58 +637,42 @@ class AddDamageFragment : Fragment() {
     }
 
     private fun observeSelectedDamageDataItem() {
-        viewModel.selectedDamageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
+        sharedViewModel.selectedDamageDataItem.observe(viewLifecycleOwner) { damageDataItem ->
             damageDataItem?.let {
-                this.damageDataItem = it
-                editData = true
-                setUpExistingContent()
-                setUpExistingBitmaps()
+                viewModel.setExistingDamageData(it)
             }
         }
     }
 
     private fun observeSelectedItemFromMap() {
-        viewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner) {
+        sharedViewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner) {
                 selectedDamageDataItemFromMap ->
             selectedDamageDataItemFromMap?.let {
-                this.damageDataItem = it
-                if (it.isInGeoserver) {
-                    editData = true
-                    setUpExistingContent()
-                    if (!it.bitmapsLoaded) {
-                        binding.progressBarPhotos.visibility = View.VISIBLE
-                        viewModel.fetchPhotos(it)
-                        observePhotosFromViewModel()
-                    }
-                    else {
-                        setUpExistingBitmaps()
-                    }
-
-                }
+                viewModel.setDamageDataFromMap(it)
             }
         }
     }
 
-    private fun observePhotosFromViewModel() {
-        viewModel.stringsOfPhotosList.observe(viewLifecycleOwner) { stringsOfPhotosList ->
-            stringsOfPhotosList?.let {
-                this.stringsOfPhotosList = it
-                binding.progressBarPhotos.visibility = View.VISIBLE
-                setUpPhotos()
-                observeIndexesOfPhotos()
-                damageDataItem.bitmapsLoaded = true
-                binding.progressBarPhotos.visibility = View.INVISIBLE
-            }
-        }
-    }
+//    private fun observePhotosFromViewModel() {
+//        sharedViewModel.stringsOfPhotosList.observe(viewLifecycleOwner) { stringsOfPhotosList ->
+//            stringsOfPhotosList?.let {
+//                this.stringsOfPhotosList = it
+//                binding.progressBarPhotos.visibility = View.VISIBLE
+//                setUpPhotos()
+//                observeIndexesOfPhotos()
+//                damageDataItem.bitmapsLoaded = true
+//                binding.progressBarPhotos.visibility = View.INVISIBLE
+//            }
+//        }
+//    }
 
-    private fun observeIndexesOfPhotos() {
-        viewModel.indexesOfPhotosList.observe(viewLifecycleOwner) { indexesOfPhotosList ->
-            indexesOfPhotosList?.let {
-                damageDataItem.indexesOfPhotos = it
-            }
-        }
-    }
+//    private fun observeIndexesOfPhotos() {
+//        sharedViewModel.indexesOfPhotosList.observe(viewLifecycleOwner) { indexesOfPhotosList ->
+//            indexesOfPhotosList?.let {
+//                damageDataItem.indexesOfPhotos = it
+//            }
+//        }
+//    }
 
     private fun setUpPhotos() {
         if (stringsOfPhotosList.isEmpty()) {
@@ -819,7 +691,7 @@ class AddDamageFragment : Fragment() {
             withContext(Dispatchers.Main) {
                 // recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
                 setUpExistingBitmaps()
-                setupRecycleView()
+                //setupRecycleView()
                 binding.progressBarPhotos.visibility = View.INVISIBLE
             }
         }
@@ -846,11 +718,80 @@ class AddDamageFragment : Fragment() {
         resultTakePhotoLauncher.launch(cameraIntent)
     }
 
-    companion object {
-        const val ARG_PERIMETER_ID = "perimeter_id"
-        const val ARG_AREA_ID = "area_id"
-        const val ARG_DATA_ITEM_ID = "item_id"
 
+    private fun observeIfEditing() {
+        viewModel.isEditingData.observe(viewLifecycleOwner) {
+            if (it) {
+                observeDamageDataItem()
+            }
+        }
     }
+
+    private fun observeDamageDataItem() {
+        viewModel.damageDataItem.observe(viewLifecycleOwner) {
+            setUpExistingContent(it)
+        }
+    }
+
+    private fun observeAdapterOfPhotos() {
+        viewModel.adapterOfPhotos.observe(viewLifecycleOwner) { adapterOfPhotos ->
+            recyclerView.adapter = adapterOfPhotos
+        }
+    }
+
+    private fun observeUncompletedNameWarning() {
+        viewModel.uncompletedNameWarning.observe(viewLifecycleOwner) {
+            warningAD()
+        }
+    }
+
+    private fun observeIfUpdateSucceeded() {
+        viewModel.updateSucceeded.observe(viewLifecycleOwner) { updateSucceeded ->
+            if (updateSucceeded) {
+                Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
+                    Toast.LENGTH_SHORT).show()
+                observeWhereToNavigate()
+            }
+            else {
+                Toast.makeText(context, "Pri aktualizovaní záznamu nastala chyba",
+                    Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun observeWhereToNavigate() {
+        viewModel.navigateToMapFragment.observe(viewLifecycleOwner) { navigateToMapFragment ->
+            if (navigateToMapFragment) {
+                navigateToMapFragment()
+            } else {
+                navigateToDataDetailFragment()
+            }
+        }
+    }
+
+    private fun observeLoadingValue() {
+        viewModel.loading.observe(viewLifecycleOwner) { loadingValue ->
+            binding.progressBar.visibility = if (loadingValue) View.VISIBLE else View.GONE
+        }
+    }
+
+    /**
+     * Naviguje používateľa na fragment zobrazujúci detail o poškodení.
+     */
+    private fun navigateToDataDetailFragment() {
+        val navController = findNavController()
+        navController.navigate(R.id.action_add_damage_fragment_TO_data_detail_fragment)
+        //navController.navigateUp()
+    }
+
+    /**
+     * Naviguje používateľa na naspäť na mapový fragment.
+     */
+    private fun navigateToMapFragment() {
+        val navController = findNavController()
+        navController.previousBackStackEntry?.savedStateHandle?.set("key", true)
+        navController.popBackStack()
+    }
+
 
 }

@@ -2,24 +2,23 @@ package com.android.monitorporastov
 
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
+import android.provider.Settings.Global.getString
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
-import com.android.monitorporastov.activities.LauncherActivity
-import com.android.monitorporastov.activities.LoginActivity
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.util.concurrent.TimeUnit
-import com.android.monitorporastov.R
-
+import com.android.monitorporastov.R.string
+import java.net.InetAddress
 
 
 // https://stackoverflow.com/questions/39489887/call-method-from-kotlin-class
@@ -111,7 +110,7 @@ object Utils {
 
     suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-        val service = RetroService.getServiceWithScalarsFactory(Utils.createOkHttpClient())
+        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.postToGeoserver(requestBody)
@@ -179,13 +178,39 @@ object Utils {
             .show()
     }
 
-    fun noNetworkAvailable(context: Context) {
-        AlertDialog.Builder(context)
+    fun noNetworkAvailable(context: Context): AlertDialog {
+        val ad = AlertDialog.Builder(context)
             .setTitle("Nemáte prístup na internet")
             .setMessage("Pre správne fungovanie aplikácie skontrolujte, prosím, pripojenie do siete.")
             .setNegativeButton(R.string.ok_text) { dialog, _ -> dialog.cancel() }
             .create()
-            .show()
+
+        return ad
+    }
+
+
+
+    fun editableToCharArray(editable: Editable?): CharArray {
+        if (editable == null) {
+            return charArrayOf()
+        }
+
+        val lengthOfEditable = editable.length
+        val charArray = CharArray(lengthOfEditable)
+        editable.getChars(0, lengthOfEditable, charArray, 0)
+        return charArray
+    }
+
+    fun EditText.afterTextChanged(afterTextChanged: (Editable) -> Unit) {
+        this.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(editable: Editable) {
+                afterTextChanged.invoke(editable)
+            }
+
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+        })
     }
 
 }

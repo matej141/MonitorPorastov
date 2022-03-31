@@ -36,11 +36,12 @@
             android:layout_height="@dimen/map_button_size"
             android:layout_marginTop="15dp"
             android:layout_marginEnd="15dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginBottom="15dp"
             android:background="@drawable/map_button_style"
             android:focusable="true"
             android:src="@drawable/ic_gps_colored"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/layout_container"
             android:contentDescription="@string/center_button_desc" />
 
@@ -55,7 +56,7 @@
             android:focusable="true"
             android:src="@drawable/ic_compass_colored"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layout_container"
+            app:layout_constraintTop_toBottomOf="@id/button_center"
             android:contentDescription="@string/compass_button_desc" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton

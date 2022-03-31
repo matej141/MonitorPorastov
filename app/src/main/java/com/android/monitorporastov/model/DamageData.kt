@@ -15,12 +15,11 @@ data class DamageData(
     var foto: String = "",
     var coordinates: List<GeoPoint> = listOf(),
     var unique_id: String = "",
-    var datetime: String = "",
+    var datetime: String? = "",
     var bitmaps: MutableList<Bitmap> = mutableListOf(),
     var indexesOfPhotos: MutableList<Int> = mutableListOf(),
     var isInGeoserver: Boolean = false,
     var changedShapeOfPolygon:Boolean = false,
     var bitmapsLoaded:Boolean = false,
     var isUpdatingDirectlyFromMap:Boolean = false,
-   //  var showThisItemOnMap:Boolean = false,
 )

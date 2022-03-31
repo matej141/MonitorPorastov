@@ -18,7 +18,7 @@ class DataListItemRecyclerViewAdapter(
 
     private var damageDataList =  listOf<DamageData>()
 
-    fun setDataListItem(newDamageDataList: List<DamageData>) {
+    fun setDataList(newDamageDataList: List<DamageData>) {
         this.damageDataList = newDamageDataList
         notifyItemRangeChanged(0, newDamageDataList.size)
     }

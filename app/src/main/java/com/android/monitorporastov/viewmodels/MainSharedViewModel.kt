@@ -1,9 +1,11 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import com.android.monitorporastov.BasicAuthInterceptor
+import com.android.monitorporastov.RetroService
+import com.android.monitorporastov.Utils
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 
@@ -11,14 +13,12 @@ import kotlinx.coroutines.*
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.RequestBody
 import org.osmdroid.util.GeoPoint
 import java.util.concurrent.TimeUnit
 
-class MainSharedViewModel : ViewModel() {
+open class MainSharedViewModel : BaseViewModel() {
     //private val service = RetroService.get()
-    var job: Job = Job()
-    val damageDataList = MutableLiveData<List<DamageData>>()
+   // val damageDataList = MutableLiveData<List<DamageData>>()
     private val mutableDamageDataItem = MutableLiveData<DamageData?>()
     private val mutableSelectedDamageDataItem = MutableLiveData<DamageData?>()
 
@@ -39,9 +39,14 @@ class MainSharedViewModel : ViewModel() {
         get() =
             _selectedDamageDataItemToShowInMap
 
-    val isNetworkAvailable = MutableLiveData<Boolean>()
-    val errorMessage = MutableLiveData<String>()
-    val loaded = MutableLiveData<Boolean>()
+    //val isNetworkAvailable = MutableLiveData<Boolean>()
+   // val errorMessage = MutableLiveData<String>()
+
+    private val _usernameCharArray = MutableLiveData<CharArray>()
+   // val usernameCharArray: LiveData<CharArray> get() = _usernameCharArray
+
+    private val _passwordCharArray = MutableLiveData<CharArray>()
+//    val passwordCharArray: LiveData<CharArray> get() = _passwordCharArray
 
     fun selectDamageDataFromMap(damageData: DamageData) {
         mutableSelectedDamageDataItemFromMap.value = damageData
@@ -54,6 +59,14 @@ class MainSharedViewModel : ViewModel() {
     fun selectDamageDataToShowInMap(damageData: DamageData) {
         _selectedDamageDataItemToShowInMap.value = damageData
     }
+
+//    fun setUsernameCharArray(usernameArray: CharArray) {
+//        _usernameCharArray.value = usernameArray
+//    }
+//
+//    fun setPasswordCharArray(passwordArray: CharArray) {
+//        _passwordCharArray.value = passwordArray
+//    }
 
     fun clearStringsOfPhotosList() {
         mutableStringsOfPhotosList.value = null
@@ -106,45 +119,47 @@ class MainSharedViewModel : ViewModel() {
             .build()
     }
 
-    fun fetchUserData() {
-        val okHttpClient: OkHttpClient = Utils.createOkHttpClient()
-        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
-        val filterString = createFilterString()
-        job = CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = service.getUserData("meno:dano")
-                // val response = service.getUsingUrlFilter(filterString)
+//    fun fetchUserData() {
+//        val okHttpClient: OkHttpClient = Utils.createOkHttpClient()
+//        val service = RetroService.createServiceWithGsonFactory(okHttpClient)
+//        val filterString = createFilterString()
+//        job = CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                val response = service.getUserData("meno:dano")
+//                // val response = service.getUsingUrlFilter(filterString)
+//
+//                withContext(Dispatchers.Main) {
+//                    if (response.isSuccessful) {
+//                        val res: UsersData? = response.body()
+//                        val list = mutableListOf<DamageData>()
+//                        if (res != null) {
+//                            var i = 0
+//
+//                            res.features.forEach {
+//                                val listOfGeopoints = createListOfGeopoints(res, i)
+//                                i++
+//                                val damageData = it.properties
+//                                listOfGeopoints.removeLast()
+//                                damageData.coordinates = listOfGeopoints
+//                                list.add(damageData)
+//                            }
+//                        }
+//
+//                        damageDataList.value = list
+//                    } else {
+//                        Log.d("MODEL", "Error: ${response.message()}")
+//                        onError(response.message())
+//                    }
+//                }
+//            } catch (e: Throwable) {
+//                if (isNetworkAvailable.value == true) {
+//                    onError(e.toString())
+//                }
+//            }
+//        }
+//    }
 
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful) {
-                        val res: UsersData? = response.body()
-                        val list = mutableListOf<DamageData>()
-                        if (res != null) {
-                            var i = 0
 
-                            res.features.forEach {
-                                val listOfGeopoints = createListOfGeopoints(res, i)
-                                i++
-                                val damageData = it.properties
-                                listOfGeopoints.removeLast()
-                                damageData.coordinates = listOfGeopoints
-                                list.add(damageData)
-                            }
-                        }
-
-                        damageDataList.value = list
-                    } else {
-                        Log.d("MODEL", "Error: ${response.message()}")
-                        errorMessage.postValue(response.message())
-                    }
-                }
-            } catch (e: Throwable) {
-                if (isNetworkAvailable.value == true) {
-                    errorMessage.postValue(e.toString())
-                }
-            }
-        }
-    }
 
     private fun createListOfGeopoints(usersData: UsersData, index: Int): MutableList<GeoPoint> {
         val listOfGeopoints = mutableListOf<GeoPoint>()
@@ -158,7 +173,7 @@ class MainSharedViewModel : ViewModel() {
 
     fun fetchPhotos(item: DamageData) {
         val okHttpClient: OkHttpClient = createOkHttpClient()
-        val service = RetroService.getServiceWithGsonFactory(okHttpClient)
+        val service = RetroService.createServiceWithGsonFactory(okHttpClient)
         job = CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.getPhotos("id:${item.unique_id}")
@@ -174,12 +189,12 @@ class MainSharedViewModel : ViewModel() {
                         mutableIndexesOfPhotosList.value = listOfIndexes
                     } else {
                         Log.d("MODEL", "Error: ${response.message()}")
-                        errorMessage.postValue(response.message())
+                        onError(response.message())
                     }
                 }
             } catch (e: Throwable) {
                 if (isNetworkAvailable.value == true) {
-                    errorMessage.postValue(e.toString())
+                    onError(e.toString())
                 }
             }
         }
@@ -215,38 +230,38 @@ class MainSharedViewModel : ViewModel() {
         return deferredBoolean.await()
     }
 
-    suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
-        val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-        val service = RetroService.getServiceWithScalarsFactory(Utils.createOkHttpClient())
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = service.postToGeoserver(requestBody)
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful) {
-                        // binding.progressBar.visibility = View.GONE
-                        val r: String? = response.body()
-
-                        Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
-                        if (r != null) {
-                            Log.d("MODELL", r)
-                        }
-                        if (r != null && r.contains("SUCCESS")) {
-                            Log.d("MODELL", "Fotky úspešné....")
-                        }
-                        deferredBoolean.complete(true)
-                    } else {
-                        Log.d("MODELL", "Error: ${response.message()}")
-                        deferredBoolean.complete(false)
-                    }
-                }
-            } catch (e: Throwable) {
-                if (isNetworkAvailable.value == true) {
-                    errorMessage.postValue(e.toString())
-                }
-            }
-        }
-        return deferredBoolean.await()
-    }
+//    override suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
+//        val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
+//        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
+//        CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                val response = service.postToGeoserver(requestBody)
+//                withContext(Dispatchers.Main) {
+//                    if (response.isSuccessful) {
+//                        // binding.progressBar.visibility = View.GONE
+//                        val r: String? = response.body()
+//
+//                        Log.d("MODELL", "Success!!!!!!!!!!!!!!!!!!!")
+//                        if (r != null) {
+//                            Log.d("MODELL", r)
+//                        }
+//                        if (r != null && r.contains("SUCCESS")) {
+//                            Log.d("MODELL", "Fotky úspešné....")
+//                        }
+//                        deferredBoolean.complete(true)
+//                    } else {
+//                        Log.d("MODELL", "Error: ${response.message()}")
+//                        deferredBoolean.complete(false)
+//                    }
+//                }
+//            } catch (e: Throwable) {
+//                if (isNetworkAvailable.value == true) {
+//                    onError(e.toString())
+//                }
+//            }
+//        }
+//        return deferredBoolean.await()
+//    }
 
     public override fun onCleared() {
         super.onCleared()

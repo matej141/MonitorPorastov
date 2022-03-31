@@ -6,6 +6,10 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.net.InetAddress
 
 // https://deepmodi.com/2021/10/13/check-internet-connectivity-and-availability-android-ko/
 class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
@@ -15,11 +19,28 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
     private val networkCallbacks = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             super.onAvailable(network)
-            postValue(true)
+            val networkCapability = connectivityManager.getNetworkCapabilities(network)
+            val hasNetworkConnection =
+                networkCapability?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    ?: false
+            if (hasNetworkConnection) {
+                checkInternetAccess()
+            }
+        }
+
+        private fun checkInternetAccess() {
+            CoroutineScope(Dispatchers.IO).launch {
+                if (InternetAvailability2.check()) {
+                    postValue(true)
+                    return@launch
+                }
+                postValue(false)
+            }
         }
 
         override fun onLost(network: Network) {
             super.onLost(network)
+
             postValue(false)
         }
 
@@ -29,38 +50,55 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
         }
     }
 
-    fun checkInternet() {
-        // we can user activeNetwork because our min sdk version is 23 if our min sdk version is less than 23
-        // then we have to user connectivityManager.activeNetworkInfo (Note: Deperated)
+    private fun checkNetwork() {
+        checkActiveNetwork()
+        val requestBuilder = createRequestBuilder()
+        connectivityManager.registerNetworkCallback(requestBuilder, networkCallbacks)
+    }
 
+    private fun checkActiveNetwork() {
         val network = connectivityManager.activeNetwork
         if (network == null) {
             postValue(false)
         }
+    }
 
-        /**
-         * After checking network its time to check network internet capabilities
-         * whether connection has internet or not for that we will register the network
-         * and then check network capabilities with the help of the callbacks
-         */
+    private fun createRequestBuilder(): NetworkRequest {
         val requestBuilder = NetworkRequest.Builder().apply {
             addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) // also for sdk version 23 or above
-            addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
             addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
             addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
         }.build()
+        return requestBuilder
 
-        connectivityManager.registerNetworkCallback(requestBuilder, networkCallbacks)
     }
 
     override fun onActive() {
         super.onActive()
-        checkInternet()
+        checkNetwork()
     }
 
     override fun onInactive() {
         super.onInactive()
         connectivityManager.unregisterNetworkCallback(networkCallbacks)
     }
+}
+
+
+object InternetAvailability2 {
+
+    fun check(): Boolean {
+        return try {
+            val ipAddress: InetAddress =
+                InetAddress.getByName("google.com")
+            !ipAddress.equals("")
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
 }

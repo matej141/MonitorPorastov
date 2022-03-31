@@ -1,19 +1,15 @@
 package com.android.monitorporastov.activities.viewmodels
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.text.Editable
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.android.monitorporastov.GeoserverService
+import com.android.monitorporastov.viewmodels.BaseViewModel
+import com.android.monitorporastov.GeoserverServiceAPI
 import com.android.monitorporastov.RetroService
-import kotlinx.coroutines.*
+import com.android.monitorporastov.Utils.editableToCharArray
 
-class LoginActivityViewModel : ViewModel() {
-    private val _loading = MutableLiveData(false)
-    val loading: LiveData<Boolean> get() = _loading
+class LoginActivityViewModel : BaseViewModel() {
     private val _rememberCredentials = MutableLiveData<Boolean>()
     val rememberCredentials: LiveData<Boolean> get() = _rememberCredentials
     private val _stayLoggedIn = MutableLiveData<Boolean>()
@@ -25,17 +21,8 @@ class LoginActivityViewModel : ViewModel() {
     private val _passwordEditable = MutableLiveData<Editable>()
     val passwordEditable: LiveData<Editable> get() = _passwordEditable
 
-    private val _errorMessage = MutableLiveData<String>()
-    val errorMessage: LiveData<String> get() = _errorMessage
-
-    private val _errorOccurred = MutableLiveData<Boolean>()
-    val errorOccurred: LiveData<Boolean> get() = _errorOccurred
-    private val _isNetworkAvailable = MutableLiveData<Boolean>()
-    val isNetworkAvailable: LiveData<Boolean> get() = _isNetworkAvailable
-
     companion object {
         private const val LOGIN_TAG = "LOGIN"
-        private const val unauthorisedCode = 401
     }
 
     fun rememberCredentials(value: Boolean) {
@@ -54,69 +41,31 @@ class LoginActivityViewModel : ViewModel() {
         _passwordEditable.value = editable
     }
 
-    fun setNetworkAvailability(value: Boolean) {
-        _isNetworkAvailable.value = value
-    }
-
-    private fun getService(): GeoserverService {
-        val okHttpClient = RetroService.createOkHttpClient(_usernameEditable.value.toString(),
-            _passwordEditable.value.toString())
-        return RetroService.getServiceWithScalarsFactory(okHttpClient)
+    private fun getGeoserverServiceAPI(): GeoserverServiceAPI {
+        return RetroService.getServiceWithScalarsFactory(editableToCharArray(_usernameEditable.value),
+            editableToCharArray(_passwordEditable.value))
     }
 
     suspend fun doLogin(): Boolean {
-        val deferredBoolean = CompletableDeferred<Boolean>()
-        setLoading(true)
-        setErrorOccurred(false)
-        val service = getService()
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = service.login()
-                when {
-                    response.isSuccessful -> {
-                        Log.d(LOGIN_TAG, "Login was successful")
-                        deferredBoolean.complete(true)
-                    }
-                    response.code() == unauthorisedCode -> {
-                        Log.d(LOGIN_TAG, "Unauthorised error")
-                        deferredBoolean.complete(false)
-                    }
-                    else -> {
-                        Log.d(LOGIN_TAG, "Error: ${response.message()}")
-                        onError(response.message())
-                        setErrorOccurred(true)
-                        deferredBoolean.complete(false)
-                    }
-                }
+        val resultOfCallToGeoserver =
+            performCallToGeoserver { getGeoserverServiceAPI().login() }
+        val wasCallSuccessful = resultOfCallToGeoserver.first
+        val response = resultOfCallToGeoserver.second
+        if (response == null) {
+            Log.d(LOGIN_TAG, "Error was occurred during attempt to login")
+            return wasCallSuccessful
+        }
+        when {
+            response.code() == unauthorisedCode -> {
+                Log.d(LOGIN_TAG, "Unauthorised error")
             }
-            catch (e: java.net.UnknownHostException) {
-                setErrorOccurred(true)
-                deferredBoolean.complete(false)
+            wasCallSuccessful -> {
+                Log.d(LOGIN_TAG, "Login was successful")
             }
-            catch (e: Exception) {
-                onError(e.toString())
-                setErrorOccurred(true)
-                deferredBoolean.complete(false)
-            }
-            finally {
-                setLoading(false)
+            else -> {
+                Log.d(LOGIN_TAG, "Error: ${response.message()}")
             }
         }
-        return deferredBoolean.await()
-    }
-
-    private fun onError(message: String) {
-        if (_isNetworkAvailable.value == true) {
-            _errorMessage.postValue(message)
-        }
-    }
-
-    private fun setErrorOccurred(value: Boolean) {
-        _errorOccurred.postValue(value)
-    }
-
-    fun setLoading(value: Boolean) {
-        _loading.postValue(value)
-
+        return wasCallSuccessful
     }
 }
