@@ -165,6 +165,34 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/linear_border_bottom"
+                android:weightSum="3">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:gravity="start"
+                    android:text="@string/detail_table_datetime_txt"
+                    android:textAppearance="@style/TextAppearance.Detail.Name" />
+
+                <TextView
+                    android:id="@+id/data_detail_datetime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_weight="2"
+                    android:gravity="center"
+                    android:padding="@dimen/data_detail_row_padding"
+                    android:textAppearance="@style/TextAppearance.Detail.Value"
+                    android:textIsSelectable="true" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
         <TextView

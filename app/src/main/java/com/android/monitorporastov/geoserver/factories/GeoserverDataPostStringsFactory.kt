@@ -10,6 +10,7 @@ import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNa
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageDescription
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageRecordName
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageType
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDatetime
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfGeometry
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfId
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfPerimeter
@@ -160,6 +161,9 @@ object GeoserverDataPostStringsFactory {
                 "       <$propertyNameOfUniqueId xmlns=\"$schemaLocationUrl\">\n" +
                 "           ${newDamageData.unique_id}\n" +
                 "       </$propertyNameOfUniqueId>\n" +
+                "       <$propertyNameOfDatetime xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.datetime}\n" +
+                "       </$propertyNameOfDatetime>\n" +
                 "       <$propertyNameOfGeometry xmlns=\"$schemaLocationUrl\">\n" +
                 "           <gml:Polygon srsName=$srsName>\n" +
                 "               <gml:outerBoundaryIs>\n" +

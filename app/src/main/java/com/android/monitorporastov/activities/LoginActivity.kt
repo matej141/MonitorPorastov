@@ -162,13 +162,13 @@ class LoginActivity : AppCompatActivity() {
     private fun setTextChangeListeners() {
         binding.loginUsername.editText?.apply {
             afterTextChanged {
-                viewModel.setUsernameEditable(it)
+                viewModel.setUsernameEditable(removeWhitespacesFromEditable(it))
             }
         }
 
         binding.loginPassword.editText?.apply {
             afterTextChanged {
-                viewModel.setPasswordEditable(it)
+                viewModel.setPasswordEditable(removeWhitespacesFromEditable(it))
             }
         }
     }
@@ -188,6 +188,10 @@ class LoginActivity : AppCompatActivity() {
             .setOnCheckedChangeListener { _, isChecked ->
                 viewModel.rememberCredentials(isChecked)
             }
+    }
+
+    private fun removeWhitespacesFromEditable(editable: Editable): Editable {
+        return Editable.Factory().newEditable(editable.filter { char -> !char.isWhitespace() })
     }
 
     private fun setLoginStayLoggedListener() {
@@ -266,9 +270,13 @@ class LoginActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun getUsernameEditText(): Editable? = binding.loginUsername.editText?.text
+    private fun getUsernameEditText(): Editable? = binding.loginUsername.editText?.text?.let {
+        removeWhitespacesFromEditable(it)
+    }
 
-    private fun getPasswordEditText(): Editable? = binding.loginPassword.editText?.text
+    private fun getPasswordEditText(): Editable? = binding.loginPassword.editText?.text?.let {
+        removeWhitespacesFromEditable(it)
+    }
 
     /**
      * Aplikuje pre textboxy TextChangeListener. Ak totiž používateľ nezadal meno alebo heslo,

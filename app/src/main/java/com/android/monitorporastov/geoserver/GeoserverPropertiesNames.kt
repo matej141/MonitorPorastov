@@ -7,14 +7,14 @@ object GeoserverPropertiesNames {
     const val openGisOGCUrl = "\"http://www.opengis.net/ogc\""
     const val xsiUrl = "\"http://www.w3.org/2001/XMLSchema-instance\""
     const val schemaLocationUrl = "http://geoserver.org/geoserver_skeagis"
-    const val basicUrl = "http://services.skeagis:7492/geoserver/"
+    private const val basicUrl = "http://services.skeagis:7492/geoserver/"
 
     const val workspaceName = "geoserver_skeagis"
     const val damagesLayerName = "porasty"
     const val photosLayerName = "fotografie"
     const val damagesTypeName = "$workspaceName:$damagesLayerName"
     const val photosTypeName = "$workspaceName:$photosLayerName"
-    const val baseDescribeFeatureTypeUrl = "${basicUrl}wfs?SERVICE=WFS&amp;REQUEST=" +
+    private const val baseDescribeFeatureTypeUrl = "${basicUrl}wfs?SERVICE=WFS&amp;REQUEST=" +
     "DescribeFeatureType&amp;VERSION=1.0.0&amp;TYPENAME="
     const val damagesDescribeFeatureTypeUrl = "${baseDescribeFeatureTypeUrl}$damagesTypeName"
     const val photosDescribeFeatureTypeUrl = "${baseDescribeFeatureTypeUrl}$photosTypeName"
@@ -31,8 +31,9 @@ object GeoserverPropertiesNames {
 
     const val propertyNameOfPhotography = "fotografia"
     const val propertyNameOfUniqueId = "unique_id"
-    const val srsName = "\"urn:ogc:def:crs:EPSG::4326\""
+    const val propertyNameOfDatetime = "datetime"
 
+    const val srsName = "\"urn:ogc:def:crs:EPSG::4326\""
 
     const val urlNameOfIdParameter = "id"
     const val urlNameOfUsernameParameter = "meno"

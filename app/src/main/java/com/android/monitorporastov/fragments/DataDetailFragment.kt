@@ -12,15 +12,17 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import com.android.monitorporastov.R
-import com.android.monitorporastov.Utils
 import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.DataDetailPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentDataDetailBinding
 import com.android.monitorporastov.fragments.viewmodels.DataDetailFragmentViewModel
 import com.android.monitorporastov.model.DamageData
+import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import kotlinx.coroutines.*
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Fragment zobrazujúci detail poškodenia.
@@ -90,7 +92,7 @@ class DataDetailFragment : Fragment() {
         if (id == R.id.menu_edit_data) {
             damageDataItem?.let {
                 it.isInGeoserver = true
-                it.isUpdatingDirectlyFromMap = false
+                it.isDirectlyFromMap = false
                 //viewModel.saveNewItem(damageDataItem!!)
                 findNavController().navigate(
                     R.id.action_data_detail_fragment_TO_add_measure_fragment)
@@ -133,7 +135,8 @@ class DataDetailFragment : Fragment() {
                 Toast.LENGTH_SHORT).show()
         } else {
             sharedViewModel.selectDamageDataToShowInMap(damageDataItem)
-            navigateToMapFragment()        }
+            navigateToMapFragment()
+        }
     }
 
     private fun navigateToMapFragment() {
@@ -182,20 +185,38 @@ class DataDetailFragment : Fragment() {
      */
     private fun setupContent(damageDataItem: DamageData) {
         damageDataItem.let {
+//            val txtPerimeter = "${
+//                "%.${3}f".format(it.obvod)
+//            } m"
+//            val txtArea = "${
+//                "%.${3}f".format(it.obsah)
+//            } m\u00B2"
+
             val txtPerimeter = "${
-                "%.${3}f".format(it.obvod)
+                it.obvod.toInt()
             } m"
             val txtArea = "${
-                "%.${3}f".format(it.obsah)
+                it.obsah.toInt()
             } m\u00B2"
             binding.dataDetailName.text = it.nazov
             binding.dataDetailDamageType.text = it.typ_poskodenia
             binding.dataDetailPerimeter.text = txtPerimeter
             binding.dataDetailArea.text = txtArea
             binding.dataDetailInfo.text = it.popis_poskodenia
-            //            val bitmaps = it.photos
-            //            recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
+            binding.dataDetailInfo.text = it.popis_poskodenia
+            binding.dataDetailDatetime.text =
+                it.datetime?.let { datetimeStr -> createDateTime(datetimeStr) }
+
         }
+    }
+
+    private fun createDateTime(dateTimeString: String): String? {
+        val sdf1 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        val date: Date? = sdf1.parse(dateTimeString)
+        val timeStampDate = date?.let { Timestamp(it.time) }
+        val sdf2 = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
+        return date?.let { sdf2.format(it) }
+
     }
 
     override fun onDestroyView() {

@@ -163,8 +163,6 @@ class MapFragment : Fragment() {
 //            }
 //        }
         setUpBackStackCallback()
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        val currentDateAndTime: String = sdf.format(Date())
 
         //requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
     }
@@ -369,7 +367,7 @@ class MapFragment : Fragment() {
 
             }
 
-             // updateMarkerLocation(locationResult.lastLocation)
+            // updateMarkerLocation(locationResult.lastLocation)
             updateMarkerLocation(l)
         }
     }
@@ -693,7 +691,8 @@ class MapFragment : Fragment() {
         var wmsEndpoint: WMSEndpoint? = null
         try {
             val c: HttpURLConnection = URL(urlString).openConnection() as HttpURLConnection
-            val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!), String(viewModel.passwordCharArray.value!!))
+            val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!),
+                String(viewModel.passwordCharArray.value!!))
             c.setRequestProperty("Authorization", credential)
             val inputStream: InputStream = c.inputStream
             wmsEndpoint = WMSParser.parse(inputStream)
@@ -805,9 +804,12 @@ class MapFragment : Fragment() {
                 if (wmsEndpoint != null) {
                     val layer = wmsEndpoint.layers.filter { it.name == layerName }[0]
                     val source =
-                        WMSTileSourceRepaired.createLayer(wmsEndpoint, layer, String(viewModel.usernameCharArray.value!!))
+                        WMSTileSourceRepaired.createLayer(wmsEndpoint,
+                            layer,
+                            String(viewModel.usernameCharArray.value!!))
                     // authorization dat iba raz:
-                    val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!), String(viewModel.passwordCharArray.value!!))
+                    val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!),
+                        String(viewModel.passwordCharArray.value!!))
                     Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
                         credential
                     deferredSource.complete(source)
@@ -1095,11 +1097,18 @@ class MapFragment : Fragment() {
     }
 
     private fun showDetailInfo(data: DamageData) {
+//        val txtPerimeter = "${
+//            "%.${2}f".format(data.obvod)
+//        } m"
+//        val txtArea = "${
+//            "%.${2}f".format(data.obsah)
+//        } m\u00B2"
+
         val txtPerimeter = "${
-            "%.${2}f".format(data.obvod)
+            data.obvod.toInt()
         } m"
         val txtArea = "${
-            "%.${2}f".format(data.obsah)
+            data.obsah.toInt()
         } m\u00B2"
         binding.layoutContainer.detailInformationLayout.damageName.text =
             if (!data.nazov.isNullOrEmpty()) data.nazov else "-------"
@@ -1485,7 +1494,7 @@ class MapFragment : Fragment() {
     private fun sendDamageDataToUpdateInGeoserver() {
         val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
         selectedRecord?.isInGeoserver = true
-        selectedRecord?.isUpdatingDirectlyFromMap = true
+        selectedRecord?.isDirectlyFromMap = true
         if (checkIfPolygonShapeWasChanged(listOfGeoPoints)) {
             changeInfoAboutPolygonOfSelectedRecord()
         }
@@ -1507,7 +1516,7 @@ class MapFragment : Fragment() {
         damageData.obvod = actualPerimeter
         damageData.obsah = actualArea
         damageData.coordinates = listOfGeoPoints
-        damageData.isUpdatingDirectlyFromMap = true
+        damageData.isDirectlyFromMap = true
         setDamageDataFromMapInViewModel(damageData)
     }
 
@@ -1638,14 +1647,20 @@ class MapFragment : Fragment() {
      * ktorá je zobrazená počas vyznačovania poškodeného územia.
      */
     private fun displayTextOfAreaAndPerimeter() {
+//        val displayedTextArea = "${
+//            "%.${3}f".format(actualArea)
+//        } m\u00B2"
+//        val displayedTextPerimeter = "${
+//            "%.${3}f".format(actualPerimeter)
+//        } m"
+
         val displayedTextArea = "${
-            "%.${3}f".format(actualArea)
+            actualArea.toInt()
         } m\u00B2"
         val displayedTextPerimeter = "${
-            "%.${3}f".format(actualPerimeter)
+            actualPerimeter.toInt()
         } m"
         binding.layoutContainer.areaCalculationsLayout.perimeter.text = displayedTextPerimeter
         binding.layoutContainer.areaCalculationsLayout.area.text = displayedTextArea
-
     }
 }

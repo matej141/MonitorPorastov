@@ -22,7 +22,7 @@
 
     <fragment
         android:id="@+id/add_damage_fragment"
-        android:name="com.android.monitorporastov.fragments.AddDamageFragment"
+        android:name="com.android.monitorporastov.fragments.AddOrUpdateRecordFragment"
         android:label="Informácie o poškodení"
         tools:layout="@layout/fragment_add_damage">
         <action

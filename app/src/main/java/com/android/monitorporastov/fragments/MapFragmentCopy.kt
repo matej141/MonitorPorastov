@@ -1450,7 +1450,7 @@ class MapFragmentCopy : Fragment() {
     private fun sendDamageDataToUpdateInGeoserver() {
         val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
         selectedRecord?.isInGeoserver = true
-        selectedRecord?.isUpdatingDirectlyFromMap = true
+        selectedRecord?.isDirectlyFromMap = true
         if (!checkIfPolygonShapeWasChanged(listOfGeoPoints)) {
             changeInfoAboutPolygonOfSelectedRecord()
         }

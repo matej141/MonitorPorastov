@@ -1,24 +1,21 @@
 package com.android.monitorporastov.adapters
 
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
-import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.databinding.PhotoListItemBinding
 
 /**
- * RecyclerViewAdapter pre prácu s fotografiami vo fragmente (AddDamageFragment),
+ * RecyclerViewAdapter pre prácu s fotografiami vo fragmente (AddOrUpdateRecordFragment),
  * kde používateľ mení alebo upravuje údaje o poškodení porastov.
  */
-class AddDamageFragmentPhotosRVAdapter(
+class AddOrUpdateRecordPhotosRVAdapter(
     var bitmaps: MutableList<Bitmap>,
 ) :
-    RecyclerView.Adapter<AddDamageFragmentPhotosRVAdapter.ViewHolder>() {
+    RecyclerView.Adapter<AddOrUpdateRecordPhotosRVAdapter.ViewHolder>() {
 
     var hexStrings = mutableListOf<String>()
     val indexesOfPhotos = mutableListOf<Int>()
