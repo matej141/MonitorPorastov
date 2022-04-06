@@ -64,6 +64,7 @@
     <string name="detail_table_area_txt">Plocha</string>
     <string name="detail_table_info_txt">Poznámky</string>
     <string name="detail_table_photos_txt">Fotografie:</string>
+    <string name="detail_table_datetime_txt">Vytvorené</string>
     <string name="delete_photo_ib_desc">delete image button</string>
     <string name="detail_record_button_desc">Detail record button desc</string>
     <string name="edit_polygon_button_desc">Edit polygon button desc</string>
@@ -116,6 +117,7 @@
         <item>Poškodenie jeleňou zverou</item>
         <item>Poškodenie srnčou zverou</item>
         <item>Napadnutie škodcom</item>
+        <item>Iné</item>
     </string-array>
 
     <!--    Other-->
@@ -125,4 +127,5 @@
     <!--    Toast-->
     <string name="must_be_password_before_login">Na prihlásenie sa do aplikácie musíte mať prístup na internet</string>
       <string name="geoserver_url_filter_username_parameter">meno</string>
+
 </resources>

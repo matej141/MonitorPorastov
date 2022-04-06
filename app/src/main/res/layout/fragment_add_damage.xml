@@ -19,7 +19,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:context=".fragments.AddDamageFragment">
+            tools:context=".fragments.AddOrUpdateRecordFragment">
 
             <TextView
                 android:id="@+id/main_title"

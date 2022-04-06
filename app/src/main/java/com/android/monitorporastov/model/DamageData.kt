@@ -21,5 +21,5 @@ data class DamageData(
     var isInGeoserver: Boolean = false,
     var changedShapeOfPolygon:Boolean = false,
     var bitmapsLoaded:Boolean = false,
-    var isUpdatingDirectlyFromMap:Boolean = false,
+    var isDirectlyFromMap:Boolean = false,
 )

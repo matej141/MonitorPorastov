@@ -25,9 +25,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android.monitorporastov.*
 import com.android.monitorporastov.Utils.afterTextChanged
 import com.android.monitorporastov.Utils.hideKeyboard
-import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
+import com.android.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
-import com.android.monitorporastov.fragments.viewmodels.AddDamageFragmentViewModel
+import com.android.monitorporastov.fragments.viewmodels.AddOrUpdateRecordFragmentViewModel
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import kotlinx.coroutines.*
@@ -38,17 +38,17 @@ import java.util.*
 /**
  * Fragment slúžiaci na zadanie údajov o poškodení (aj fotografií) a uloženie poškodenia.
  */
-class AddDamageFragment : Fragment() {
+class AddOrUpdateRecordFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private var editData = false  // či pridávame nové poškodenie, alebo meníme existujúce
     private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
-    private val viewModel: AddDamageFragmentViewModel by viewModels()
+    private val viewModel: AddOrUpdateRecordFragmentViewModel by viewModels()
 
     private var _binding: FragmentAddDamageBinding? = null
 
     private val binding get() = _binding!!
-    private var adapterOfPhotos = AddDamageFragmentPhotosRVAdapter(mutableListOf())
+    private var adapterOfPhotos = AddOrUpdateRecordPhotosRVAdapter(mutableListOf())
 
     private lateinit var listOfDamageType: Array<String>
 
@@ -288,7 +288,7 @@ class AddDamageFragment : Fragment() {
             Toast.makeText(context, "Záznam bol aktualizovaný",
                 Toast.LENGTH_SHORT).show()
             updateDataInSharedViewModel()
-            if (!damageDataItem.isUpdatingDirectlyFromMap) {
+            if (!damageDataItem.isDirectlyFromMap) {
                 navigateToDataDetailFragment()
             } else {
                 navigateToMapFragment()
@@ -734,7 +734,7 @@ class AddDamageFragment : Fragment() {
 
     private fun observeAdapterOfPhotos() {
         viewModel.adapterWasChanged.observe(viewLifecycleOwner) {
-            val adapter: AddDamageFragmentPhotosRVAdapter? = viewModel.adapterOfPhotos.value
+            val adapter: AddOrUpdateRecordPhotosRVAdapter? = viewModel.adapterOfPhotos.value
             if (adapter != null) {
                 recyclerView.adapter = adapter
             }
@@ -773,11 +773,11 @@ class AddDamageFragment : Fragment() {
 
     private fun nonSucceededToast() {
         if (viewModel.isEditingData.value == true) {
-            Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
+            Toast.makeText(context, "Záznam sa nepodarilo aktualizovať",
                 Toast.LENGTH_SHORT).show()
         }
         else {
-            Toast.makeText(context, "Záznam bol úspešne uložený",
+            Toast.makeText(context, "Záznam sa nepodarilo uložiť",
                 Toast.LENGTH_SHORT).show()
         }
     }

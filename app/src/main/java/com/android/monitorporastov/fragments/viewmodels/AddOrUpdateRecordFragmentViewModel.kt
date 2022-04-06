@@ -4,11 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.android.monitorporastov.Utils.createRequestBody
+import com.android.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.android.monitorporastov.fragments.viewmodels.base.DamagePhotosBaseViewModel
 import com.android.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory
-import com.android.monitorporastov.Utils.createRequestBody
-import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
-import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory
 import com.android.monitorporastov.model.DamageData
 import id.zelory.compressor.Compressor
@@ -17,16 +16,19 @@ import id.zelory.compressor.constraint.quality
 import id.zelory.compressor.constraint.size
 import kotlinx.coroutines.*
 import java.io.*
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.*
 
-class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
+class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
 
     private val _isEditingData = MutableLiveData<Boolean>()
     val isEditingData: LiveData<Boolean> = _isEditingData
     private val maxSizeOfPhoto = 600
 
-    private val _adapterOfPhotos = MutableLiveData<AddDamageFragmentPhotosRVAdapter>()
-    val adapterOfPhotos: LiveData<AddDamageFragmentPhotosRVAdapter> = _adapterOfPhotos
+    private val _adapterOfPhotos = MutableLiveData<AddOrUpdateRecordPhotosRVAdapter>()
+    val adapterOfPhotos: LiveData<AddOrUpdateRecordPhotosRVAdapter> = _adapterOfPhotos
 
     private val _updateSucceeded = MutableLiveData<Boolean>()
     val updateSucceeded: LiveData<Boolean> = _updateSucceeded
@@ -46,13 +48,13 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
 
 
     init {
-        val addDamageFragmentPhotosRVAdapter = AddDamageFragmentPhotosRVAdapter(mutableListOf())
+        val addDamageFragmentPhotosRVAdapter = AddOrUpdateRecordPhotosRVAdapter(mutableListOf())
         setAdapterOfPhotos(addDamageFragmentPhotosRVAdapter)
     }
 
     private fun setAdapterOfPhotos(
         adapter:
-        AddDamageFragmentPhotosRVAdapter,
+        AddOrUpdateRecordPhotosRVAdapter,
     ) {
         _adapterOfPhotos.value = adapter
     }
@@ -86,15 +88,15 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     fun setNameOfDamageDataRecord(name: String) {
-        nameOfDamageDataRecord = name
+        nameOfDamageDataRecord = name.removeWhitespaces()
     }
 
     fun setDescriptionOfDamageDataRecord(description: String) {
-        descriptionOfDamageDataRecord = description
+        descriptionOfDamageDataRecord = description.removeWhitespaces()
     }
 
     fun setDamageType(type: String) {
-        damageType = type
+        damageType = type.removeWhitespaces()
     }
 
     private fun setUncompletedNameWarning() {
@@ -113,6 +115,10 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
         _adapterWasChanged.value = true
     }
 
+    private fun String.removeWhitespaces(): String {
+        return filterNot { it.isWhitespace() }
+    }
+
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {
         super.setBitmaps(listOfBitmaps)
         setBitmapsToAdapter(listOfBitmaps)
@@ -120,26 +126,10 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun setBitmapsToAdapter(listOfBitmaps: MutableList<Bitmap>) {
-//        if (isEditingData.value == true) {
-//            listOfBitmaps.forEach {
-//                addPhotoItemToAdapter(it)
-//                addEmptyHexStringToAdapter()
-//            }
-//            return
-//        }
-//        val listOfPhotoItems = mutableListOf<PhotoItem>()
-//        listOfBitmaps.forEach {
-//            listOfPhotoItems.add(PhotoItem(it))
-//        }
-//        val adapter = AddDamageFragmentPhotosRVAdapter(listOfPhotoItems)
-//        setAdapterOfPhotos(adapter)
-
         listOfBitmaps.forEach {
             addPhotoItemToAdapter(it)
             addEmptyHexStringToAdapter()
         }
-
-
     }
 
     private fun addPhotoItemToAdapter(bitmap: Bitmap) {
@@ -347,7 +337,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun whereToNavigateBack() {
-        val isItemDirectlyFromMap = damageDataItem.value?.isUpdatingDirectlyFromMap == true
+        val isItemDirectlyFromMap = damageDataItem.value?.isDirectlyFromMap == true
         setNavigateToMapFragment(isItemDirectlyFromMap)
     }
 
@@ -374,11 +364,17 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
         damageDataItem.typ_poskodenia = damageType
         damageDataItem.popis_poskodenia = descriptionOfDamageDataRecord
         damageDataItem.pouzivatel = getUserName()
+        damageDataItem.datetime = getActualDateTime()
         return damageDataItem
     }
 
     private fun getUserName(): String {
         return String(usernameCharArray.value!!)
+    }
+
+    private fun getActualDateTime(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        return sdf.format(Date())
     }
 
     private fun updateSavedData() {
