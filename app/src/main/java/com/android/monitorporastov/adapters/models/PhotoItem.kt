@@ -1,3 +1,5 @@
 package com.android.monitorporastov.adapters.models
 
-data class PhotoItem(val image: Any?)
+import android.graphics.Bitmap
+
+data class PhotoItem(val image: Bitmap?)

@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.viewmodels.BaseViewModel
 import com.android.monitorporastov.GeoserverServiceAPI
-import com.android.monitorporastov.RetroService
+import com.android.monitorporastov.GeoserverRetroService
 import com.android.monitorporastov.Utils.editableToCharArray
 
 class LoginActivityViewModel : BaseViewModel() {
@@ -42,7 +42,7 @@ class LoginActivityViewModel : BaseViewModel() {
     }
 
     private fun getGeoserverServiceAPI(): GeoserverServiceAPI {
-        return RetroService.getServiceWithScalarsFactory(editableToCharArray(_usernameEditable.value),
+        return GeoserverRetroService.getServiceWithScalarsFactory(editableToCharArray(_usernameEditable.value),
             editableToCharArray(_passwordEditable.value))
     }
 

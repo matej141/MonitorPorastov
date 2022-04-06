@@ -26,7 +26,8 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
     override fun setUpPreviouslyLoadedPhotos() {
         super.setUpPreviouslyLoadedPhotos()
         val haveBeenLoaded = checkIfPhotosHaveBeenLoaded()
-        setNoPhotosToShow(!haveBeenLoaded)
+        val bitmapList: MutableList<Bitmap>? = bitmaps.value
+        setNoPhotosToShow(bitmapList.isNullOrEmpty())
     }
 
     override fun setNewlyLoadedPhotos() {

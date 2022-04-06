@@ -1,6 +1,7 @@
 package com.android.monitorporastov
 
 import android.util.Log
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.urlNameOfUsernameParameter
 import org.osmdroid.api.IMapView
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.util.MapTileIndex
@@ -21,6 +22,7 @@ open class WMSTileSourceRepaired(
     size: Int,
     private val style: String?,
 ) : OnlineTileSourceBase(aName, 0, 22, size, "png", aBaseUrl) {
+
     override fun getTileURLString(pMapTileIndex: Long): String {
         val baseUrl = baseUrl
         val sb = StringBuilder(baseUrl)
@@ -49,8 +51,7 @@ open class WMSTileSourceRepaired(
                 sb.append(boundingBox.lonWest).append(",")
                 sb.append(boundingBox.latNorth).append(",")
                 sb.append(boundingBox.lonEast)
-            }
-            catch (e:Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
 
@@ -62,7 +63,7 @@ open class WMSTileSourceRepaired(
         sb.append("&format=image/png")
         sb.append("&transparent=true")
         if (style != null) sb.append("&styles=").append(style)
-        sb.append("&viewparams=meno:dano")
+        sb.append(urlViewParams)
         Log.i(IMapView.LOGTAG, sb.toString())
         return sb.toString()
     }
@@ -99,6 +100,7 @@ open class WMSTileSourceRepaired(
         // Size of square world map in meters, using WebMerc projection.
         private const val MAP_SIZE = 20037508.34789244 * 2
         private const val version = "1.3.0"
+
         fun createFrom(endpoint: WMSEndpoint, layer: WMSLayer): WMSTileSourceRepaired {
             val crs = "EPSG:4326"
             val s = if (layer.styles.isEmpty()) null else layer.styles[0]
@@ -108,6 +110,20 @@ open class WMSTileSourceRepaired(
                 crs,
                 layer.pixelSize,
                 s)
+        }
+
+        private var urlViewParams: String = ""
+
+        fun createLayer(endpoint: WMSEndpoint, layer: WMSLayer, userName: String): WMSTileSourceRepaired {
+            urlViewParams = createUrlViewParams(userName)
+            return createFrom(endpoint, layer)
+        }
+
+        private fun createUrlViewParams(username: String): String {
+            val parameter = "&viewparams="
+            val value = "$urlNameOfUsernameParameter:$username"
+            return parameter + value
+
         }
     }
 }

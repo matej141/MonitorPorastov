@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         observeNetwork()
         observeErrorMessage()
         observeUnauthorisedError()
-        sharedViewModel.clearErrorMessage()
+
         noNetworkAvailableAD = noNetworkAvailable(this)
     }
 
@@ -195,6 +195,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         sharedViewModel.errorMessage.observe(this) { errorMessage ->
             if (errorMessage != null) {
                 createErrorMessageAD(this, errorMessage)
+                sharedViewModel.clearErrorMessage()
             }
 
         }

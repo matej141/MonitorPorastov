@@ -26,7 +26,6 @@ import com.android.monitorporastov.*
 import com.android.monitorporastov.Utils.afterTextChanged
 import com.android.monitorporastov.Utils.hideKeyboard
 import com.android.monitorporastov.adapters.AddDamageFragmentPhotosRVAdapter
-import com.android.monitorporastov.adapters.models.PhotoItem
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.fragments.viewmodels.AddDamageFragmentViewModel
 import com.android.monitorporastov.model.DamageData
@@ -147,7 +146,7 @@ class AddDamageFragment : Fragment() {
 
     private fun setUpExistingBitmaps() {
         damageDataItem.bitmaps.forEach {
-            adapterOfPhotos.photoItems.add((PhotoItem(it)))
+            // adapterOfPhotos.photoItems.add((PhotoItem(it)))
             adapterOfPhotos.hexStrings.add("")
         }
         damageDataItem.indexesOfPhotos.forEach { adapterOfPhotos.indexesOfPhotos.add(it) }
@@ -499,7 +498,7 @@ class AddDamageFragment : Fragment() {
 
     private suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean = CompletableDeferred<Boolean>()
-        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
+        val service = GeoserverRetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             val response = service.postToGeoserver(requestBody)
             withContext(Dispatchers.Main) {
@@ -734,8 +733,11 @@ class AddDamageFragment : Fragment() {
     }
 
     private fun observeAdapterOfPhotos() {
-        viewModel.adapterOfPhotos.observe(viewLifecycleOwner) { adapterOfPhotos ->
-            recyclerView.adapter = adapterOfPhotos
+        viewModel.adapterWasChanged.observe(viewLifecycleOwner) {
+            val adapter: AddDamageFragmentPhotosRVAdapter? = viewModel.adapterOfPhotos.value
+            if (adapter != null) {
+                recyclerView.adapter = adapter
+            }
         }
     }
 
@@ -748,14 +750,35 @@ class AddDamageFragment : Fragment() {
     private fun observeIfUpdateSucceeded() {
         viewModel.updateSucceeded.observe(viewLifecycleOwner) { updateSucceeded ->
             if (updateSucceeded) {
-                Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
-                    Toast.LENGTH_SHORT).show()
+                succeededToasts()
                 observeWhereToNavigate()
             }
             else {
-                Toast.makeText(context, "Pri aktualizovaní záznamu nastala chyba",
-                    Toast.LENGTH_SHORT).show()
+                nonSucceededToast()
             }
+            sharedViewModel.clearSelectedDamageDataItemFromMap()
+        }
+    }
+
+    private fun succeededToasts() {
+        if (viewModel.isEditingData.value == true) {
+            Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
+                Toast.LENGTH_SHORT).show()
+        }
+        else {
+            Toast.makeText(context, "Záznam bol úspešne uložený",
+                Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun nonSucceededToast() {
+        if (viewModel.isEditingData.value == true) {
+            Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
+                Toast.LENGTH_SHORT).show()
+        }
+        else {
+            Toast.makeText(context, "Záznam bol úspešne uložený",
+                Toast.LENGTH_SHORT).show()
         }
     }
 

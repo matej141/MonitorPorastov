@@ -36,6 +36,7 @@ class MainSharedViewModelNew : BaseViewModel() {
 
     fun setIfLoadedUserData(value: Boolean) {
         _loadedUserData.postValue(value)
+        _loadedUserData.value = value
     }
 
     fun selectDamageData(item: DamageData) {
@@ -50,17 +51,31 @@ class MainSharedViewModelNew : BaseViewModel() {
         _selectedDamageDataItemToShowInMap.value = damageData
     }
 
+    fun clearSelectedDamageDataItemFromMap() {
+        mutableSelectedDamageDataItemFromMap.value = null
+    }
+
+    fun clearSelectedDamageDataItemToShowInMap() {
+        _selectedDamageDataItemToShowInMap.value = null
+    }
+
     suspend fun deleteItem(damageData: DamageData?): Boolean {
         if (damageData == null) {
             return false
         }
         val deleteRecordString = createDeleteRecordTransactionString(damageData)
         val requestBody = Utils.createRequestBody(deleteRecordString)
-        val deferredBoolean: Deferred<Boolean> = CoroutineScope(Dispatchers.Main).async<Boolean> {
+        val deferredBoolean: Deferred<Boolean> = CoroutineScope(Dispatchers.Main).async {
             val deferred = async { postToGeoserver(requestBody) }
             deferred.await()
         }
-        return deferredBoolean.await()
+        val value = deferredBoolean.await()
+        if (value) {
+            setIfLoadedUserData(false)
+        }
+
+
+        return value
     }
 
     private fun createDeleteRecordTransactionString(damageData: DamageData): String {

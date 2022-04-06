@@ -1,9 +1,12 @@
 package com.android.monitorporastov.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -52,7 +55,9 @@ class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDe
         recyclerView = binding.dataItemList
         setUpAdapter()
         observeDamageDataList()
+        observeIfDataLoaded()
         // setCredentials()
+        sharedViewModel.clearSelectedDamageDataItemFromMap()
         viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
     }
 
@@ -107,8 +112,24 @@ class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDe
 
     private fun observeDamageDataList() {
         viewModel.damageDataList.observe(viewLifecycleOwner) { damageData ->
+
             adapter.setDataList(damageData)
+            Log.d("HOVNOOOO", "sucks")
             binding.progressBar.visibility = View.GONE
+        }
+    }
+
+    private fun observeIfDataLoaded() {
+        viewModel.loadedUserData.observe(viewLifecycleOwner) { loaded ->
+            if (loaded) {
+                binding.progressBar.visibility = View.GONE
+            }
+            else {
+                binding.progressBar.visibility = View.VISIBLE
+                Toast.makeText(context, "Načítavam dáta",
+                    Toast.LENGTH_SHORT).show()
+            }
+
         }
     }
 
