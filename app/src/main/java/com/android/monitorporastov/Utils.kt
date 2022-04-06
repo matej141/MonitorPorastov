@@ -2,7 +2,6 @@ package com.android.monitorporastov
 
 import android.app.Activity
 import android.content.Context
-import android.provider.Settings.Global.getString
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -17,8 +16,6 @@ import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.util.concurrent.TimeUnit
-import com.android.monitorporastov.R.string
-import java.net.InetAddress
 
 
 // https://stackoverflow.com/questions/39489887/call-method-from-kotlin-class
@@ -110,7 +107,7 @@ object Utils {
 
     suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
+        val service = GeoserverRetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.postToGeoserver(requestBody)

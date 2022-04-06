@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.viewmodels.BaseViewModel
 import com.android.monitorporastov.GeoserverServiceAPI
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
-import com.android.monitorporastov.RetroService
+import com.android.monitorporastov.GeoserverRetroService
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.launch
 
@@ -82,7 +82,7 @@ abstract class MapBaseViewModel: BaseViewModel() {
         val geoserverServiceAPI: GeoserverServiceAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
-                    RetroService.getServiceWithGsonFactory(usernameChars,
+                    GeoserverRetroService.getServiceWithGsonFactory(usernameChars,
                         passwordChars)
                 }
             }

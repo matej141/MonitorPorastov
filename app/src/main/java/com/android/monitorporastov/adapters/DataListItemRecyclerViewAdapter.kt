@@ -16,11 +16,18 @@ class DataListItemRecyclerViewAdapter(
     ) :
     RecyclerView.Adapter<DataListItemRecyclerViewAdapter.ViewHolder>() {
 
-    private var damageDataList =  listOf<DamageData>()
+    private var damageDataList =  mutableListOf<DamageData>()
+    private var size = 0
 
-    fun setDataList(newDamageDataList: List<DamageData>) {
+    fun setDataList(newDamageDataList: MutableList<DamageData>) {
         this.damageDataList = newDamageDataList
-        notifyItemRangeChanged(0, newDamageDataList.size)
+        if (damageDataList.size > size) {
+            notifyItemRangeChanged(0, newDamageDataList.size)
+        }
+        else {
+            notifyItemRangeRemoved(0, size)
+        }
+        size = damageDataList.size
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

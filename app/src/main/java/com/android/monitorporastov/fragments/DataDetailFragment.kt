@@ -162,7 +162,7 @@ class DataDetailFragment : Fragment() {
 
             Toast.makeText(context, "Dáta boli úspešne vymazané",
                 Toast.LENGTH_SHORT).show()
-            Utils.navigateToPreviousFragment(findNavController())
+
             navigateToDataListFragment()
         }
         binding.progressBar.visibility = View.GONE

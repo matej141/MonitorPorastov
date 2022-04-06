@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.BasicAuthInterceptor
-import com.android.monitorporastov.RetroService
+import com.android.monitorporastov.GeoserverRetroService
 import com.android.monitorporastov.Utils
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
@@ -17,7 +17,7 @@ import org.osmdroid.util.GeoPoint
 import java.util.concurrent.TimeUnit
 
 open class MainSharedViewModel : BaseViewModel() {
-    //private val service = RetroService.get()
+    //private val service = GeoserverRetroService.get()
    // val damageDataList = MutableLiveData<List<DamageData>>()
     private val mutableDamageDataItem = MutableLiveData<DamageData?>()
     private val mutableSelectedDamageDataItem = MutableLiveData<DamageData?>()
@@ -121,7 +121,7 @@ open class MainSharedViewModel : BaseViewModel() {
 
 //    fun fetchUserData() {
 //        val okHttpClient: OkHttpClient = Utils.createOkHttpClient()
-//        val service = RetroService.createServiceWithGsonFactory(okHttpClient)
+//        val service = GeoserverRetroService.createServiceWithGsonFactory(okHttpClient)
 //        val filterString = createFilterString()
 //        job = CoroutineScope(Dispatchers.IO).launch {
 //            try {
@@ -173,7 +173,7 @@ open class MainSharedViewModel : BaseViewModel() {
 
     fun fetchPhotos(item: DamageData) {
         val okHttpClient: OkHttpClient = createOkHttpClient()
-        val service = RetroService.createServiceWithGsonFactory(okHttpClient)
+        val service = GeoserverRetroService.createServiceWithGsonFactory(okHttpClient)
         job = CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.getPhotos("id:${item.unique_id}")
@@ -232,7 +232,7 @@ open class MainSharedViewModel : BaseViewModel() {
 
 //    override suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
 //        val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-//        val service = RetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
+//        val service = GeoserverRetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
 //        CoroutineScope(Dispatchers.IO).launch {
 //            try {
 //                val response = service.postToGeoserver(requestBody)

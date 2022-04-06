@@ -68,7 +68,7 @@ object GeoserverDataPostStringsFactory {
         if (description != originalData.popis_poskodenia) {
             updatePropertiesString += createDescriptionPropertyString(description)
         }
-        if (originalData.changedShapeOfPolygon) {
+        if (updatedData.changedShapeOfPolygon) {
             updatePropertiesString +=
                 createPerimeterPropertyString(originalData.obvod.toString()) +
                         createAreaPropertyString(originalData.obsah.toString()) +
@@ -137,42 +137,42 @@ object GeoserverDataPostStringsFactory {
         val stringFromPoints = createStringFromPoints(newDamageData)
 
         return createHeaderOfTransaction() +
-                "<Insert xmlns=$openGisWFSUrl>" +
-                "   <$damagesLayerName xmlns=\"$schemaLocationUrl\">" +
-                "       <$propertyNameOfDamageRecordName xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.nazov}" +
-                "       </$propertyNameOfDamageRecordName>" +
-                "       <$propertyNameOfUser xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.pouzivatel}" +
-                "       </$propertyNameOfUser>" +
-                "       <$propertyNameOfDamageType xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.typ_poskodenia}" +
-                "       </$propertyNameOfDamageType>" +
-                "       <$propertyNameOfDamageDescription xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.popis_poskodenia}" +
-                "       </$propertyNameOfDamageDescription>" +
-                "       <$propertyNameOfPerimeter xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.obvod}" +
-                "       </$propertyNameOfPerimeter>" +
-                "       <$propertyNameOfArea xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.obsah}" +
-                "       </$propertyNameOfArea>" +
-                "       <$propertyNameOfUniqueId xmlns=\"$schemaLocationUrl\">" +
-                "           ${newDamageData.unique_id}" +
-                "       </$propertyNameOfUniqueId>" +
-                "       <$propertyNameOfGeometry xmlns=\"$schemaLocationUrl\">" +
-                "           <gml:Polygon srsName=$srsName>" +
-                "               <gml:outerBoundaryIs>" +
-                "                   <gml:LinearRing>" +
-                "                       <gml:coordinates cs=\",\" ts=\" \">" +
-                                            stringFromPoints +
-                "                       </gml:coordinates>" +
-                "                   </gml:LinearRing>" +
-                "               </gml:outerBoundaryIs>" +
-                "           </gml:Polygon>" +
-                "       </$propertyNameOfGeometry>" +
-                "       </$damagesLayerName>" +
-                "</Insert>" +
-                "</Transaction>"
+                "<Insert xmlns=$openGisWFSUrl>\n" +
+                "   <$damagesLayerName xmlns=\"$schemaLocationUrl\">\n" +
+                "       <$propertyNameOfDamageRecordName xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.nazov}\n" +
+                "       </$propertyNameOfDamageRecordName>\n" +
+                "       <$propertyNameOfUser xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.pouzivatel}\n" +
+                "       </$propertyNameOfUser>\n" +
+                "       <$propertyNameOfDamageType xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.typ_poskodenia}\n" +
+                "       </$propertyNameOfDamageType>\n" +
+                "       <$propertyNameOfDamageDescription xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.popis_poskodenia}\n" +
+                "       </$propertyNameOfDamageDescription>\n" +
+                "       <$propertyNameOfPerimeter xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.obvod}\n" +
+                "       </$propertyNameOfPerimeter>\n" +
+                "       <$propertyNameOfArea xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.obsah}\n" +
+                "       </$propertyNameOfArea>\n" +
+                "       <$propertyNameOfUniqueId xmlns=\"$schemaLocationUrl\">\n" +
+                "           ${newDamageData.unique_id}\n" +
+                "       </$propertyNameOfUniqueId>\n" +
+                "       <$propertyNameOfGeometry xmlns=\"$schemaLocationUrl\">\n" +
+                "           <gml:Polygon srsName=$srsName>\n" +
+                "               <gml:outerBoundaryIs>\n" +
+                "                   <gml:LinearRing>\n" +
+                "                       <gml:coordinates cs=\",\" ts=\" \">\n" +
+                                            stringFromPoints + "\n" +
+                "                       </gml:coordinates>\n" +
+                "                   </gml:LinearRing>\n" +
+                "               </gml:outerBoundaryIs>\n" +
+                "           </gml:Polygon>\n" +
+                "       </$propertyNameOfGeometry>\n" +
+                "       </$damagesLayerName>\n" +
+                "</Insert>\n" +
+                "</Transaction>\n"
     }
 }

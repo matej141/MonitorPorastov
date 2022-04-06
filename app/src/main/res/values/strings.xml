@@ -25,6 +25,9 @@
     <string name="menu_E_parcel_txt">Parcely registra E</string>
     <string name="menu_hunting_territories_txt">Poľovné revíry</string>
     <string name="menu_watercourse_txt">Vodné toky</string>
+    <string name="menu_vrstevnice10m_txt">Vrstevnice 10m</string>
+    <string name="menu_vrstevnice50m_txt">Vrstevnice 50m</string>
+
     <string name="stay_logged">zostať prihlásený</string>
     <string name="menu_log_out_txt">Odhlásiť sa</string>
 
@@ -80,6 +83,8 @@
     <string name="hunting_territories_layer_name">geoserver_skeagis:PolovneReviry</string>
     <string name="watercourse_layer_name">geoserver_skeagis:VodneToky</string>
     <string name="damage_polygon_layer_name">geoserver_skeagis:porasty_pouzivatel_sql</string>
+    <string name="vrstevnice10m_layer_name">geoserver_skeagis:VrstevniceSR10m</string>
+    <string name="vrstevnice50m_layer_name">geoserver_skeagis:VrstevniceSR50m</string>
 
     <string name="user_polygons_layer_name">geoserver_skuska:porasty_pouzivatel_sql</string>
 

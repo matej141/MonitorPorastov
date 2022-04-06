@@ -9,7 +9,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
 
-object RetroService {
+object GeoserverRetroService {
     private const val BASE_URL = "http://services.skeagis.sk:7492/geoserver/"
 
     fun createServiceWithGsonFactory(okHttpClientInterceptor: OkHttpClient): GeoserverServiceAPI {
@@ -25,7 +25,7 @@ object RetroService {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClientInterceptor)
-            .addConverterFactory(ScalarsConverterFactory.create())  // tu je rozdiel
+            .addConverterFactory(ScalarsConverterFactory.create())
             .build()
             .create(GeoserverServiceAPI::class.java)
     }

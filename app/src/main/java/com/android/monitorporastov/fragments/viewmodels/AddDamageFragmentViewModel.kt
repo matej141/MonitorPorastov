@@ -41,6 +41,10 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     private val _navigateToMapFragment = MutableLiveData<Boolean>()
     val navigateToMapFragment: LiveData<Boolean> = _navigateToMapFragment
 
+    private val _adapterWasChanged = MutableLiveData<Boolean>()
+    val adapterWasChanged: LiveData<Boolean> = _adapterWasChanged
+
+
     init {
         val addDamageFragmentPhotosRVAdapter = AddDamageFragmentPhotosRVAdapter(mutableListOf())
         setAdapterOfPhotos(addDamageFragmentPhotosRVAdapter)
@@ -63,9 +67,19 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
         prepareToLoadPhotos()
     }
 
+    private fun setExistingDamageDataFromMapFragment(damageData: DamageData) {
+        if (loadedPhotos.value == true) {
+            return
+        }
+        setDamageDataItem(damageData)
+        setEditingDataValueAsTrue()
+
+        prepareToLoadPhotos()
+    }
+
     fun setDamageDataFromMap(damageData: DamageData) {
         if (damageData.isInGeoserver) {
-            setExistingDamageData(damageData)
+            setExistingDamageDataFromMapFragment(damageData)
             return
         }
         setDamageDataItem(damageData)
@@ -95,6 +109,10 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
         _navigateToMapFragment.value = value
     }
 
+    private fun setAdapterWasChanged() {
+        _adapterWasChanged.value = true
+    }
+
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {
         super.setBitmaps(listOfBitmaps)
         setBitmapsToAdapter(listOfBitmaps)
@@ -102,15 +120,31 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun setBitmapsToAdapter(listOfBitmaps: MutableList<Bitmap>) {
+//        if (isEditingData.value == true) {
+//            listOfBitmaps.forEach {
+//                addPhotoItemToAdapter(it)
+//                addEmptyHexStringToAdapter()
+//            }
+//            return
+//        }
+//        val listOfPhotoItems = mutableListOf<PhotoItem>()
+//        listOfBitmaps.forEach {
+//            listOfPhotoItems.add(PhotoItem(it))
+//        }
+//        val adapter = AddDamageFragmentPhotosRVAdapter(listOfPhotoItems)
+//        setAdapterOfPhotos(adapter)
+
         listOfBitmaps.forEach {
             addPhotoItemToAdapter(it)
             addEmptyHexStringToAdapter()
         }
+
+
     }
 
     private fun addPhotoItemToAdapter(bitmap: Bitmap) {
-        val photoItem = PhotoItem(bitmap)
-        adapterOfPhotos.value?.photoItems?.add(photoItem)
+        adapterOfPhotos.value?.bitmaps?.add(bitmap)
+        setAdapterWasChanged()
     }
 
     private fun addEmptyHexStringToAdapter() {
@@ -149,6 +183,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
         notifyItemInsertedInAdapter()
         job = CoroutineScope(Dispatchers.Main).launch {
             addBitmapHexToAdapter(resizedBitmap, context)
+            setAdapterWasChanged()
         }
     }
 
@@ -168,7 +203,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun notifyItemInsertedInAdapter() {
-        val sizeOfPhotoItemsList = adapterOfPhotos.value?.photoItems?.size
+        val sizeOfPhotoItemsList = adapterOfPhotos.value?.bitmaps?.size
         if (sizeOfPhotoItemsList != null) {
             adapterOfPhotos.value?.notifyItemInserted(sizeOfPhotoItemsList - 1)
         }
@@ -298,7 +333,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
 
     private fun checkIfCallsWereSucceeded(resultsList: List<Boolean>): Boolean {
         val predicate: (Boolean) -> Boolean = { it }
-        return resultsList.any(predicate)
+        return resultsList.all(predicate)
     }
 
     private fun onSucceededResult() {
@@ -319,7 +354,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     private suspend fun updateDamageInfoInGeoserver(): Boolean {
         val updateDamageDataString = createUpdateDamageDataString()
         if (updateDamageDataString.isEmpty()) {
-            return false
+            return true
         }
         val requestBody = createRequestBody(updateDamageDataString)
         return postToGeoserver(requestBody)
@@ -334,7 +369,6 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
 
     private fun createNewDamageDataItem(): DamageData {
         val originalData = damageDataItem.value
-        originalData?.copy()
         val damageDataItem = originalData?.copy() ?: DamageData()
         damageDataItem.nazov = nameOfDamageDataRecord
         damageDataItem.typ_poskodenia = damageType
@@ -344,7 +378,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun getUserName(): String {
-        return usernameCharArray.toString()
+        return String(usernameCharArray.value!!)
     }
 
     private fun updateSavedData() {
@@ -359,7 +393,7 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     private suspend fun updatePhotosInGeoserver(): Boolean {
         val updatePhotosTransactionString = createUpdatePhotosTransactionString()
         if (updatePhotosTransactionString.isEmpty()) {
-            return false
+            return true
         }
         val requestBody = createRequestBody(updatePhotosTransactionString)
         return postToGeoserver(requestBody)
@@ -388,7 +422,11 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun updateDataInSharedViewModel() {
-        // sharedViewModel.updateSelectedItems(damageDataItem)
+        if (sharedViewModel?.selectedDamageDataItemFromMap?.value?.id ==
+            sharedViewModel?.selectedDamageDataItem?.value?.id) {
+            damageDataItem.value?.let { sharedViewModel?.selectDamageData(it) }
+        }
+        //sharedViewModel.updateSelectedItems(damageDataItem)
     }
 
     private fun saveDataToGeoserver() {
@@ -399,13 +437,11 @@ class AddDamageFragmentViewModel : DamagePhotosBaseViewModel() {
             val resultsListDeferred =
                 listOf(
                     async { sendDamageDataToGeoserver(uniqueId) },
-                    async {
-                        sendPhotosToGeoserver(uniqueId)
+                    async { sendPhotosToGeoserver(uniqueId)
                     })
             resultsListDeferred.awaitAll()
             val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
             val ifUpdateSucceeded = checkIfCallsWereSucceeded(resultsList)
-
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()

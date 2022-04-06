@@ -34,5 +34,6 @@ object GeoserverPropertiesNames {
     const val srsName = "\"urn:ogc:def:crs:EPSG::4326\""
 
 
-    const val parameterNameOfIdUrlFilter = "id"
+    const val urlNameOfIdParameter = "id"
+    const val urlNameOfUsernameParameter = "meno"
 }

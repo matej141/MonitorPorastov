@@ -37,7 +37,7 @@ import com.android.monitorporastov.databinding.FragmentMapBinding
 import com.android.monitorporastov.fragments.viewmodels.MapFragmentViewModel
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
@@ -66,10 +66,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MapFragment : Fragment() {
+class MapFragmentCopy : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
-    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: MapFragmentViewModel by activityViewModels()
     private var job: Job? = null
     private lateinit var mMap: MapView
@@ -207,7 +207,7 @@ class MapFragment : Fragment() {
         setUpButtonsListeners()
         drawerLockInterface = activity as DrawerLockInterface
 
-        //sharedViewModel.clearSelectedDamageDataItemFromMap()
+        sharedViewModel.clearSelectedDamageDataItemFromMap()
         // https://www.py4u.net/discuss/616531
         // riešenie navcontrolleru, keď sa používateľ z fragmentu vráti do tohto fragmentu
         val navController = findNavController()
@@ -231,7 +231,6 @@ class MapFragment : Fragment() {
         // vykreslenie už existujúcich polygónov
         drawExistingPolygons()
         observeItemFromPokus()
-        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
     }
 
 
@@ -261,15 +260,11 @@ class MapFragment : Fragment() {
                     true
                 getString(R.string.LPIS_layer_name) -> menu.findItem(R.id.menu_LPIS).isChecked =
                     true
-                getString(R.string.C_parcel_layer_name) -> menu.findItem(R.id.menu_C_parcel).isChecked =
+                getString(R.string.C_parcel_layer_name) -> menu.findItem(R.string.C_parcel_layer_name).isChecked =
                     true
-                getString(R.string.E_parcel_layer_name) -> menu.findItem(R.id.menu_E_parcel).isChecked =
+                getString(R.string.E_parcel_layer_name) -> menu.findItem(R.string.E_parcel_layer_name).isChecked =
                     true
-                getString(R.string.watercourse_layer_name) -> menu.findItem(R.id.menu_watercourse).isChecked =
-                    true
-                getString(R.string.vrstevnice10m_layer_name) -> menu.findItem(R.id.menu_vrstevnice10m).isChecked =
-                    true
-                getString(R.string.vrstevnice50m_layer_name) -> menu.findItem(R.id.menu_vrstevnice50m).isChecked =
+                getString(R.string.watercourse_layer_name) -> menu.findItem(R.string.watercourse_layer_name).isChecked =
                     true
             }
         }
@@ -290,8 +285,10 @@ class MapFragment : Fragment() {
         if (id == R.id.menu_ortofoto && mapLayerStr != getString(R.string.ortofoto_layer_name)) {
             mapLayerStr = getString(R.string.ortofoto_layer_name)
             loadBase = true
+        } else if (id == R.id.menu_BPEJ && mapLayerStr != getString(R.string.BPEJ_layer_name)) {
+            mapLayerStr = getString(R.string.BPEJ_layer_name)
+            loadBase = true
         }
-
 //        else if (id == R.id.menu_hunting_territories && mapLayerStr != getString(R.string.hunting_territories_layer_name)) {
 //            mapLayerStr = getString(R.string.hunting_territories_layer_name)
 //            loadBase = true
@@ -305,9 +302,6 @@ class MapFragment : Fragment() {
         var layerName = ""
 
         when (id) {
-            R.id.menu_BPEJ -> {
-                layerName = getString(R.string.BPEJ_layer_name)
-            }
             R.id.menu_C_parcel -> {
                 layerName = getString(R.string.C_parcel_layer_name)
             }
@@ -322,12 +316,6 @@ class MapFragment : Fragment() {
             }
             R.id.menu_watercourse -> {
                 layerName = getString(R.string.watercourse_layer_name)
-            }
-            R.id.menu_vrstevnice10m -> {
-                layerName = getString(R.string.vrstevnice10m_layer_name)
-            }
-            R.id.menu_vrstevnice50m -> {
-                layerName = getString(R.string.vrstevnice50m_layer_name)
             }
         }
 
@@ -354,13 +342,11 @@ class MapFragment : Fragment() {
     private val locationCallback = object : LocationCallback() {
         // https://stackoverflow.com/questions/45576935/android-fusedlocationprovider-returns-null-if-no-internet-connection-available
         // https://stackoverflow.com/questions/59734242/android-fusedlocationproviderclient-not-working-with-apn-sim-its-working-with-wi
-        override fun onLocationResult(locationResult: LocationResult) {
-            // nafejkovana poloha na Turc. Peter, vymazat...
-            val l = Location("")
-            l.latitude = 49.033703
-            l.longitude = 18.890103
-            // lastLocation = locationResult.lastLocation
-            lastLocation = l
+        override fun onLocationResult(locationResult: LocationResult?) {
+            if (locationResult == null) {
+                return
+            }
+            lastLocation = locationResult.lastLocation
             if (firstLoad) {
                 centerMap()
                 mMapController.setZoom(defaultZoomLevel)
@@ -369,8 +355,7 @@ class MapFragment : Fragment() {
 
             }
 
-             // updateMarkerLocation(locationResult.lastLocation)
-            updateMarkerLocation(l)
+            updateMarkerLocation(locationResult.lastLocation)
         }
     }
 
@@ -531,10 +516,8 @@ class MapFragment : Fragment() {
                 }
                 checkIfPreviousFragmentIsDataDetailFragment() -> {
                     // navigateToDetailFragment()
-                    sharedViewModel.clearSelectedDamageDataItemFromMap()
                     findNavController().navigateUp()
                     noToDestroy = true
-
                 }
                 else -> {
                     // ak nemerá nič, opýta sa ho, či chce ukončít aplikáciu.
@@ -642,8 +625,6 @@ class MapFragment : Fragment() {
                 } else {
                     setUpForGPSMeasure()
                 }
-                sharedViewModel.clearSelectedDamageDataItemFromMap()
-                setSelectedRecordAsNull()
             }
             .setNegativeButton(getString(R.string.button_cancel_text)) { dialog, _ ->
                 dialog.cancel()
@@ -693,7 +674,7 @@ class MapFragment : Fragment() {
         var wmsEndpoint: WMSEndpoint? = null
         try {
             val c: HttpURLConnection = URL(urlString).openConnection() as HttpURLConnection
-            val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!), String(viewModel.passwordCharArray.value!!))
+            val credential = Credentials.basic("dano", "test")
             c.setRequestProperty("Authorization", credential)
             val inputStream: InputStream = c.inputStream
             wmsEndpoint = WMSParser.parse(inputStream)
@@ -805,9 +786,9 @@ class MapFragment : Fragment() {
                 if (wmsEndpoint != null) {
                     val layer = wmsEndpoint.layers.filter { it.name == layerName }[0]
                     val source =
-                        WMSTileSourceRepaired.createLayer(wmsEndpoint, layer, String(viewModel.usernameCharArray.value!!))
+                        WMSTileSourceRepaired.createFrom(wmsEndpoint, layer)
                     // authorization dat iba raz:
-                    val credential = Credentials.basic(String(viewModel.usernameCharArray.value!!), String(viewModel.passwordCharArray.value!!))
+                    val credential = Credentials.basic("dano", "test")
                     Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
                         credential
                     deferredSource.complete(source)
@@ -963,23 +944,19 @@ class MapFragment : Fragment() {
     private fun createFilterString(p: GeoPoint): String {
         val coordinateString = createCoordinateString(p)
         return "<Filter xmlns:ogc=\"http://www.opengis.net/ogc\" " +
-                "   xmlns:gml=\"http://www.opengis.net/gml\">" +
-                "       <And>" +
-                "           <Intersects>" +
-                "               <PropertyName>geom</PropertyName>" +
-                "                   <gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
-                "                       <gml:coordinates>$coordinateString</gml:coordinates>" +
-                "                   </gml:Point>" +
-                "           </Intersects>\n" +
-
-                "           <PropertyIsEqualTo>\n" +
-                "               <PropertyName>pouzivatel</PropertyName>\n" +
-                "                   <Literal>" +
-                "                       ${String(viewModel.usernameCharArray.value!!)}" +
-                "                   </Literal>\n" +
-                "           </PropertyIsEqualTo>" +
-                "       </And>" +
-                "</Filter>"
+                "xmlns:gml=\"http://www.opengis.net/gml\">" +
+                "<And>" +
+                "<Intersects>" +
+                "<PropertyName>geom</PropertyName>" +
+                "<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">" +
+                "<gml:coordinates>$coordinateString</gml:coordinates>" +
+                "</gml:Point>" +
+                "</Intersects>\n" +
+                "<PropertyIsEqualTo>\n" +
+                "<PropertyName>pouzivatel</PropertyName>\n" +
+                "<Literal>dano</Literal>\n" +   // zmenit pouzivatela
+                "</PropertyIsEqualTo>" +
+                "</And></Filter>"
     }
 
     private fun getDetailOfPolygonOnMap(p: GeoPoint) {
@@ -994,6 +971,8 @@ class MapFragment : Fragment() {
             try {
                 val response = service.getDetail(filterString)
                 withContext(Dispatchers.Main) {
+
+
                     if (response.isSuccessful) {
                         val usersData: UsersData? = response.body()
                         handleIfShowDetailOfPolygon(usersData)
@@ -1058,7 +1037,6 @@ class MapFragment : Fragment() {
         ) {
             clearMapFromShownDetail()
             setSelectedRecordAsNull()
-            sharedViewModel.clearSelectedDamageDataItemFromMap()
         }
     }
 
@@ -1096,17 +1074,17 @@ class MapFragment : Fragment() {
 
     private fun showDetailInfo(data: DamageData) {
         val txtPerimeter = "${
-            "%.${2}f".format(data.obvod)
+            "%.${3}f".format(data.obvod)
         } m"
         val txtArea = "${
-            "%.${2}f".format(data.obsah)
+            "%.${3}f".format(data.obsah)
         } m\u00B2"
         binding.layoutContainer.detailInformationLayout.damageName.text =
             if (!data.nazov.isNullOrEmpty()) data.nazov else "-------"
         binding.layoutContainer.detailInformationLayout.damageType.text =
-            if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "(nezadaný typ poškodenia)"
+            if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.damageInfo.text =
-            if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "(nezadaný popis)"
+            if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "-------"
         binding.layoutContainer.detailInformationLayout.perimeter.text = txtPerimeter
         binding.layoutContainer.detailInformationLayout.area.text = txtArea
     }
@@ -1322,34 +1300,22 @@ class MapFragment : Fragment() {
         binding.backButton.visibility = View.VISIBLE
     }
 
-    private suspend fun handleDeletingRecord(): Boolean {
-        val deferredBoolean = CompletableDeferred<Boolean>()
-        val damageDataItem = selectedRecord ?: return false
-        AlertDialog.Builder(requireContext())  //
-            .setTitle(R.string.if_delete_record_title)
-            .setPositiveButton(R.string.button_positive_text) { _, _ ->
-                CoroutineScope(Dispatchers.Main).launch {
-                    binding.progressBar.visibility = View.VISIBLE
-                    deferredBoolean.complete(sharedViewModel.deleteItem(damageDataItem))
-                }
-            }
-            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
-                deferredBoolean.complete(false)
-                dialog.cancel()
-            }
-            .create()
-            .show()
+    private suspend fun handleDeletingRecord() {
+        if (selectedRecord == null) {
+            return
+        }
 
-        if (deferredBoolean.await()) {
-
+        Utils.setSelectedItem(selectedRecord!!)
+        val resultOfOperation: Boolean =
+            withContext(CoroutineScope(Dispatchers.Main).coroutineContext) {
+                Utils.handleDeletingOfRecord(requireContext(), binding.progressBar)
+            }
+        if (resultOfOperation) {
             Toast.makeText(context, "Dáta boli úspešne vymazané",
                 Toast.LENGTH_SHORT).show()
             setDefault()
             loadWMSPolygons()
-            clearMapFromShownDetail()
         }
-        binding.progressBar.visibility = View.GONE
-        return deferredBoolean.await()
     }
 
     /**
@@ -1414,7 +1380,6 @@ class MapFragment : Fragment() {
             .setPositiveButton(R.string.button_positive_text) { _, _ ->
                 setDefault()
                 setSelectedRecordAsNull()
-                sharedViewModel.clearSelectedDamageDataItemFromMap()
             }
             .setNegativeButton(R.string.button_negative_text) { dialog, _ -> dialog.cancel() }
             .create()
@@ -1486,7 +1451,7 @@ class MapFragment : Fragment() {
         val listOfGeoPoints = createListOfPointsFromMapProperToSaveInGeoserver()
         selectedRecord?.isInGeoserver = true
         selectedRecord?.isUpdatingDirectlyFromMap = true
-        if (checkIfPolygonShapeWasChanged(listOfGeoPoints)) {
+        if (!checkIfPolygonShapeWasChanged(listOfGeoPoints)) {
             changeInfoAboutPolygonOfSelectedRecord()
         }
         selectedRecord?.let { setDamageDataFromMapInViewModel(it) }
@@ -1507,7 +1472,6 @@ class MapFragment : Fragment() {
         damageData.obvod = actualPerimeter
         damageData.obsah = actualArea
         damageData.coordinates = listOfGeoPoints
-        damageData.isUpdatingDirectlyFromMap = true
         setDamageDataFromMapInViewModel(damageData)
     }
 

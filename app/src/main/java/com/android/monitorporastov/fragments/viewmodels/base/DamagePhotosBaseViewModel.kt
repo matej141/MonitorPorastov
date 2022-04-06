@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.GeoserverServiceAPI
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.parameterNameOfIdUrlFilter
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.urlNameOfIdParameter
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 import kotlinx.coroutines.CoroutineScope
@@ -177,6 +177,6 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
     }
 
     private fun createURLFilterForPhotos(uniqueId: String): String {
-        return "$parameterNameOfIdUrlFilter:$uniqueId"
+        return "$urlNameOfIdParameter:$uniqueId"
     }
 }

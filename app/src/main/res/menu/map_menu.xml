@@ -19,9 +19,7 @@
                 <item
                     android:id="@+id/menu_ortofoto"
                     android:title="@string/menu_ortofoto_txt" />
-                <item
-                    android:id="@+id/menu_BPEJ"
-                    android:title="@string/menu_BPEJ_txt" />
+
 <!--                <item-->
 <!--                    android:id="@+id/menu_hunting_territories"-->
 <!--                    android:title="@string/menu_hunting_territories_txt" />-->
@@ -29,6 +27,9 @@
             <group
                 android:id="@+id/menu_vrstva"
                 android:checkableBehavior="all">
+                <item
+                    android:id="@+id/menu_BPEJ"
+                    android:title="@string/menu_BPEJ_txt" />
                 <item
                     android:id="@+id/menu_JPRL"
                     android:title="@string/menu_JPRL_txt" />
@@ -45,6 +46,14 @@
                 <item
                     android:id="@+id/menu_watercourse"
                     android:title="@string/menu_watercourse_txt" />
+
+                <item
+                    android:id="@+id/menu_vrstevnice10m"
+                    android:title="@string/menu_vrstevnice10m_txt" />
+
+                <item
+                    android:id="@+id/menu_vrstevnice50m"
+                    android:title="@string/menu_vrstevnice50m_txt" />
 
             </group>
         </menu>

@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.android.monitorporastov.CoroutineScopeDelegate
 import com.android.monitorporastov.CoroutineScopeInterface
 import com.android.monitorporastov.GeoserverServiceAPI
-import com.android.monitorporastov.RetroService
+import com.android.monitorporastov.GeoserverRetroService
 import kotlinx.coroutines.*
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -139,7 +139,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         val geoserverServiceAPI: GeoserverServiceAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
-                    RetroService.getServiceWithScalarsFactory(usernameChars,
+                    GeoserverRetroService.getServiceWithScalarsFactory(usernameChars,
                         passwordChars)
                 }
             }
@@ -157,6 +157,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
             performCallToGeoserver { geoserverServiceAPI.postToGeoserver(requestBody) }
         deferredBoolean.complete(processPostedResponse(resultOfCallToGeoserver.first,
             resultOfCallToGeoserver.second))
+        val f = deferredBoolean.await()
         return deferredBoolean.await()
     }
 
