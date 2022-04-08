@@ -70,7 +70,6 @@ class MapFragmentCopy : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
-    private val viewModel: MapFragmentViewModel by activityViewModels()
     private var job: Job? = null
     private lateinit var mMap: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
@@ -230,7 +229,6 @@ class MapFragmentCopy : Fragment() {
 
         // vykreslenie už existujúcich polygónov
         drawExistingPolygons()
-        observeItemFromPokus()
     }
 
 
@@ -611,7 +609,6 @@ class MapFragmentCopy : Fragment() {
     private fun showNewRecordAD() {
         // najskôr skontroluje, či už bola načítaná poloha a udelené povolenia.
         // Ak nie, alert dialog sa nezobrazí.
-        viewModel.iAmHere.value = true
         if (!locationCheck()) {
             return
         }
@@ -895,12 +892,6 @@ class MapFragmentCopy : Fragment() {
         }
     }
 
-    private fun observeItemFromPokus() {
-        viewModel.iAmHere.observe(viewLifecycleOwner) { value ->
-            val pp = value
-        }
-    }
-
     private fun checkIfPreviousFragmentIsDataDetailFragment(): Boolean {
         val previousFragment = findNavController()
             .previousBackStackEntry?.destination?.id ?: return false
@@ -966,7 +957,7 @@ class MapFragmentCopy : Fragment() {
 
     private fun getDetailFromOfPolygonFromGeoserver(filterString: String) {
         val okHttpClient = Utils.createOkHttpClient()
-        val service = GeoserverRetroService.createServiceWithGsonFactory(okHttpClient)
+        val service = GeoserverRetrofitBuilder.createServiceWithGsonFactory(okHttpClient)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.getDetail(filterString)

@@ -6,7 +6,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.android.monitorporastov.GeoserverServiceAPI
+import com.android.monitorporastov.GeoserverRetrofitAPI
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.urlNameOfIdParameter
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
@@ -72,10 +72,10 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
             return
         }
         val urlFilterValue = createURLFilterForPhotos(item.unique_id)
-        val geoserverServiceAPI: GeoserverServiceAPI =
+        val geoserverRetrofitAPI: GeoserverRetrofitAPI =
             getGeoserverServiceAPIWithGson() ?: return
         val resultOfCallToGeoserver: Pair<Boolean, Response<UsersData>?> =
-            performCallToGeoserver { geoserverServiceAPI.getPhotos(urlFilterValue) }
+            performCallToGeoserver { geoserverRetrofitAPI.getPhotos(urlFilterValue) }
         processObtainedResponseForPhotos(resultOfCallToGeoserver)
     }
 

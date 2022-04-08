@@ -30,7 +30,7 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
 
         private fun checkInternetAccess() {
             CoroutineScope(Dispatchers.IO).launch {
-                if (InternetAvailability2.check()) {
+                if (InternetAvailability.check()) {
                     postValue(true)
                     return@launch
                 }
@@ -40,7 +40,6 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
 
         override fun onLost(network: Network) {
             super.onLost(network)
-
             postValue(false)
         }
 
@@ -72,7 +71,6 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
             addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
         }.build()
         return requestBuilder
-
     }
 
     override fun onActive() {
@@ -84,21 +82,4 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
         super.onInactive()
         connectivityManager.unregisterNetworkCallback(networkCallbacks)
     }
-}
-
-
-object InternetAvailability2 {
-
-    fun check(): Boolean {
-        return try {
-            val ipAddress: InetAddress =
-                InetAddress.getByName("google.com")
-            !ipAddress.equals("")
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
-
 }

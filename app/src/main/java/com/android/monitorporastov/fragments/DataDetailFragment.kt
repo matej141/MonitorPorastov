@@ -38,13 +38,10 @@ class DataDetailFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
     private val viewModel: DataDetailFragmentViewModel by viewModels()
-    private var stringsOfPhotosList = listOf<String>()  // viewmodel
-    private var photosLoaded = false  // viewmodel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        // setUpBackStackCallback()
     }
 
     override fun onCreateView(
@@ -70,18 +67,6 @@ class DataDetailFragment : Fragment() {
         inflater.inflate(R.menu.data_detail_menu, menu)
     }
 
-    /**
-     * Umelo vytvorene spravanie backpressed aktivity...
-     * zabranuje tomu, aby sa cycklicky pri backpressed stlaceni buttonu opakovalo
-     * map fragment -> data detail fragment a zaroven zabranuje tomu,
-     * aby sa z backstacku vyhodil MapFragment
-     */
-    private fun setUpBackStackCallback() {
-//        requireActivity().onBackPressedDispatcher.addCallback(this) {
-//            navigateToDataListFragment()
-//        }
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (!checkIfPhotosHaveBeenLoaded(id)) {
@@ -93,7 +78,6 @@ class DataDetailFragment : Fragment() {
             damageDataItem?.let {
                 it.isInGeoserver = true
                 it.isDirectlyFromMap = false
-                //viewModel.saveNewItem(damageDataItem!!)
                 findNavController().navigate(
                     R.id.action_data_detail_fragment_TO_add_measure_fragment)
             }
@@ -105,7 +89,6 @@ class DataDetailFragment : Fragment() {
         }
 
         if (id == R.id.menu_show_on_map_data) {
-            // damageDataItem?.showThisItemOnMap = true
             handleToMapFragment()
         }
         return super.onOptionsItemSelected(item)
@@ -173,9 +156,6 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun navigateToDataListFragment() {
-        //findNavController().popBackStack()
-
-//        findNavController().popBackStack(R.id.data_detail_fragment, true)
         findNavController().navigate(
             R.id.action_data_detail_fragment_TO_data_list_fragment)
     }
@@ -213,7 +193,6 @@ class DataDetailFragment : Fragment() {
     private fun createDateTime(dateTimeString: String): String? {
         val sdf1 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
         val date: Date? = sdf1.parse(dateTimeString)
-        val timeStampDate = date?.let { Timestamp(it.time) }
         val sdf2 = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
         return date?.let { sdf2.format(it) }
 
@@ -222,50 +201,6 @@ class DataDetailFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        //sharedViewModel.clearStringsOfPhotosList()
-        //activity?.viewModelStore?.clear()
-    }
-
-    private fun setUpPreviouslyLoadedPhotos() {
-        binding.progressBar.visibility = View.GONE
-        if (damageDataItem?.bitmaps?.isNotEmpty() == true) {
-            recyclerView.adapter = DataDetailPhotosRVAdapter(damageDataItem!!.bitmaps)
-        } else {
-            binding.dataDetailPhotoNoPhotos.visibility = View.VISIBLE
-        }
-        photosLoaded = true
-    }
-
-    private fun setNewlyLoadedPhotos() {
-        if (stringsOfPhotosList.isEmpty()) {
-            binding.dataDetailPhotoNoPhotos.visibility = View.VISIBLE
-            binding.progressBar.visibility = View.GONE
-            photosLoaded = true
-            return
-        }
-        binding.dataDetailPhotoNoPhotos.visibility = View.GONE
-        photosLoaded = true
-        val bitmaps = mutableListOf<Bitmap>()
-        CoroutineScope(Dispatchers.Default).launch {
-            stringsOfPhotosList.forEach {
-                val imageBytes: ByteArray = Base64.decode(it, 0)
-                val image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                bitmaps.add(image)
-                damageDataItem?.bitmaps?.add(image)
-            }
-            withContext(Dispatchers.Main) {
-                recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
-                binding.progressBar.visibility = View.GONE
-            }
-        }
-    }
-
-    private fun setUpPhotos() {
-        if (damageDataItem != null && damageDataItem?.bitmapsLoaded == true) {
-            setUpPreviouslyLoadedPhotos()
-            return
-        }
-        setNewlyLoadedPhotos()
     }
 
     private fun observeDamageDataFromViewModel() {
@@ -321,17 +256,6 @@ class DataDetailFragment : Fragment() {
     private fun observeIfNoPhotosToShow() {
         viewModel.noPhotosToShow.observe(viewLifecycleOwner) { value ->
             binding.dataDetailPhotoNoPhotos.visibility = if (value) View.VISIBLE else View.GONE
-            //binding.dataDetailPhotoNoPhotos.visibility = if (value) View.VISIBLE else View.GONE
         }
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        //viewModel.clearSelectedDamageDataItemFromMap()
-    }
-
-    companion object {
-        const val ARG_DATA_ITEM_ID = "item_id"
-    }
-
 }

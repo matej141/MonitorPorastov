@@ -4,9 +4,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.viewmodels.BaseViewModel
-import com.android.monitorporastov.GeoserverServiceAPI
+import com.android.monitorporastov.GeoserverRetrofitAPI
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
-import com.android.monitorporastov.GeoserverRetroService
+import com.android.monitorporastov.GeoserverRetrofitBuilder
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.launch
 
@@ -78,18 +78,18 @@ abstract class MapBaseViewModel: BaseViewModel() {
 
     }
 
-    fun getGeoserverServiceAPIWithGson(): GeoserverServiceAPI? {
-        val geoserverServiceAPI: GeoserverServiceAPI? =
+    fun getGeoserverServiceAPIWithGson(): GeoserverRetrofitAPI? {
+        val geoserverRetrofitAPI: GeoserverRetrofitAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
-                    GeoserverRetroService.getServiceWithGsonFactory(usernameChars,
+                    GeoserverRetrofitBuilder.getServiceWithGsonFactory(usernameChars,
                         passwordChars)
                 }
             }
-        if (geoserverServiceAPI == null) {
+        if (geoserverRetrofitAPI == null) {
             informThatCredentialsWereNotLoaded()
         }
-        return geoserverServiceAPI
+        return geoserverRetrofitAPI
     }
 
 

@@ -9,25 +9,25 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
 
-object GeoserverRetroService {
+object GeoserverRetrofitBuilder {
     private const val BASE_URL = "http://services.skeagis.sk:7492/geoserver/"
 
-    fun createServiceWithGsonFactory(okHttpClientInterceptor: OkHttpClient): GeoserverServiceAPI {
+    fun createServiceWithGsonFactory(okHttpClientInterceptor: OkHttpClient): GeoserverRetrofitAPI {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClientInterceptor)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(GeoserverServiceAPI::class.java)
+            .create(GeoserverRetrofitAPI::class.java)
     }
 
-    fun createServiceWithScalarsFactory(okHttpClientInterceptor: OkHttpClient): GeoserverServiceAPI {
+    fun createServiceWithScalarsFactory(okHttpClientInterceptor: OkHttpClient): GeoserverRetrofitAPI {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClientInterceptor)
             .addConverterFactory(ScalarsConverterFactory.create())
             .build()
-            .create(GeoserverServiceAPI::class.java)
+            .create(GeoserverRetrofitAPI::class.java)
     }
 
     private fun createOkHttpClient(username: String, password: String): OkHttpClient {
@@ -44,7 +44,7 @@ object GeoserverRetroService {
     fun getServiceWithScalarsFactory(
         usernameCharArray: CharArray,
         passwordCharArray: CharArray,
-    ): GeoserverServiceAPI {
+    ): GeoserverRetrofitAPI {
         val okHttpClient = createOkHttpClient(String(usernameCharArray),
             String(passwordCharArray))
         return createServiceWithScalarsFactory(okHttpClient)
@@ -53,7 +53,7 @@ object GeoserverRetroService {
     fun getServiceWithGsonFactory(
         usernameCharArray: CharArray,
         passwordCharArray: CharArray,
-    ): GeoserverServiceAPI {
+    ): GeoserverRetrofitAPI {
         val okHttpClient = createOkHttpClient(String(usernameCharArray),
             String(passwordCharArray))
         return createServiceWithGsonFactory(okHttpClient)
