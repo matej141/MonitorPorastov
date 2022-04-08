@@ -24,13 +24,11 @@ class DataListFragmentViewModel : MapBaseViewModel() {
 //        get() = Dispatchers.IO + job
 
     companion object {
-        private const val DATA_LIST_FRAGMENT_TAG = "DATA_LIST_FRAGMENT"
         private const val USER_DATA_TAG = "ObservingUserData"
     }
 
     private fun setDamageDataList(damageDataList: MutableList<DamageData>) {
         _damageDataList.postValue(damageDataList)
-        Log.d("HOVNOOOO", "hej hej")
     }
 
     private suspend fun fetchUserData() {
@@ -42,11 +40,11 @@ class DataListFragmentViewModel : MapBaseViewModel() {
             informThatCredentialsWereNotLoaded()
             return
         }
-        val geoserverServiceAPI: GeoserverServiceAPI =
+        val geoserverRetrofitAPI: GeoserverRetrofitAPI =
             getGeoserverServiceAPIWithGson() ?: return
 
         val resultOfCallToGeoserver: Pair<Boolean, Response<UsersData>?> =
-            performCallToGeoserver { geoserverServiceAPI.getUserData(urlFilterValue) }
+            performCallToGeoserver { geoserverRetrofitAPI.getUserData(urlFilterValue) }
         processObtainedResponseForUserData(resultOfCallToGeoserver)
     }
 
@@ -72,15 +70,11 @@ class DataListFragmentViewModel : MapBaseViewModel() {
     }
 
     private fun setIfLoadedUserData(value: Boolean) {
-        Log.d("HOVNOOOO", "hahhahaha $value")
         _loadedUserData.value = value
-        Log.d("HOVNOOOO", "heeeeeej ${ _loadedUserData.value}")
     }
 
     private fun setIfLoadedUserDataAsync(value: Boolean) {
-        Log.d("HOVNOOOO", "hahhahaha $value")
         _loadedUserData.postValue(value)
-        Log.d("HOVNOOOO", "heeeeeej ${ _loadedUserData.value}")
     }
 
     private fun createURLFilterForUserData(): String {
@@ -106,7 +100,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
             damageData.coordinates = listOfGeopoints
             newMutableDamageDataList.add(damageData)
         }
-        Log.d("HOVNOOOO", "create damage list")
         setDamageDataList(newMutableDamageDataList)
     }
 
@@ -123,14 +116,11 @@ class DataListFragmentViewModel : MapBaseViewModel() {
     private fun checkIfShouldReloadUserData(): Boolean {
         val a = isNetworkAvailable.value
         val b = _loadedUserData.value
-        Log.d("HOVNOOOO", "loaded val  $b")
-        Log.d("HOVNOOOO", "check")
         return isNetworkAvailable.value == true && (_loadedUserData.value == false || _loadedUserData.value == null)
     }
 
     private suspend fun reloadUserData() {
         if (checkIfShouldReloadUserData()) {
-            Log.d("HOVNOOOO", "reload")
             fetchUserData()
         }
     }
@@ -159,7 +149,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
         super.setToViewModel()
         sharedViewModel?.loadedUserData?.value?.let {
             setIfLoadedUserData(it)
-            Log.d("HOVNOOOO", "value: $it")
         }
 
     }

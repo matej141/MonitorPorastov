@@ -42,7 +42,6 @@ class LoginActivity : AppCompatActivity() {
     }
     private lateinit var connectionLiveData: ConnectionLiveData
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -69,48 +68,11 @@ class LoginActivity : AppCompatActivity() {
 
     private fun observeErrorMessage() {
         viewModel.errorMessage.observe(this) { errorMessage ->
-            //connectionLiveData.checkInternet()
-            if (isOnline(this)) {
-                if (errorMessage != null) {
-                    createErrorMessageAD(this, errorMessage)
-                    viewModel.clearErrorMessage()
-                }
-            }
-            else {
+            if (errorMessage != null) {
+                createErrorMessageAD(this, errorMessage)
+                viewModel.clearErrorMessage()
+            } else {
                 showNoInternetToastMessage()
-            }
-        }
-    }
-
-    // https://stackoverflow.com/questions/51141970/check-internet-connectivity-android-in-kotlin
-
-    private fun isOnline(context: Context): Boolean {
-        val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-        if (capabilities != null) {
-            when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                    return true
-                }
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
-                    return true
-                }
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
-
-
-    private fun waitAWhile() {
-        runBlocking {
-            launch {
-                delay(1000L)
             }
         }
     }

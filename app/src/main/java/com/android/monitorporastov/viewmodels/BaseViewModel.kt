@@ -6,8 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.android.monitorporastov.CoroutineScopeDelegate
 import com.android.monitorporastov.CoroutineScopeInterface
-import com.android.monitorporastov.GeoserverServiceAPI
-import com.android.monitorporastov.GeoserverRetroService
+import com.android.monitorporastov.GeoserverRetrofitAPI
+import com.android.monitorporastov.GeoserverRetrofitBuilder
 import kotlinx.coroutines.*
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -135,26 +135,26 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         Log.d(UNLOAD_CREDENTIALS_TAG, "Error was occurred during attempt to load credentials")
     }
 
-    fun getGeoserverServiceAPIWithScalars(): GeoserverServiceAPI? {
-        val geoserverServiceAPI: GeoserverServiceAPI? =
+    fun getGeoserverServiceAPIWithScalars(): GeoserverRetrofitAPI? {
+        val geoserverRetrofitAPI: GeoserverRetrofitAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
-                    GeoserverRetroService.getServiceWithScalarsFactory(usernameChars,
+                    GeoserverRetrofitBuilder.getServiceWithScalarsFactory(usernameChars,
                         passwordChars)
                 }
             }
-        if (geoserverServiceAPI == null) {
+        if (geoserverRetrofitAPI == null) {
             informThatCredentialsWereNotLoaded()
         }
-        return geoserverServiceAPI
+        return geoserverRetrofitAPI
     }
 
     suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-        val geoserverServiceAPI: GeoserverServiceAPI =
+        val geoserverRetrofitAPI: GeoserverRetrofitAPI =
             getGeoserverServiceAPIWithScalars() ?: return false
         val resultOfCallToGeoserver: Pair<Boolean, Response<String>?> =
-            performCallToGeoserver { geoserverServiceAPI.postToGeoserver(requestBody) }
+            performCallToGeoserver { geoserverRetrofitAPI.postToGeoserver(requestBody) }
         deferredBoolean.complete(processPostedResponse(resultOfCallToGeoserver.first,
             resultOfCallToGeoserver.second))
         val f = deferredBoolean.await()

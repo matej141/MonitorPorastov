@@ -107,7 +107,7 @@ object Utils {
 
     suspend fun postToGeoserver(requestBody: RequestBody): Boolean {
         val deferredBoolean: CompletableDeferred<Boolean> = CompletableDeferred<Boolean>()
-        val service = GeoserverRetroService.createServiceWithScalarsFactory(Utils.createOkHttpClient())
+        val service = GeoserverRetrofitBuilder.createServiceWithScalarsFactory(Utils.createOkHttpClient())
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.postToGeoserver(requestBody)

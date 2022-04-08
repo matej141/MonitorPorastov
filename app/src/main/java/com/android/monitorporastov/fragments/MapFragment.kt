@@ -62,8 +62,6 @@ import org.osmdroid.wms.WMSParser
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 class MapFragment : Fragment() {
@@ -72,16 +70,16 @@ class MapFragment : Fragment() {
     private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
     private val viewModel: MapFragmentViewModel by activityViewModels()
     private var job: Job? = null
-    private lateinit var mMap: MapView
+    private lateinit var mMap: MapView  // VIEWMODEL
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
     private lateinit var mMapController: IMapController
-    private lateinit var lastLocation: Location  // posldená známa poloha
-    private var newPolygon: Polygon = Polygon()  // nový pridávaný polygón
-    private var polyMarkers = mutableListOf<Marker>()  // markery, resp. body polygónu
+    private lateinit var lastLocation: Location // VIEWMODEL // posldená známa poloha
+    private var newPolygon: Polygon = Polygon() // VIEWMODEL  // nový pridávaný polygón
+    private var polyMarkers = mutableListOf<Marker>() // VIEWMODEL  // markery, resp. body polygónu
     private var defaultZoomLevel = 18.0  // zoom level mapy
-    private var manualMeasure = false  // či je zapnuté manuálne vyznačovanie územia
-    private var gpsMeasure = false  // či je zapnuté vyznačovanie územia krokovaním
-    private var firstLoad = true  // či je fragment spustený prvýkrát
+    private var manualMeasure = false // VIEWMODEL // či je zapnuté manuálne vyznačovanie územia
+    private var gpsMeasure = false // VIEWMODEL // či je zapnuté vyznačovanie územia krokovaním
+    private var firstLoad = true // VIEWMODEL // či je fragment spustený prvýkrát
     private lateinit var drawerLockInterface: DrawerLockInterface  // interface na uzamykanie
 
     // drawer layoutu
@@ -89,18 +87,18 @@ class MapFragment : Fragment() {
     private lateinit var mapMarkerIcon: Drawable  // ikona hlavného markeru,
 
     // zobrazujúceho polohu používateľa
-    private var buttonDeleting = false  // či je umožnené mazanie markerov
+    private var buttonDeleting = false // VIEWMODEL // či je umožnené mazanie markerov
 
     private var mPrefs: SharedPreferences? = null
 
     private val binding get() = _binding!!
-    private val polygons = mutableListOf<Polygon>()  // existujúce polygóny
+    private val polygons = mutableListOf<Polygon>() // DELETE // existujúce polygóny
     private val newPolygonDefaultId = "new polygon"  // id nového polygónu (kvôli mazaniu)
     private val polygonOutlineColorStr = "#2CE635"  // farba okraja polygónu
     private val polygonFillColorStr = "#33EA3535"  // farba vnútra polygónu
-    private var actualPerimeter = 0.0  // aktuálny obvod polygónu
-    private var actualArea = 0.0  // aktuálna rozloha polygónu
-    private var mapLayerStr = ""  // typ mapy (default, orto...)
+    private var actualPerimeter = 0.0 // VIEWMODEL // aktuálny obvod polygónu
+    private var actualArea = 0.0 // VIEWMODEL // aktuálna rozloha polygónu
+    private var mapLayerStr = "" // VIEWMODEL // typ mapy (default, orto...)
 
     private var activityResultLauncher: ActivityResultLauncher<Array<String>>
 
@@ -108,9 +106,9 @@ class MapFragment : Fragment() {
     private lateinit var locationRequest: LocationRequest
     private val interval = 1000
     private val fastestInterval = 1000L
-    private val polyMarkersHistory = mutableListOf<MutableList<Marker>>()  // história markerov
-    private var allPermissionsAreGranted = true  // či boli udelené poovolenia
-    private var detailShown = false
+    private val polyMarkersHistory = mutableListOf<MutableList<Marker>>() // VIEWMODEL // história markerov
+    private var allPermissionsAreGranted = true // VIEWMODEL // či boli udelené poovolenia
+    private var detailShown = false // VIEWMODEL
 
     private var selectedRecord: DamageData? = null
     private val detailPolygonId = "DetailPoly"
@@ -148,7 +146,7 @@ class MapFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        mPrefs = context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        mPrefs = context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
@@ -228,7 +226,6 @@ class MapFragment : Fragment() {
 
         // vykreslenie už existujúcich polygónov
         drawExistingPolygons()
-        observeItemFromPokus()
         viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
     }
 
@@ -626,7 +623,6 @@ class MapFragment : Fragment() {
     private fun showNewRecordAD() {
         // najskôr skontroluje, či už bola načítaná poloha a udelené povolenia.
         // Ak nie, alert dialog sa nezobrazí.
-        viewModel.iAmHere.value = true
         if (!locationCheck()) {
             return
         }
@@ -916,11 +912,6 @@ class MapFragment : Fragment() {
         }
     }
 
-    private fun observeItemFromPokus() {
-        viewModel.iAmHere.observe(viewLifecycleOwner) { value ->
-            val pp = value
-        }
-    }
 
     private fun checkIfPreviousFragmentIsDataDetailFragment(): Boolean {
         val previousFragment = findNavController()
@@ -991,7 +982,7 @@ class MapFragment : Fragment() {
 
     private fun getDetailFromOfPolygonFromGeoserver(filterString: String) {
         val okHttpClient = Utils.createOkHttpClient()
-        val service = GeoserverRetroService.createServiceWithGsonFactory(okHttpClient)
+        val service = GeoserverRetrofitBuilder.createServiceWithGsonFactory(okHttpClient)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = service.getDetail(filterString)

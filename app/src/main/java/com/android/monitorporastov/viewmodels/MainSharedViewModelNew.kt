@@ -12,27 +12,19 @@ class MainSharedViewModelNew : BaseViewModel() {
     private val _loadedUserData = MutableLiveData<Boolean>()
     val loadedUserData: LiveData<Boolean> = _loadedUserData
 
-    private val _damageDataList = MutableLiveData<List<DamageData>>()
-    val damageDataList: LiveData<List<DamageData>> = _damageDataList
-
     private val _selectedDamageDataItem = MutableLiveData<DamageData?>()
     val selectedDamageDataItem: LiveData<DamageData?> = _selectedDamageDataItem
 
-    private var mutableSelectedDamageDataItemFromMap: MutableLiveData<DamageData?> =
+    private val _selectedDamageDataItemFromMap: MutableLiveData<DamageData?> =
         MutableLiveData<DamageData?>()
     val selectedDamageDataItemFromMap: MutableLiveData<DamageData?>
         get() =
-            mutableSelectedDamageDataItemFromMap
+            _selectedDamageDataItemFromMap
 
     private val _selectedDamageDataItemToShowInMap = MutableLiveData<DamageData?>()
     val selectedDamageDataItemToShowInMap: LiveData<DamageData?>
         get() =
             _selectedDamageDataItemToShowInMap
-
-    companion object {
-        private const val MAIN_VIEW_MODEL_TAG = "MainViewModel"
-
-    }
 
     fun setIfLoadedUserData(value: Boolean) {
         _loadedUserData.postValue(value)
@@ -44,7 +36,7 @@ class MainSharedViewModelNew : BaseViewModel() {
     }
 
     fun selectDamageDataFromMap(damageData: DamageData) {
-        mutableSelectedDamageDataItemFromMap.value = damageData
+        _selectedDamageDataItemFromMap.value = damageData
     }
 
     fun selectDamageDataToShowInMap(damageData: DamageData) {
@@ -52,7 +44,7 @@ class MainSharedViewModelNew : BaseViewModel() {
     }
 
     fun clearSelectedDamageDataItemFromMap() {
-        mutableSelectedDamageDataItemFromMap.value = null
+        _selectedDamageDataItemFromMap.value = null
     }
 
     fun clearSelectedDamageDataItemToShowInMap() {
