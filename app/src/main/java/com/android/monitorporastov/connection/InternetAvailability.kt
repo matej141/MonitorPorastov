@@ -1,4 +1,4 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.connection
 
 import java.net.InetAddress
 

@@ -1,16 +1,16 @@
 package com.android.monitorporastov.geoserver.factories
 
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisGMLUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisOGCUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisWFSUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.photosDescribeFeatureTypeUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.photosLayerName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.photosTypeName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfId
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfPhotography
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfUniqueId
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.schemaLocationUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.xsiUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfId
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfPhotography
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUniqueId
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.photosLayer
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.photosLayerName
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisGMLUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisOGCUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisWFSUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.photosDescribeFeatureTypeUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.schemaLocationUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.xsiUrl
 
 object GeoserverPhotosPostStringsFactory {
 
@@ -53,7 +53,7 @@ object GeoserverPhotosPostStringsFactory {
             return ""
         }
         return "" +
-                "<Delete xmlns=$openGisWFSUrl typeName=\"$photosTypeName\">\n" +
+                "<Delete xmlns=$openGisWFSUrl typeName=\"$photosLayerName\">\n" +
                 "           <Filter xmlns=$openGisOGCUrl>\n" +
                 "               <Or>\n" +
                 "                   $deleteFilterString" +
@@ -91,14 +91,14 @@ object GeoserverPhotosPostStringsFactory {
         photoHexStrings.forEach {
             val line =
                 "" +
-                        "<$photosLayerName xmlns=\"$schemaLocationUrl\">\n" +
+                        "<$photosLayer xmlns=\"$schemaLocationUrl\">\n" +
                         "       <$propertyNameOfPhotography xmlns=\"$schemaLocationUrl\">" +
                         "           $it" +
                         "       </$propertyNameOfPhotography>\n " +
                         "       <$propertyNameOfUniqueId xmlns=\"$schemaLocationUrl\">" +
                         "           $uniqueId" +
                         "       </$propertyNameOfUniqueId>\n" +
-                        "</$photosLayerName>\n"
+                        "</$photosLayer>\n"
             photoStrings += line
         }
         return photoStrings

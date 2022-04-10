@@ -16,9 +16,7 @@ import id.zelory.compressor.constraint.quality
 import id.zelory.compressor.constraint.size
 import kotlinx.coroutines.*
 import java.io.*
-import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.util.*
 
 class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {

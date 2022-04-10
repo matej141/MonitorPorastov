@@ -1,25 +1,25 @@
 package com.android.monitorporastov.geoserver.factories
 
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.damagesTypeName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.damagesDescribeFeatureTypeUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.damagesLayerName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisGMLUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisOGCUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.openGisWFSUrl
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfArea
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageDescription
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageRecordName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDamageType
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfDatetime
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfGeometry
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfId
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfPerimeter
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfUniqueId
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.propertyNameOfUser
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.schemaLocationUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfArea
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDamageDescription
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDamageRecordName
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDamageType
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDatetime
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfGeometry
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfId
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfPerimeter
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUniqueId
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUser
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.damagesLayer
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.damagesLayerName
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.workspaceName
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.damagesDescribeFeatureTypeUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisGMLUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisOGCUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisWFSUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.schemaLocationUrl
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.xsiUrl
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.srsName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.workspaceName
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.xsiUrl
 import com.android.monitorporastov.model.DamageData
 
 
@@ -32,7 +32,7 @@ object GeoserverDataPostStringsFactory {
         }
         return createHeaderOfTransaction() +
                 "   <Update xmlns=$openGisWFSUrl\n" +
-                "               typeName=\"$damagesTypeName\">\n" +
+                "               typeName=\"$damagesLayerName\">\n" +
                 "                   $updatePropertiesString\n" +
                 "       <Filter xmlns=$openGisOGCUrl>\n" +
                 "           <PropertyIsEqualTo>\n" +
@@ -139,7 +139,7 @@ object GeoserverDataPostStringsFactory {
 
         return createHeaderOfTransaction() +
                 "<Insert xmlns=$openGisWFSUrl>\n" +
-                "   <$damagesLayerName xmlns=\"$schemaLocationUrl\">\n" +
+                "   <$damagesLayer xmlns=\"$schemaLocationUrl\">\n" +
                 "       <$propertyNameOfDamageRecordName xmlns=\"$schemaLocationUrl\">\n" +
                 "           ${newDamageData.nazov}\n" +
                 "       </$propertyNameOfDamageRecordName>\n" +
@@ -175,7 +175,7 @@ object GeoserverDataPostStringsFactory {
                 "               </gml:outerBoundaryIs>\n" +
                 "           </gml:Polygon>\n" +
                 "       </$propertyNameOfGeometry>\n" +
-                "       </$damagesLayerName>\n" +
+                "       </$damagesLayer>\n" +
                 "</Insert>\n" +
                 "</Transaction>\n"
     }
