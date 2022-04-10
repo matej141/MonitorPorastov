@@ -13,6 +13,7 @@ data class DamageData(
     var obvod: Double = 0.0,
     var obsah: Double = 0.0,
     var foto: String = "",
+
     var coordinates: List<GeoPoint> = listOf(),
     var unique_id: String = "",
     var datetime: String? = "",

@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.GeoserverRetrofitAPI
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.urlNameOfIdParameter
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlFilterParametersNames.urlNameOfIdParameter
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +22,6 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
     var stringsOfPhotosList = mutableListOf<String>()
 
     companion object {
-
         private const val PHOTOS_TAG = "ObservingPhotos"
     }
 
@@ -38,11 +37,8 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
         damageDataItem.value?.indexesOfPhotos = listOfIndexes
     }
 
-
-
     fun prepareToLoadPhotos() {
         if (damageDataItem.value == null) {
-
             return
         }
         if (checkIfPhotosHaveBeenLoaded()) {
@@ -50,7 +46,6 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
         } else {
             observeNetworkState { loadDamagePhotos() }
         }
-
     }
 
     private fun checkIfShouldReloadPhotos(): Boolean {
@@ -99,7 +94,7 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
         }
     }
 
-    fun checkIfPhotosHaveBeenLoaded(): Boolean {
+    private fun checkIfPhotosHaveBeenLoaded(): Boolean {
         return damageDataItem.value != null && damageDataItem.value?.bitmapsLoaded == true
     }
 

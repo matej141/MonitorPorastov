@@ -64,7 +64,6 @@ abstract class MapBaseViewModel: BaseViewModel() {
     }
 
     fun observeNetworkState(reloadFunction: suspend () -> Unit = { }) {
-
         viewLifecycleOwner?.let {
             sharedViewModel?.isNetworkAvailable?.observe(it) { isAvailable ->
                 if (isAvailable) {
@@ -75,7 +74,6 @@ abstract class MapBaseViewModel: BaseViewModel() {
                 setNetworkAvailability(isAvailable)
             }
         }
-
     }
 
     fun getGeoserverServiceAPIWithGson(): GeoserverRetrofitAPI? {

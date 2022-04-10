@@ -1,7 +1,7 @@
 package com.android.monitorporastov
 
 import android.util.Log
-import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.urlNameOfUsernameParameter
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlFilterParametersNames.urlNameOfUsernameParameter
 import org.osmdroid.api.IMapView
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.util.MapTileIndex

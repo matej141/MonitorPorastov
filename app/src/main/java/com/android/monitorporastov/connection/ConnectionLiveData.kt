@@ -1,4 +1,4 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.connection
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,7 +9,6 @@ import androidx.lifecycle.LiveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.InetAddress
 
 // https://deepmodi.com/2021/10/13/check-internet-connectivity-and-availability-android-ko/
 class ConnectionLiveData(context: Context) : LiveData<Boolean>() {

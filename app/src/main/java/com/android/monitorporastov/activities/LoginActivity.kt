@@ -1,14 +1,10 @@
 package com.android.monitorporastov.activities
 
-import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -20,7 +16,7 @@ import com.android.monitorporastov.AppsEncryptedSharedPreferences.PREFS_USERNAME
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedPasswordCharArray
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getSavedUsernameCharArray
-import com.android.monitorporastov.ConnectionLiveData
+import com.android.monitorporastov.connection.ConnectionLiveData
 import com.android.monitorporastov.R
 import com.android.monitorporastov.Utils.afterTextChanged
 import com.android.monitorporastov.Utils.createErrorMessageAD
@@ -29,7 +25,6 @@ import com.android.monitorporastov.activities.viewmodels.LoginActivityViewModel
 import com.android.monitorporastov.databinding.ActivityLoginBinding
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.*
-import java.net.InetAddress
 
 
 class LoginActivity : AppCompatActivity() {

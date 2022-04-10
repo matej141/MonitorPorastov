@@ -25,6 +25,7 @@ import com.android.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInVal
 import com.android.monitorporastov.R
 import com.android.monitorporastov.Utils.createErrorMessageAD
 import com.android.monitorporastov.Utils.noNetworkAvailable
+import com.android.monitorporastov.connection.ConnectionLiveData
 import com.android.monitorporastov.databinding.ActivityMainBinding
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
 import com.google.android.material.navigation.NavigationView
@@ -269,7 +270,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun unableToLoadUserCredentialsFromMemoryAD() {
         AlertDialog.Builder(this)
             .setTitle("Nepodarilo sa načítať uložené meno a heslo v aplikácii")
-            .setMessage("Pre správne fungovanie aplikácie sa prosím odhláste sa a " +
+            .setMessage("Pre správne fungovanie aplikácie sa prosím odhláste a " +
                     "zadajte svoje prihlasovacie údaje znovu.")
             .setPositiveButton("Odhlásiť sa") { _, _ ->
                 logOut()

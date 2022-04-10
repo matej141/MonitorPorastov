@@ -35,7 +35,7 @@ class DataListFragmentViewModel : MapBaseViewModel() {
         if (_loadedUserData.value == true) {
             return
         }
-        val urlFilterValue = createURLFilterForUserData()
+        val urlFilterValue: String = createURLFilterForUserData()
         if (urlFilterValue.isEmpty()) {
             informThatCredentialsWereNotLoaded()
             return

@@ -25,7 +25,6 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
 
     override fun setUpPreviouslyLoadedPhotos() {
         super.setUpPreviouslyLoadedPhotos()
-        val haveBeenLoaded = checkIfPhotosHaveBeenLoaded()
         val bitmapList: MutableList<Bitmap>? = bitmaps.value
         setNoPhotosToShow(bitmapList.isNullOrEmpty())
     }
@@ -35,8 +34,4 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
         setNoPhotosToShow(stringsOfPhotosList.isNullOrEmpty())
     }
 
-
-    private fun setIndexesOfPhotos(listOfIndexes: MutableList<Int>) {
-        damageDataItem.value?.indexesOfPhotos = listOfIndexes
-    }
 }
