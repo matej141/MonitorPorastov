@@ -91,6 +91,7 @@
     <string name="detail_table_no_photos_txt">Žiadne fotky nie sú k dispozícii</string>
     <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
     <string name="ask_if_log_out_title">Naozaj sa chcete odhlásiť?</string>
+    <string name="ask_if_log_out_title2">Naozaj sa chcete odhlásiť?</string>
 
     <string-array name="damages">
         <item>Požiar</item>
