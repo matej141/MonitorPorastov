@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.android.monitorporastov"
+        applicationId "com.skeagis.monitorporastov"
         minSdk 23
         targetSdk 31
         versionCode 1

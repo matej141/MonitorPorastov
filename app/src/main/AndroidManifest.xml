@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.monitorporastov">
+    package="com.skeagis.monitorporastov">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -23,7 +23,7 @@
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".activities.LauncherActivity"
+            android:name="com.skeagis.monitorporastov.activities.LauncherActivity"
             android:exported="true"
             android:theme="@style/Theme.MonitorPorastov.NoActionBar">
             <intent-filter>
@@ -35,11 +35,11 @@
 
 
         <activity
-            android:name=".activities.LoginActivity"
+            android:name="com.skeagis.monitorporastov.activities.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.MonitorPorastov.NoActionBar" />
         <activity
-            android:name=".activities.MainActivity"
+            android:name="com.skeagis.monitorporastov.activities.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.MonitorPorastov.NoActionBar">
 
