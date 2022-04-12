@@ -495,9 +495,9 @@ class MapFragmentViewModel : MapBaseViewModel() {
         var layerName = ""
 
         when (id) {
-            R.id.menu_BPEJ -> {
-                layerName = BPEJLayerName
-            }
+//            R.id.menu_BPEJ -> {
+//                layerName = BPEJLayerName
+//            }
             R.id.menu_C_parcel -> {
                 layerName = C_parcelLayerName
             }
@@ -507,15 +507,15 @@ class MapFragmentViewModel : MapBaseViewModel() {
             R.id.menu_LPIS -> {
                 layerName = LPISLayerName
             }
-            R.id.menu_JPRL -> {
-                layerName = JPRLLayerName
-            }
+//            R.id.menu_JPRL -> {
+//                layerName = JPRLLayerName
+//            }
             R.id.menu_watercourse -> {
                 layerName = watercourseLayerName
             }
-            R.id.menu_vrstevnice10m -> {
-                layerName = vrstevnice10mLayerName
-            }
+//            R.id.menu_vrstevnice10m -> {
+//                layerName = vrstevnice10mLayerName
+//            }
             R.id.menu_vrstevnice50m -> {
                 layerName = vrstevnice50mLayerName
             }

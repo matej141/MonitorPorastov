@@ -27,12 +27,12 @@
             <group
                 android:id="@+id/menu_vrstva"
                 android:checkableBehavior="all">
-                <item
-                    android:id="@+id/menu_BPEJ"
-                    android:title="@string/menu_BPEJ_txt" />
-                <item
-                    android:id="@+id/menu_JPRL"
-                    android:title="@string/menu_JPRL_txt" />
+<!--                <item-->
+<!--                    android:id="@+id/menu_BPEJ"-->
+<!--                    android:title="@string/menu_BPEJ_txt" />-->
+<!--                <item-->
+<!--                    android:id="@+id/menu_JPRL"-->
+<!--                    android:title="@string/menu_JPRL_txt" />-->
                 <item
                     android:id="@+id/menu_LPIS"
                     android:title="@string/menu_LPIS_txt" />
@@ -47,9 +47,9 @@
                     android:id="@+id/menu_watercourse"
                     android:title="@string/menu_watercourse_txt" />
 
-                <item
-                    android:id="@+id/menu_vrstevnice10m"
-                    android:title="@string/menu_vrstevnice10m_txt" />
+<!--                <item-->
+<!--                    android:id="@+id/menu_vrstevnice10m"-->
+<!--                    android:title="@string/menu_vrstevnice10m_txt" />-->
 
                 <item
                     android:id="@+id/menu_vrstevnice50m"

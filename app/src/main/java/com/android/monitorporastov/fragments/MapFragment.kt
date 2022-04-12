@@ -82,8 +82,6 @@ class MapFragment : Fragment() {
 
     private var allPermissionsAreGranted = true // či boli udelené poovolenia
 
-    private var selectedRecord: DamageData? = null
-
     private var locationLiveData: LocationLiveData? = null
 
     private val mainMarkerId = "Main marker"
@@ -937,6 +935,10 @@ class MapFragment : Fragment() {
 
     private fun setUpLocationReceiver() {
         locationLiveData?.observe(viewLifecycleOwner) {
+            // fejkovanie polohy
+//            val l = Location("")
+//            l.latitude = 49.033703
+//            l.longitude = 18.890103
             viewModel.setLastLocation(it)
         }
     }
@@ -1169,20 +1171,20 @@ class MapFragment : Fragment() {
         when (layerName) {
             ortofotoLayerName -> menu.findItem(R.id.menu_ortofoto).isChecked =
                 true
-            BPEJLayerName -> menu.findItem(R.id.menu_BPEJ).isChecked =
-                true
+//            BPEJLayerName -> menu.findItem(R.id.menu_BPEJ).isChecked =
+//                true
             C_parcelLayerName -> menu.findItem(R.id.menu_C_parcel).isChecked =
                 true
             E_parcelLayerName -> menu.findItem(R.id.menu_E_parcel).isChecked =
                 true
             LPISLayerName -> menu.findItem(R.id.menu_LPIS).isChecked =
                 true
-            JPRLLayerName -> menu.findItem(R.id.menu_JPRL).isChecked =
-                true
+//            JPRLLayerName -> menu.findItem(R.id.menu_JPRL).isChecked =
+//                true
             watercourseLayerName -> menu.findItem(R.id.menu_watercourse).isChecked =
                 true
-            vrstevnice10mLayerName -> menu.findItem(R.id.menu_vrstevnice10m).isChecked =
-                true
+//            vrstevnice10mLayerName -> menu.findItem(R.id.menu_vrstevnice10m).isChecked =
+//                true
             vrstevnice50mLayerName -> menu.findItem(R.id.menu_vrstevnice50m).isChecked =
                 true
         }
