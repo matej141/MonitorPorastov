@@ -4,8 +4,8 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.android.monitorporastov.*
 import com.android.monitorporastov.fragments.viewmodels.base.MapBaseViewModel
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
@@ -19,9 +19,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
 
     private val _loadedUserData = MutableLiveData<Boolean>()
     val loadedUserData: LiveData<Boolean> = _loadedUserData
-//    private var job: Job = Job()
-//    override val coroutineContext: CoroutineContext
-//        get() = Dispatchers.IO + job
 
     companion object {
         private const val USER_DATA_TAG = "ObservingUserData"
@@ -51,7 +48,7 @@ class DataListFragmentViewModel : MapBaseViewModel() {
 
     private fun processObtainedResponseForUserData(
         resultOfCallToGeoserver: Pair<Boolean,
-                Response<UsersData>?>,
+                Response<UsersData>?>
     ) {
         val wasCallSuccessful = resultOfCallToGeoserver.first
         val response = resultOfCallToGeoserver.second
@@ -150,7 +147,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
         sharedViewModel?.loadedUserData?.value?.let {
             setIfLoadedUserData(it)
         }
-
     }
 
 }

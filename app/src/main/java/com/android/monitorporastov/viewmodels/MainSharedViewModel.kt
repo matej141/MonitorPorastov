@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.BasicAuthInterceptor
-import com.android.monitorporastov.GeoserverRetrofitBuilder
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.android.monitorporastov.Utils
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData

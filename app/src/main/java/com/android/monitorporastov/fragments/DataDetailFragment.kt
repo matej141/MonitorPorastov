@@ -165,13 +165,6 @@ class DataDetailFragment : Fragment() {
      */
     private fun setupContent(damageDataItem: DamageData) {
         damageDataItem.let {
-//            val txtPerimeter = "${
-//                "%.${3}f".format(it.obvod)
-//            } m"
-//            val txtArea = "${
-//                "%.${3}f".format(it.obsah)
-//            } m\u00B2"
-
             val txtPerimeter = "${
                 it.obvod.toInt()
             } m"

@@ -12,6 +12,9 @@ class MainSharedViewModelNew : BaseViewModel() {
     private val _loadedUserData = MutableLiveData<Boolean>()
     val loadedUserData: LiveData<Boolean> = _loadedUserData
 
+    private val _loadedMapLayerWithUserData = MutableLiveData<Boolean>()
+    val loadedMapLayerWithUserData: LiveData<Boolean> = _loadedMapLayerWithUserData
+
     private val _selectedDamageDataItem = MutableLiveData<DamageData?>()
     val selectedDamageDataItem: LiveData<DamageData?> = _selectedDamageDataItem
 
@@ -29,6 +32,10 @@ class MainSharedViewModelNew : BaseViewModel() {
     fun setIfLoadedUserData(value: Boolean) {
         _loadedUserData.postValue(value)
         _loadedUserData.value = value
+    }
+
+    fun setIfLoadedMapLayerWithUserData(value: Boolean) {
+        _loadedMapLayerWithUserData.value = value
     }
 
     fun selectDamageData(item: DamageData) {

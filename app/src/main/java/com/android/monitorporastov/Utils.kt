@@ -12,6 +12,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 import okhttp3.*

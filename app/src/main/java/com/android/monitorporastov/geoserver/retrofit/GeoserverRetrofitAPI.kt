@@ -1,5 +1,7 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.geoserver.retrofit
 
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.damagesLayer
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.userDamagesLayer
 import com.android.monitorporastov.model.UsersData
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -10,7 +12,7 @@ import retrofit2.http.Query
 
 interface GeoserverRetrofitAPI {
 
-    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=porasty_pouzivatel_sql&outputFormat=application/json&sortBy=id")
+    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=$userDamagesLayer&outputFormat=application/json&sortBy=id")
     suspend fun getUserData(@Query("viewparams", encoded = true) user: String): Response<UsersData>
 
     @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=fotografie_sql&outputFormat=application/json")
@@ -19,7 +21,7 @@ interface GeoserverRetrofitAPI {
     @POST("wfs?service=WFS")
     suspend fun postToGeoserver(@Body body: RequestBody): Response<String>
 
-    @GET("wfs?service=WFS&version=1.0.0&request=GetFeature&typeNames=porasty&outputFormat=application/json")
+    @GET("wfs?service=WFS&version=1.0.0&request=GetFeature&typeNames=$damagesLayer&outputFormat=application/json")
     suspend fun getDetail(@Query("filter", encoded = true) filter: String): Response<UsersData>
 
     @GET(".")

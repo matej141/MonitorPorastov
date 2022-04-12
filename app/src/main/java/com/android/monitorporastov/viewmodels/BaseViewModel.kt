@@ -6,8 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.android.monitorporastov.CoroutineScopeDelegate
 import com.android.monitorporastov.CoroutineScopeInterface
-import com.android.monitorporastov.GeoserverRetrofitAPI
-import com.android.monitorporastov.GeoserverRetrofitBuilder
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import kotlinx.coroutines.*
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -77,17 +77,15 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
             Pair<Boolean, Response<T>?> {
         val successResultDeferred = CompletableDeferred<Boolean>()
         val retrofitResponseDeferred = CompletableDeferred<Response<T>?>()
-        setLoading(true)
+
         setErrorOccurred(false)
         job = CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = serviceMethod()
-                Log.e(CALL_TO_GEOSERVER_TAG, "buuuuuuuuuuuuuu")
                 retrofitResponseDeferred.complete(response)
                 when {
                     response.isSuccessful -> {
                         successResultDeferred.complete(true)
-                        Log.e(CALL_TO_GEOSERVER_TAG, "buuuuuuuuuuuuu2")
                     }
                     response.code() == unauthorisedCode -> {
                         successResultDeferred.complete(false)
@@ -106,9 +104,6 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
                 successResultDeferred.complete(false)
                 retrofitResponseDeferred.complete(null)
                 handleExceptions(e)
-
-            } finally {
-                setLoading(false)
             }
         }
         val res = successResultDeferred.await()

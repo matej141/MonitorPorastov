@@ -11,7 +11,7 @@ object GeoserverPropertiesNames {
         const val openGisOGCUrl = "\"http://www.opengis.net/ogc\""
         const val xsiUrl = "\"http://www.w3.org/2001/XMLSchema-instance\""
         const val schemaLocationUrl = "http://geoserver.org/geoserver_skeagis"
-        private const val basicUrl = "http://services.skeagis.sk:7492/geoserver/"
+        const val basicUrl = "http://services.skeagis.sk:7492/geoserver/"
         const val getCapabilitiesUrl = "${basicUrl}ows?service=wms&version=1.3.0&request=GetCapabilities"
 
         private const val baseDescribeFeatureTypeUrl = "${basicUrl}wfs?SERVICE=WFS&amp;REQUEST=" +
@@ -44,8 +44,8 @@ object GeoserverPropertiesNames {
 
     object LayersNames {
         const val workspaceName = "geoserver_skeagis"
-        const val damagesLayer = "porasty"
-        private const val userDamagesLayer = "porasty_pouzivatel_sql"
+        const val damagesLayer = "poskodenia"
+        const val userDamagesLayer = "poskodenia_sql"
         const val photosLayer = "fotografie"
         private const val ortofotoLayer = "Ortofoto"
         private const val BPEJLayer = "BPEJ"

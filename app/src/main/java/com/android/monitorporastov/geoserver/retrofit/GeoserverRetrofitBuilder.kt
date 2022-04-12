@@ -1,5 +1,7 @@
-package com.android.monitorporastov
+package com.android.monitorporastov.geoserver.retrofit
 
+import com.android.monitorporastov.BasicAuthInterceptor
+import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.basicUrl
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.ConnectionPool
@@ -10,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 
 object GeoserverRetrofitBuilder {
-    private const val BASE_URL = "http://services.skeagis.sk:7492/geoserver/"
+    private const val BASE_URL = basicUrl
 
     fun createServiceWithGsonFactory(okHttpClientInterceptor: OkHttpClient): GeoserverRetrofitAPI {
         return Retrofit.Builder()

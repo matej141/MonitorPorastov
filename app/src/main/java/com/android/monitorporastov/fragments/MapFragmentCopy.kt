@@ -34,7 +34,7 @@ import com.android.monitorporastov.*
 import com.android.monitorporastov.R
 import com.android.monitorporastov.adapters.models.DialogItem
 import com.android.monitorporastov.databinding.FragmentMapBinding
-import com.android.monitorporastov.fragments.viewmodels.MapFragmentViewModel
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
 import com.android.monitorporastov.viewmodels.MainSharedViewModel
@@ -577,7 +577,7 @@ class MapFragmentCopy : Fragment() {
         binding.buttonCompass.setOnClickListener {
             centerRotationOfMap()
         }
-        binding.deletePointButton.setOnClickListener {
+        binding.deleteMarkerButton.setOnClickListener {
             setButtonDeleting()
         }
         binding.doneGPSMeasureButton.setOnClickListener {
@@ -1287,7 +1287,7 @@ class MapFragmentCopy : Fragment() {
         binding.addPointButton.visibility = View.GONE
         binding.doneGPSMeasureButton.visibility = View.GONE
         binding.saveButton.visibility = View.VISIBLE
-        binding.deletePointButton.visibility = View.VISIBLE
+        binding.deleteMarkerButton.visibility = View.VISIBLE
         binding.backButton.visibility = View.VISIBLE
     }
 
@@ -1335,7 +1335,7 @@ class MapFragmentCopy : Fragment() {
         binding.deleteButton.visibility = View.GONE
         binding.saveButton.visibility = View.GONE
         binding.addPointButton.visibility = View.GONE
-        binding.deletePointButton.visibility = View.GONE
+        binding.deleteMarkerButton.visibility = View.GONE
         binding.doneGPSMeasureButton.visibility = View.GONE
 //        binding.editPolygonButton.visibility = View.GONE
 //        binding.deleteRecordButton.visibility = View.GONE
@@ -1352,11 +1352,11 @@ class MapFragmentCopy : Fragment() {
         if (!buttonDeleting) {
             buttonDeleting = true
             // zmenenie farby buttonu
-            binding.deletePointButton.backgroundTintList = ColorStateList.valueOf(Color
+            binding.deleteMarkerButton.backgroundTintList = ColorStateList.valueOf(Color
                 .parseColor("#EA0A0A"))
         } else {
             buttonDeleting = false
-            binding.deletePointButton.backgroundTintList = ColorStateList.valueOf(Color
+            binding.deleteMarkerButton.backgroundTintList = ColorStateList.valueOf(Color
                 .parseColor("#B4802E"))
         }
     }
