@@ -332,6 +332,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
 
     private fun setDataNotLoadedInSharedViewModel() {
         sharedViewModel?.setIfLoadedUserData(false)
+        sharedViewModel?.setIfLoadedMapLayerWithUserData(false)
     }
 
     private fun whereToNavigateBack() {

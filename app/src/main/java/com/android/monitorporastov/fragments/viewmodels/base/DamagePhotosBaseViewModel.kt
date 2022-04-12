@@ -6,7 +6,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.android.monitorporastov.GeoserverRetrofitAPI
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.UrlFilterParametersNames.urlNameOfIdParameter
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData

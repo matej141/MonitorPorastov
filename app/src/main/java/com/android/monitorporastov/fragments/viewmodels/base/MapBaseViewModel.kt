@@ -4,9 +4,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.viewmodels.BaseViewModel
-import com.android.monitorporastov.GeoserverRetrofitAPI
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
-import com.android.monitorporastov.GeoserverRetrofitBuilder
+import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.launch
 
