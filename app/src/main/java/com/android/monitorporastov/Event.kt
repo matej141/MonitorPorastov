@@ -33,8 +33,3 @@ open class Event<out T>(private val content: T) {
      */
     fun peekContent(): T = content
 }
-
-sealed class EventStatus {
-    object Handled : EventStatus()
-    object Unhandled : EventStatus()
-}

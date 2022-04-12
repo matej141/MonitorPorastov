@@ -42,9 +42,8 @@ import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersName
 import com.android.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.watercourseLayerName
 import com.android.monitorporastov.location.LocationLiveData
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import kotlinx.coroutines.*
-import okhttp3.Credentials
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.MapTileProviderBasic
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -56,26 +55,18 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
-import org.osmdroid.wms.WMSEndpoint
-import org.osmdroid.wms.WMSParser
-import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
-    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: MapFragmentViewModel by activityViewModels()
 
     private var job: Job? = null
     private lateinit var mMap: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
-    private var newPolygon: Polygon = Polygon() // VIEWMODEL  // nový pridávaný polygón
-    private var polyMarkers = mutableListOf<Marker>() // VIEWMODEL  // markery, resp. body polygónu
 
-    private var manualSelecting = false // VIEWMODEL // či je zapnuté manuálne vyznačovanie územia
     private lateinit var drawerLockInterface: DrawerLockInterface  // interface na uzamykanie
 
     // drawer layoutu
@@ -86,28 +77,18 @@ class MapFragment : Fragment() {
 
     private val polygonOutlineColorStr = "#2CE635"  // farba okraja polygónu
     private val polygonFillColorStr = "#33EA3535"  // farba vnútra polygónu
-    private var actualPerimeter = 0.0 // VIEWMODEL // aktuálny obvod polygónu
-    private var actualArea = 0.0 // VIEWMODEL // aktuálna rozloha polygónu
 
     private var activityResultLauncher: ActivityResultLauncher<Array<String>>
 
-    private val polyMarkersHistory =
-        mutableListOf<MutableList<Marker>>() // VIEWMODEL // história markerov
-    private var allPermissionsAreGranted = true // VIEWMODEL // či boli udelené poovolenia
-    private var detailShown = false // VIEWMODEL
+    private var allPermissionsAreGranted = true // či boli udelené poovolenia
 
     private var selectedRecord: DamageData? = null
-
-    private var listOfGeopointsOfSelectedPolygon: MutableList<GeoPoint> = mutableListOf()
 
     private var locationLiveData: LocationLiveData? = null
 
     private val mainMarkerId = "Main marker"
     private val detailPolygonId = "DetailPolygon"
 
-    companion object {
-        private const val MAP_TAG = "MapFragment"
-    }
 
     // na začiatku skontrolujeme povolenia k polohe
     init {
@@ -131,7 +112,6 @@ class MapFragment : Fragment() {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         setUpBackStackCallback()
-        // requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
     }
 
     override fun onCreateView(
@@ -330,9 +310,8 @@ class MapFragment : Fragment() {
             endGPSMeasureAD()
         }
         binding.deleteRecordButton.setOnClickListener {
-            CoroutineScope(Dispatchers.Main).launch {
-                handleDeletingRecord()
-            }
+            askIfDeleteDataAD()
+
         }
         binding.detailRecordButton.setOnClickListener {
             navigateToDetailFragment()
@@ -527,7 +506,14 @@ class MapFragment : Fragment() {
             return
         }
         val boundingBox = BoundingBox.fromGeoPoints(damageData.coordinates)
-        mMap.zoomToBoundingBox(boundingBox, true, 100)
+        val geoPoint = boundingBox.centerWithDateLine
+        CoroutineScope(Dispatchers.Main).launch {
+            viewModel.getDetailOfPolygonOnMap(geoPoint)
+        }
+        mMap.post {
+            mMap.zoomToBoundingBox(boundingBox, true, 100)
+        }
+
     }
 
     private fun observeDamageDataItem() {
@@ -599,8 +585,6 @@ class MapFragment : Fragment() {
 
     private fun addMarkerToMapOnClick(p: GeoPoint) {
         val marker = createMarker(p)  // vytvorenie markeru
-        polyMarkersHistory.add(polyMarkers.toMutableList())
-        polyMarkers.add(marker)
         mMap.overlays.add(marker)
         viewModel.addMarkerToPolygonOnMap(marker)
         viewModel.createDamagePolygon()
@@ -802,36 +786,6 @@ class MapFragment : Fragment() {
         binding.deleteMarkerButton.visibility = View.VISIBLE
     }
 
-    private suspend fun handleDeletingRecord(): Boolean {
-        val deferredBoolean = CompletableDeferred<Boolean>()
-        val damageDataItem = selectedRecord ?: return false
-        AlertDialog.Builder(requireContext())  //
-            .setTitle(R.string.if_delete_record_title)
-            .setPositiveButton(R.string.button_positive_text) { _, _ ->
-                CoroutineScope(Dispatchers.Main).launch {
-                    binding.progressBar.visibility = View.VISIBLE
-                    deferredBoolean.complete(sharedViewModel.deleteItem(damageDataItem))
-                }
-            }
-            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
-                deferredBoolean.complete(false)
-                dialog.cancel()
-            }
-            .create()
-            .show()
-
-        if (deferredBoolean.await()) {
-
-            Toast.makeText(context, "Dáta boli úspešne vymazané",
-                Toast.LENGTH_SHORT).show()
-            viewModel.setDefaultModeOfMap()
-            viewModel.loadUserPolygons()
-            clearMapFromShownDetail()
-        }
-        binding.progressBar.visibility = View.GONE
-        return deferredBoolean.await()
-    }
-
     /**
      * Metóda zviditeľní buttony, ktoré sa majú zobrazovať počas vyznačovania územia krokovaním
      * a umožní spustenie tohto vyznačovania.
@@ -987,6 +941,20 @@ class MapFragment : Fragment() {
         }
     }
 
+    private fun askIfDeleteDataAD() {
+        AlertDialog.Builder(requireContext())  //
+            .setTitle(R.string.if_delete_record_title)
+            .setPositiveButton(R.string.button_positive_text) { _, _ ->
+                binding.progressBar.visibility = View.VISIBLE
+                sharedViewModel.prepareToDelete(viewModel.getSelectedDamageRecord())
+            }
+            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
+                dialog.cancel()
+            }
+            .create()
+            .show()
+    }
+
     private fun initSetUp() {
         checkForPermissions()
         setUpViewModel()
@@ -1021,10 +989,11 @@ class MapFragment : Fragment() {
         observeNoInternetForSelectedLayers()
         observeGeopoints()
         observeAreaAndPerimeter()
+        observeDetailOfPolygonOnMap()
         observeSelecting()
         observeNewPolygonMarkersHistory()
         observeMarkersToAddOrRemoveFromMap()
-        observeDetailOfPolygonOnMap()
+        observeIfDeletingWasSuccessful()
     }
 
     private fun setUpViewModel() {
@@ -1116,10 +1085,9 @@ class MapFragment : Fragment() {
 
     private fun addNewLayerWithUserDataToMap(wmsTileSource: WMSTileSourceRepaired) {
         val tilesOverlayRepaired = createTilesOverlay(userDamagesLayerName, wmsTileSource)
-        if (viewModel.detailModeShown.value == true && mMap.overlays.size-1 > -1) {
-            mMap.overlays?.add(mMap.overlays.size-1, tilesOverlayRepaired)
-        }
-        else {
+        if (viewModel.detailModeShown.value == true && mMap.overlays.size - 1 > -1) {
+            mMap.overlays?.add(mMap.overlays.size - 1, tilesOverlayRepaired)
+        } else {
             mMap.overlays?.add(tilesOverlayRepaired)
         }
 
@@ -1240,7 +1208,7 @@ class MapFragment : Fragment() {
     }
 
     private fun addNewPolygonToMap(geoPoints: List<GeoPoint>) {
-        newPolygon = Polygon()
+        val newPolygon = Polygon()
         newPolygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
         newPolygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
         newPolygon.points = geoPoints
@@ -1280,7 +1248,6 @@ class MapFragment : Fragment() {
         observeGPSSelecting()
         observeIfDefaultModeOfMap()
         observeMarkerDeletingMode()
-
     }
 
     private fun observeDetailOfPolygonOnMap() {
@@ -1327,6 +1294,9 @@ class MapFragment : Fragment() {
 
     private fun observePolygonDetailMode() {
         viewModel.detailModeShown.observe(viewLifecycleOwner) { value ->
+            if (viewModel.manualSelecting.value == true) {
+                return@observe
+            }
             if (value) {
                 setUpViewForDetail()
             } else {
@@ -1369,10 +1339,12 @@ class MapFragment : Fragment() {
 
     private fun observeDetailDamageData() {
         viewModel.detailDamageData.observe(viewLifecycleOwner) {
+            if (viewModel.manualSelecting.value == true) {
+                return@observe
+            }
             if (it != null) {
                 showDetailInfo(it)
-            }
-            else {
+            } else {
                 clearMapFromShownDetail()
             }
         }
@@ -1382,6 +1354,23 @@ class MapFragment : Fragment() {
         viewModel.geopointsOfSelectedPolygon.observe(viewLifecycleOwner) {
             if (it != null) {
                 showDetailPolygon(it)
+            }
+        }
+    }
+
+    private fun observeIfDeletingWasSuccessful() {
+        sharedViewModel.deletingWasSuccessful.observe(viewLifecycleOwner) { value ->
+            value.getContentIfNotHandled()?.let { wasSuccessful ->
+                if (wasSuccessful) {
+                    Toast.makeText(context, getString(R.string.successful_deleting),
+                        Toast.LENGTH_SHORT).show()
+                    viewModel.setDefaultModeOfMap()
+                    viewModel.loadUserPolygons()
+                    clearMapFromShownDetail()
+                } else {
+                    Toast.makeText(context, getString(R.string.unsuccessful_deleting),
+                        Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

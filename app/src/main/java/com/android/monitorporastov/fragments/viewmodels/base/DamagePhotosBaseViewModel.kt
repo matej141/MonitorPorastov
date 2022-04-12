@@ -141,19 +141,6 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
         damageDataItem.value?.bitmapsLoaded = true
     }
 
-    private fun updateItemInSharedViewModel() {
-        val damageDataItem = damageDataItem.value ?: return
-        if (sharedViewModel == null) {
-            return
-        }
-        if (sharedViewModel?.selectedDamageDataItem?.value == null) {
-            sharedViewModel?.selectDamageData(damageDataItem)
-            return
-        }
-        sharedViewModel?.selectDamageDataFromMap(damageDataItem)
-
-    }
-
     private fun createListsNecessaryForPhotos(usersData: UsersData) {
         createStringsOfPhotosList(usersData)
         createIndexesOfPhotosList(usersData)

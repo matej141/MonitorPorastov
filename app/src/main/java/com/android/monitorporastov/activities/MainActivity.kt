@@ -27,7 +27,7 @@ import com.android.monitorporastov.Utils.createErrorMessageAD
 import com.android.monitorporastov.Utils.noNetworkAvailable
 import com.android.monitorporastov.connection.ConnectionLiveData
 import com.android.monitorporastov.databinding.ActivityMainBinding
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import com.google.android.material.navigation.NavigationView
 
 
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var navController: NavController
-    private val sharedViewModel: MainSharedViewModelNew by viewModels()
+    private val sharedViewModel: MainSharedViewModel by viewModels()
 
     private val binding get() = _binding!!
     private lateinit var connectionLiveData: ConnectionLiveData

@@ -28,7 +28,7 @@ import com.android.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentAddDamageBinding
 import com.android.monitorporastov.fragments.viewmodels.AddOrUpdateRecordFragmentViewModel
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 
 
 /**
@@ -36,7 +36,7 @@ import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
  */
 class AddOrUpdateRecordFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
-    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: AddOrUpdateRecordFragmentViewModel by viewModels()
 
     private var _binding: FragmentAddDamageBinding? = null

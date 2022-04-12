@@ -679,6 +679,10 @@ class MapFragmentViewModel : MapBaseViewModel() {
         selectedDamageRecord = data
     }
 
+    fun getSelectedDamageRecord(): DamageData? {
+        return selectedDamageRecord
+    }
+
     fun setSelectedDamageRecordAsNull() {
         selectedDamageRecord = null
     }
