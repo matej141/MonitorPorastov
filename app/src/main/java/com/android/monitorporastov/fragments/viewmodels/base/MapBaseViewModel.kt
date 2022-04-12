@@ -5,13 +5,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.viewmodels.BaseViewModel
 import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.android.monitorporastov.model.DamageData
 import kotlinx.coroutines.launch
 
 abstract class MapBaseViewModel: BaseViewModel() {
-    var sharedViewModel: MainSharedViewModelNew? = null
+    var sharedViewModel: MainSharedViewModel? = null
     var viewLifecycleOwner: LifecycleOwner? = null
     private val _damageDataItem = MutableLiveData<DamageData>()
     val damageDataItem: LiveData<DamageData> = _damageDataItem
@@ -24,12 +24,12 @@ abstract class MapBaseViewModel: BaseViewModel() {
         this.viewLifecycleOwner = viewLifecycleOwner
     }
 
-    private fun initSharedViewModel(sharedViewModel: MainSharedViewModelNew) {
+    private fun initSharedViewModel(sharedViewModel: MainSharedViewModel) {
         this.sharedViewModel = sharedViewModel
     }
 
     open fun initViewModelMethods(
-        sharedViewModel: MainSharedViewModelNew,
+        sharedViewModel: MainSharedViewModel,
         viewLifecycleOwner: LifecycleOwner,
     ) {
         initSharedViewModel(sharedViewModel)

@@ -69,7 +69,6 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
     }
 
     fun reportThatUnauthorisedErrorIsOccurred() {
-        // _unauthorisedErrorIsOccurred.postValue(true)
         _unauthorisedErrorIsOccurred.postValue(true)
     }
 
@@ -130,7 +129,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         Log.d(UNLOAD_CREDENTIALS_TAG, "Error was occurred during attempt to load credentials")
     }
 
-    fun getGeoserverServiceAPIWithScalars(): GeoserverRetrofitAPI? {
+    private fun getGeoserverServiceAPIWithScalars(): GeoserverRetrofitAPI? {
         val geoserverRetrofitAPI: GeoserverRetrofitAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
@@ -152,7 +151,6 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
             performCallToGeoserver { geoserverRetrofitAPI.postToGeoserver(requestBody) }
         deferredBoolean.complete(processPostedResponse(resultOfCallToGeoserver.first,
             resultOfCallToGeoserver.second))
-        val f = deferredBoolean.await()
         return deferredBoolean.await()
     }
 

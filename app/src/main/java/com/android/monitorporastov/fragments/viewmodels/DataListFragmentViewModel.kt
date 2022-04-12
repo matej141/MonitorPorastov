@@ -8,7 +8,7 @@ import com.android.monitorporastov.fragments.viewmodels.base.MapBaseViewModel
 import com.android.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.android.monitorporastov.model.DamageData
 import com.android.monitorporastov.model.UsersData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import org.osmdroid.util.GeoPoint
 import retrofit2.Response
 
@@ -123,7 +123,7 @@ class DataListFragmentViewModel : MapBaseViewModel() {
     }
 
     override fun initViewModelMethods(
-        sharedViewModel: MainSharedViewModelNew,
+        sharedViewModel: MainSharedViewModel,
         viewLifecycleOwner: LifecycleOwner,
     ) {
 

@@ -179,4 +179,18 @@ object GeoserverDataPostStringsFactory {
                 "</Insert>\n" +
                 "</Transaction>\n"
     }
+
+    fun createDeleteRecordTransactionString(id: Int): String {
+        return createHeaderOfTransaction() +
+                "<Delete xmlns=$openGisWFSUrl " +
+                "       typeName=\"$damagesLayerName\">\n" +
+                "       <Filter xmlns=$openGisOGCUrl>\n" +
+                "           <PropertyIsEqualTo>" +
+                "               <PropertyName>$propertyNameOfId</PropertyName>" +
+                "                   <Literal>$id</Literal>" +
+                "           </PropertyIsEqualTo>\n" +
+                "       </Filter>\n" +
+                "</Delete>\n" +
+                "</Transaction>\n"
+    }
 }

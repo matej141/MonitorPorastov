@@ -1,7 +1,6 @@
 package com.android.monitorporastov.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -15,7 +14,7 @@ import com.android.monitorporastov.adapters.DataListItemRecyclerViewAdapter
 import com.android.monitorporastov.databinding.FragmentDataListBinding
 import com.android.monitorporastov.fragments.viewmodels.DataListFragmentViewModel
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 
 /**
  * Fragment zobrazujúci zoznam poškodení.
@@ -26,7 +25,7 @@ class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDe
 
     private val binding get() = _binding!!
 
-    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
 
     private val viewModel: DataListFragmentViewModel by activityViewModels()
 

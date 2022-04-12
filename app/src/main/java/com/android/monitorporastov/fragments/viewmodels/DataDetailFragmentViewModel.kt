@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.monitorporastov.fragments.viewmodels.base.DamagePhotosBaseViewModel
+import com.android.monitorporastov.model.DamageData
 
 open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
 
@@ -13,6 +14,7 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
     private val _noPhotosToShow = MutableLiveData<Boolean>()
     val noPhotosToShow: LiveData<Boolean> = _noPhotosToShow
 
+    lateinit var detailDamageDataItem: DamageData
 
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {
         super.setBitmaps(listOfBitmaps)

@@ -1,9 +1,6 @@
 package com.android.monitorporastov.fragments
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Base64
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -18,9 +15,7 @@ import com.android.monitorporastov.adapters.DataDetailPhotosRVAdapter
 import com.android.monitorporastov.databinding.FragmentDataDetailBinding
 import com.android.monitorporastov.fragments.viewmodels.DataDetailFragmentViewModel
 import com.android.monitorporastov.model.DamageData
-import com.android.monitorporastov.viewmodels.MainSharedViewModelNew
-import kotlinx.coroutines.*
-import java.sql.Timestamp
+import com.android.monitorporastov.viewmodels.MainSharedViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,14 +24,13 @@ import java.util.*
  */
 class DataDetailFragment : Fragment() {
 
-    private var damageDataItem: DamageData? = null  // viewmodel
     private lateinit var recyclerView: RecyclerView
 
     private var _binding: FragmentDataDetailBinding? = null
 
     private val binding get() = _binding!!
 
-    private val sharedViewModel: MainSharedViewModelNew by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: DataDetailFragmentViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,11 +49,16 @@ class DataDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.dataDetailPhotoRv
+        setUpObservers()
+        hideKeyboard()
+    }
+
+    private fun setUpObservers() {
         observeDamageDataFromViewModel()
         observeBitmaps()
         observeIfNoPhotosToShow()
         observeLoadingValue()
-        hideKeyboard()
+        observeIfDeletingWasSuccessful()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -75,17 +74,15 @@ class DataDetailFragment : Fragment() {
             return false
         }
         if (id == R.id.menu_edit_data) {
-            damageDataItem?.let {
+            viewModel.detailDamageDataItem.let {
                 it.isInGeoserver = true
                 it.isDirectlyFromMap = false
                 findNavController().navigate(
-                    R.id.action_data_detail_fragment_TO_add_measure_fragment)
+                    R.id.action_data_detail_fragment_TO_add_or_update_fragment)
             }
         }
         if (id == R.id.menu_delete_data) {
-            CoroutineScope(Dispatchers.Main).launch {
-                handleDeletingRecord()
-            }
+            askIfDeleteDataAD()
         }
 
         if (id == R.id.menu_show_on_map_data) {
@@ -124,35 +121,6 @@ class DataDetailFragment : Fragment() {
 
     private fun navigateToMapFragment() {
         findNavController().navigate(R.id.action_data_detail_fragment_TO_map_fragment)
-    }
-
-    private suspend fun handleDeletingRecord(): Boolean {
-        val deferredBoolean = CompletableDeferred<Boolean>()
-        val damageDataItem = viewModel.damageDataItem.value ?: return false
-        AlertDialog.Builder(requireContext())  //
-            .setTitle(R.string.if_delete_record_title)
-            .setPositiveButton(R.string.button_positive_text) { _, _ ->
-                CoroutineScope(Dispatchers.Main).launch {
-                    binding.progressBar.visibility = View.VISIBLE
-                    deferredBoolean.complete(sharedViewModel.deleteItem(damageDataItem))
-                }
-            }
-            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
-                deferredBoolean.complete(false)
-                dialog.cancel()
-            }
-            .create()
-            .show()
-
-        if (deferredBoolean.await()) {
-
-            Toast.makeText(context, "Dáta boli úspešne vymazané",
-                Toast.LENGTH_SHORT).show()
-
-            navigateToDataListFragment()
-        }
-        binding.progressBar.visibility = View.GONE
-        return deferredBoolean.await()
     }
 
     private fun navigateToDataListFragment() {
@@ -198,17 +166,32 @@ class DataDetailFragment : Fragment() {
 
     private fun observeDamageDataFromViewModel() {
         if (sharedViewModel.selectedDamageDataItemFromMap.value == null) {
+            viewModel.detailDamageDataItem = sharedViewModel.selectedDamageDataItem.value!!
             observeSelectedDamageDataFromViewModel()
             return
         }
+        viewModel.detailDamageDataItem = sharedViewModel.selectedDamageDataItemFromMap.value!!
         observeSelectedItemFromMap()
     }
 
     private fun setUpDamageData(damageData: DamageData) {
-        damageDataItem = damageData
         setupContent(damageData)
-
     }
+
+    private fun askIfDeleteDataAD() {
+        AlertDialog.Builder(requireContext())  //
+            .setTitle(R.string.if_delete_record_title)
+            .setPositiveButton(R.string.button_positive_text) { _, _ ->
+                binding.progressBar.visibility = View.VISIBLE
+                sharedViewModel.prepareToDelete(viewModel.detailDamageDataItem)
+            }
+            .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
+                dialog.cancel()
+            }
+            .create()
+            .show()
+    }
+
 
     private fun observeSelectedItemFromMap() {
         sharedViewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner
@@ -249,6 +232,21 @@ class DataDetailFragment : Fragment() {
     private fun observeIfNoPhotosToShow() {
         viewModel.noPhotosToShow.observe(viewLifecycleOwner) { value ->
             binding.dataDetailPhotoNoPhotos.visibility = if (value) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun observeIfDeletingWasSuccessful() {
+        sharedViewModel.deletingWasSuccessful.observe(viewLifecycleOwner) { value ->
+            value.getContentIfNotHandled()?.let { wasSuccessful ->
+                if (wasSuccessful) {
+                    Toast.makeText(context, getString(R.string.successful_deleting),
+                        Toast.LENGTH_SHORT).show()
+                    navigateToDataListFragment()
+                } else {
+                    Toast.makeText(context, getString(R.string.unsuccessful_deleting),
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }

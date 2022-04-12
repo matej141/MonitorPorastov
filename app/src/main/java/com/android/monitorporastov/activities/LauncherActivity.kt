@@ -6,6 +6,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
 import com.android.monitorporastov.AppsEncryptedSharedPreferences.getIfLoggedInValue
 import com.android.monitorporastov.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -18,11 +22,16 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun startNewActivity() {
-        if (sharedPreferences.getIfLoggedInValue()) {
-            startMainActivity()
-            return
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(100)
+            if (sharedPreferences.getIfLoggedInValue()) {
+
+                startMainActivity()
+                return@launch
+            }
+            startLoginActivity()
         }
-        startLoginActivity()
+
     }
 
     private fun startMainActivity() {

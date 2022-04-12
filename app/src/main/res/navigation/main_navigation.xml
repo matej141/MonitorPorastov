@@ -9,15 +9,13 @@
         android:id="@+id/map_fragment"
         android:name="com.android.monitorporastov.fragments.MapFragment"
         android:label="@string/menu_map_txt"
-        tools:layout="@layout/fragment_map"
-        >
+        tools:layout="@layout/fragment_map">
         <action
             android:id="@+id/action_map_fragment_TO_add_damage_fragment"
             app:destination="@id/add_damage_fragment" />
         <action
             android:id="@+id/action_map_fragment_TO_data_detail_fragment"
-            app:destination="@id/data_detail_fragment"
-            />
+            app:destination="@id/data_detail_fragment" />
     </fragment>
 
     <fragment
@@ -49,8 +47,7 @@
         <action
             android:id="@+id/action_data_list_fragment_TO_map_fragment"
             app:destination="@id/map_fragment"
-            app:popUpTo="@+id/map_fragment"
-            />
+            app:popUpTo="@+id/map_fragment" />
     </fragment>
 
     <fragment
@@ -60,13 +57,13 @@
         tools:layout="@layout/fragment_data_detail">
 
         <action
-            android:id="@+id/action_data_detail_fragment_TO_add_measure_fragment"
+            android:id="@+id/action_data_detail_fragment_TO_add_or_update_fragment"
             app:destination="@id/add_damage_fragment" />
 
         <action
             android:id="@+id/action_data_detail_fragment_TO_data_list_fragment"
             app:destination="@id/data_list_fragment"
-            />
+            app:popUpTo="@+id/data_list_fragment" />
 
         <action
             android:id="@+id/action_data_detail_fragment_TO_map_fragment"
