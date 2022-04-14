@@ -9,6 +9,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import okhttp3.MediaType
+import okhttp3.RequestBody
 
 
 // https://stackoverflow.com/questions/39489887/call-method-from-kotlin-class
@@ -17,6 +19,10 @@ object Utils {
     // mozno uzitocne na editText https://stackoverflow.com/questions/52469649/kotlin-hide-soft-keyboard-on-android-8
     fun Fragment.hideKeyboard() {
         view?.let { activity?.hideKeyboard(it) }
+    }
+
+    fun createRequestBody(requestBodyText: String): RequestBody {
+        return RequestBody.create(MediaType.parse("text/xml"), requestBodyText)
     }
 
     fun Activity.hideKeyboard() {

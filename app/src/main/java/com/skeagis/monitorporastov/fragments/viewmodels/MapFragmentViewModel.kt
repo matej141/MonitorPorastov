@@ -347,11 +347,18 @@ class MapFragmentViewModel : MapBaseViewModel() {
 
     private suspend fun getWmsTileSourceOnRepeat(layerName: String): WMSTileSourceRepaired? {
         val deferredSource = CompletableDeferred<WMSTileSourceRepaired?>()
+
         withContext(Dispatchers.Main) {
             observeNetworkState {
-                setLoading(true)
-                val wmsTileSource = createWMSTileSource(layerName)
-                deferredSource.complete(wmsTileSource)
+                if (loadedMapLayerWithUserData.value == true) {
+                    deferredSource.complete(null)
+                }
+                else {
+                    setLoading(true)
+                    val wmsTileSource = createWMSTileSource(layerName)
+                    deferredSource.complete(wmsTileSource)
+                }
+
             }
         }
         return deferredSource.await()

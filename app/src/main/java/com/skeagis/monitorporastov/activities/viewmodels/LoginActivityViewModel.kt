@@ -47,6 +47,7 @@ class LoginActivityViewModel : BaseViewModel() {
     }
 
     suspend fun doLogin(): Boolean {
+        setLoading(true)
         val resultOfCallToGeoserver =
             performCallToGeoserver { getGeoserverServiceAPI().login() }
         val wasCallSuccessful = resultOfCallToGeoserver.first
@@ -66,6 +67,7 @@ class LoginActivityViewModel : BaseViewModel() {
                 Log.d(LOGIN_TAG, "Error: ${response.message()}")
             }
         }
+        setLoading(false)
         return wasCallSuccessful
     }
 }

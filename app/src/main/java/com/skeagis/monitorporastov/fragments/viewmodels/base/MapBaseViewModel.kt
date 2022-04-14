@@ -70,6 +70,7 @@ abstract class MapBaseViewModel: BaseViewModel() {
                     launch {
                         reloadFunction()
                     }
+                    //sharedViewModel?.isNetworkAvailable?.removeObservers(it)
                 }
                 setNetworkAvailability(isAvailable)
             }
