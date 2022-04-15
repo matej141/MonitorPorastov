@@ -75,7 +75,7 @@ class MapFragment : Fragment() {
     private val polygonOutlineColorStr = "#2CE635"  // farba okraja polygónu
     private val polygonFillColorStr = "#33EA3535"  // farba vnútra polygónu
 
-    private var activityResultLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var activityResultLauncher: ActivityResultLauncher<Array<String>>
 
     private var allPermissionsAreGranted = true // či boli udelené poovolenia
 
@@ -87,6 +87,10 @@ class MapFragment : Fragment() {
 
     // na začiatku skontrolujeme povolenia k polohe
     init {
+        checkIfPermissionsAreGranted()
+    }
+
+    private fun checkIfPermissionsAreGranted() {
         this.activityResultLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()) { result ->
             allPermissionsAreGranted = true
@@ -101,6 +105,7 @@ class MapFragment : Fragment() {
             }
         }
     }
+
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {

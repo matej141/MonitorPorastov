@@ -83,8 +83,8 @@
     <string name="login_ag_title">Prihlásenie neúspešné</string>
     <string name="login_ag_message">Skontrolujte svoje prihlasovacie údaje.
         Ak problém pretrváva, kontaktujte podporu.</string>
-    <string name="explanation_ad_title">Mapu nie je možné zobraziť</string>
-    <string name="explanation_ad_message">Mapu nie je možné zobraziť a ani nie je možné s ňou pracovať, pretože nebol udelený prístup k polohe.</string>
+    <string name="explanation_ad_title">Aktuálnu polohu nie je možné zobraziť</string>
+    <string name="explanation_ad_message">Aktuálnu polohu nie je možné zobraziť a ani nie je možné s ňou pracovať, pretože prístup k polohe nebol udelený.</string>
     <string name="location_alert">Poloha ešte nebola získaná, počkajte prosím</string>
     <string name="end_gps_measure_ad_title">Naozaj chcete ukončiť vyznačovanie krokovaním?</string>
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
