@@ -119,13 +119,13 @@ class LoginActivity : AppCompatActivity() {
     private fun setTextChangeListeners() {
         binding.loginUsername.editText?.apply {
             afterTextChanged {
-                viewModel.setUsernameEditable(removeWhitespacesFromEditable(it))
+                viewModel.setUsernameEditable(trimEditable(it))
             }
         }
 
         binding.loginPassword.editText?.apply {
             afterTextChanged {
-                viewModel.setPasswordEditable(removeWhitespacesFromEditable(it))
+                viewModel.setPasswordEditable(trimEditable(it))
             }
         }
     }
@@ -147,8 +147,8 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun removeWhitespacesFromEditable(editable: Editable): Editable {
-        return Editable.Factory().newEditable(editable.filter { char -> !char.isWhitespace() })
+    private fun trimEditable(editable: Editable): Editable {
+        return Editable.Factory().newEditable(editable.trim())
     }
 
     private fun setLoginStayLoggedListener() {
@@ -228,11 +228,11 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun getUsernameEditText(): Editable? = binding.loginUsername.editText?.text?.let {
-        removeWhitespacesFromEditable(it)
+        trimEditable(it)
     }
 
     private fun getPasswordEditText(): Editable? = binding.loginPassword.editText?.text?.let {
-        removeWhitespacesFromEditable(it)
+        trimEditable(it)
     }
 
     /**

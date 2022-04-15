@@ -61,7 +61,7 @@ class MapFragment : Fragment() {
     private val viewModel: MapFragmentViewModel by activityViewModels()
 
     private var job: Job? = null
-    private lateinit var mMap: MapView
+    private lateinit var mapView: MapView
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
 
     private lateinit var drawerLockInterface: DrawerLockInterface  // interface na uzamykanie
@@ -185,11 +185,11 @@ class MapFragment : Fragment() {
             createMainMarker()
         }
         mainMarker!!.position = position
-        mMap.invalidate()
+        mapView.invalidate()
     }
 
     private fun createMainMarker() {
-        mainMarker = Marker(mMap)
+        mainMarker = Marker(mapView)
         mainMarker!!.setOnMarkerClickListener { _, _ ->
             false
         }
@@ -198,12 +198,12 @@ class MapFragment : Fragment() {
         // https://stackoverflow.com/questions/29041027/android-getresources-getdrawable-deprecated-api-22
         mainMarker!!.icon =
             mapMarkerIcon
-        mMap.overlays.add(mainMarker)
+        mapView.overlays.add(mainMarker)
     }
 
     override fun onResume() {
         super.onResume()
-        mMap.onResume()
+        mapView.onResume()
     }
 
     /**
@@ -211,8 +211,8 @@ class MapFragment : Fragment() {
      */
     override fun onPause() {
         super.onPause()
-        viewModel.saveStateOfMap(mMap)
-        mMap.onPause()
+        viewModel.saveStateOfMap(mapView)
+        mapView.onPause()
     }
 
     override fun onDestroyView() {
@@ -302,7 +302,7 @@ class MapFragment : Fragment() {
             viewModel.setMarkerDeletingMode()
         }
         binding.doneGPSMeasureButton.setOnClickListener {
-            endGPSMeasureAD()
+            endGPSSelectingAD()
         }
         binding.deleteRecordButton.setOnClickListener {
             askIfDeleteDataAD()
@@ -405,9 +405,9 @@ class MapFragment : Fragment() {
 
 
     private fun deleteLayerFromMap(layerName: String) {
-        mMap.overlays.forEach {
+        mapView.overlays.forEach {
             if (it is TilesOverlayRepaired && it.layerName == layerName)
-                mMap.overlays.remove(it)
+                mapView.overlays.remove(it)
         }
     }
 
@@ -415,7 +415,7 @@ class MapFragment : Fragment() {
      * Načíta do mapy defaultnú vrstvu od Mapniku.
      */
     private fun loadDefaultLayer() {
-        mMap.setTileSource(TileSourceFactory.MAPNIK)
+        mapView.setTileSource(TileSourceFactory.MAPNIK)
     }
 
     /**
@@ -431,14 +431,14 @@ class MapFragment : Fragment() {
     }
 
     private fun setUpMapView() {
-        mMap = binding.mapView
+        mapView = binding.mapView
 
         if (viewModel.mapIsInitialised) {
-            viewModel.restartStateOfMap(mMap)
+            viewModel.restartStateOfMap(mapView)
         }
 
-        mMap.setDestroyMode(false)
-        mMap.setMultiTouchControls(true)
+        mapView.setDestroyMode(false)
+        mapView.setMultiTouchControls(true)
         setUpZoomLevelsOfMap()
     }
 
@@ -448,15 +448,15 @@ class MapFragment : Fragment() {
     }
 
     private fun setUpMaxZoomLevel() {
-        mMap.maxZoomLevel = 30.0
+        mapView.maxZoomLevel = 30.0
     }
 
     private fun setUpMinZoomLevel() {
-        mMap.minZoomLevel = 4.0
+        mapView.minZoomLevel = 4.0
     }
 
     private fun setUpZoomController() {
-        mMap.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
+        mapView.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
         setUpDefaultZoomAndCenterOfMap()
     }
 
@@ -468,32 +468,32 @@ class MapFragment : Fragment() {
         val startGeoPoint = GeoPoint(lat, long)
         if (viewModel.getLastLocation() == null) {
             // kým sa nenačíta poloha, nastaví center a zoom na Slovensko, približne na Bratislavu.
-            mMap.controller.setZoom(startZoomLevel)
-            mMap.controller.setCenter(startGeoPoint)
+            mapView.controller.setZoom(startZoomLevel)
+            mapView.controller.setCenter(startGeoPoint)
         }
     }
 
     private fun setUpRotationGestureOverlay() {
         // overlay umožňujúci rotáciu mapy
-        val rotationGestureOverlay = RotationGestureOverlay(mMap)
+        val rotationGestureOverlay = RotationGestureOverlay(mapView)
         rotationGestureOverlay.isEnabled = true
 
-        mMap.overlays.add(rotationGestureOverlay)
+        mapView.overlays.add(rotationGestureOverlay)
     }
 
     private fun addMainMarkerToMapIfExists() {
         if (mainMarker != null) {
             removeMainMarkerIfPreviouslyAdded()
-            mMap.overlays.add(mainMarker)
+            mapView.overlays.add(mainMarker)
         }
     }
 
     private fun removeMainMarkerIfPreviouslyAdded() {
-        mMap.overlays.removeAll { it is Marker && it.id == mainMarkerId }
+        mapView.overlays.removeAll { it is Marker && it.id == mainMarkerId }
     }
 
     private fun removeAllMarkersOfPolygon() {
-        mMap.overlays.removeAll { it is Marker && it.id != mainMarkerId }
+        mapView.overlays.removeAll { it is Marker && it.id != mainMarkerId }
     }
 
     private fun zoomToBoundingBox(damageData: DamageData) {
@@ -505,8 +505,8 @@ class MapFragment : Fragment() {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.getDetailOfPolygonOnMap(geoPoint)
         }
-        mMap.post {
-            mMap.zoomToBoundingBox(boundingBox, true, 100)
+        mapView.post {
+            mapView.zoomToBoundingBox(boundingBox, true, 100)
         }
 
     }
@@ -554,7 +554,7 @@ class MapFragment : Fragment() {
             }
         }
         // tento receiver sa nakoniec pridá do mapy ako overlay
-        mMap.overlays.add(MapEventsOverlay(mReceive))
+        mapView.overlays.add(MapEventsOverlay(mReceive))
     }
 
     private fun setUpForEditingPolygon() {
@@ -568,19 +568,19 @@ class MapFragment : Fragment() {
         viewModel.listOfGeopointsOfSelectedPolygon.forEach {
             val marker = createMarker(it)
             viewModel.polygonMarkersList.add(marker)
-            mMap.overlays.add(marker)
+            mapView.overlays.add(marker)
         }
     }
 
     private fun clearMapFromShownDetail() {
-        mMap.overlays.removeAll { it is Polygon }
-        mMap.invalidate()
+        mapView.overlays.removeAll { it is Polygon }
+        mapView.invalidate()
         hideLayoutOfDetail()
     }
 
     private fun addMarkerToMapOnClick(p: GeoPoint) {
         val marker = createMarker(p)  // vytvorenie markeru
-        mMap.overlays.add(marker)
+        mapView.overlays.add(marker)
         viewModel.addMarkerToPolygonOnMap(marker)
         viewModel.createDamagePolygon()
     }
@@ -619,14 +619,14 @@ class MapFragment : Fragment() {
     }
 
     private fun showDetailPolygon(list: List<GeoPoint>) {
-        mMap.overlays.removeAll { it is Polygon && it.id == detailPolygonId }
+        mapView.overlays.removeAll { it is Polygon && it.id == detailPolygonId }
         val detailPolygon = Polygon()
         detailPolygon.id = detailPolygonId
         detailPolygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
         detailPolygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
         detailPolygon.points = list
-        mMap.overlays?.add(detailPolygon)
-        mMap.invalidate()
+        mapView.overlays?.add(detailPolygon)
+        mapView.invalidate()
     }
 
     /**
@@ -634,7 +634,7 @@ class MapFragment : Fragment() {
      * @param point súradnice kliknutého bodu v mape
      */
     private fun createMarker(point: GeoPoint): Marker {
-        val marker = Marker(mMap)
+        val marker = Marker(mapView)
 
         marker.isDraggable = true
         // aplikujeme na marker receiver, vďaka ktorému ho je možné presúvať.
@@ -682,7 +682,7 @@ class MapFragment : Fragment() {
      */
     private fun deleteMarker(marker: Marker) {
         if (viewModel.markerDeletingMode.value != true) return
-        mMap.overlays.remove(marker)
+        mapView.overlays.remove(marker)
         viewModel.removeMarker(marker)
         viewModel.createDamagePolygon()
     }
@@ -696,17 +696,17 @@ class MapFragment : Fragment() {
         }
         val maxZoomLevel = 25
         val defaultZoomLevel = 18.0
-        if (mMap.zoomLevelDouble < maxZoomLevel) {
-            mMap.controller.setZoom(defaultZoomLevel)
+        if (mapView.zoomLevelDouble < maxZoomLevel) {
+            mapView.controller.setZoom(defaultZoomLevel)
         }
-        mMap.controller.setCenter(GeoPoint(viewModel.getLastLocation()))
+        mapView.controller.setCenter(GeoPoint(viewModel.getLastLocation()))
     }
 
     /**
      * Vycentruje otočenie mapy.
      */
     private fun centerRotationOfMap() {
-        mMap.mapOrientation = 0.0f
+        mapView.mapOrientation = 0.0f
     }
 
     /**
@@ -733,7 +733,7 @@ class MapFragment : Fragment() {
         removeAllMarkersOfPolygon()
         if (polygonMarkersList.isNotEmpty()) {
             for (marker in polygonMarkersList) {
-                mMap.overlays.add(marker)
+                mapView.overlays.add(marker)
             }
             viewModel.createDamagePolygon()
         }
@@ -833,9 +833,9 @@ class MapFragment : Fragment() {
      * Taktiež vyčistí aj prislúchajúce zoznamy.
      */
     private fun clearSelectingOfDamageArea() {
-        mMap.overlays.removeAll { (it is Marker && it.id != mainMarkerId) || it is Polygon }
+        mapView.overlays.removeAll { (it is Marker && it.id != mainMarkerId) || it is Polygon }
         viewModel.clearNewPolygonData()
-        mMap.invalidate()
+        mapView.invalidate()
     }
 
     private fun lessThan3PointsAD() {
@@ -879,7 +879,7 @@ class MapFragment : Fragment() {
      * Zobrazuje alert dialog, ktorý sa pýta používateľa, či chce ukončiť vynzačovania
      * územia krokovaním.
      */
-    private fun endGPSMeasureAD() {
+    private fun endGPSSelectingAD() {
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.end_gps_measure_ad_title))
             .setPositiveButton(R.string.button_positive_text) { _, _ -> changeMarkersForManualSelecting() }
@@ -892,7 +892,7 @@ class MapFragment : Fragment() {
      * Prídáva body, resp. markery na mapu počas vyznačovania územia krokovaním.
      */
     private fun addPoint() {
-        val marker = Marker(mMap)
+        val marker = Marker(mapView)
 
         marker.setOnMarkerClickListener { _, _ ->
             false
@@ -903,7 +903,7 @@ class MapFragment : Fragment() {
         marker.position = viewModel.getLastLocation()
             ?.let { GeoPoint(it.latitude, viewModel.getLastLocation()!!.longitude) }
         viewModel.addMarkerToPolygonOnMap(marker)
-        mMap.overlays.add(marker)
+        mapView.overlays.add(marker)
         viewModel.createDamagePolygon()  // prekreslenie polygónu
     }
 
@@ -914,15 +914,15 @@ class MapFragment : Fragment() {
     private fun changeMarkersForManualSelecting() {
         setUpViewForManualSelecting()
         val list = viewModel.polygonMarkersList
-        list.forEach { it.icon = polyMarkerIcon }
-        list.forEach { applyDraggableListenerOnMarker(it) }
-        list.forEach { it.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER) }
         list.forEach {
+            it.icon = polyMarkerIcon
+            applyDraggableListenerOnMarker(it)
+            it.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             it.setOnMarkerClickListener { m, _ ->
                 deleteMarker(m)
                 true
-            }
-        }
+            }}
+        mapView.invalidate()
     }
 
     private fun setUpConnectionLiveData() {
@@ -1036,7 +1036,7 @@ class MapFragment : Fragment() {
                     unloadLayerAD()
                     return@observe
                 }
-                mMap.setTileSource(it)
+                mapView.setTileSource(it)
             }
         }
     }
@@ -1077,21 +1077,21 @@ class MapFragment : Fragment() {
 
     private fun addNewLayerToMap(layerName: String, wmsTileSource: WMSTileSourceRepaired) {
         val tilesOverlayRepaired = createTilesOverlay(layerName, wmsTileSource)
-        mMap.overlays?.add(0, tilesOverlayRepaired)
+        mapView.overlays?.add(0, tilesOverlayRepaired)
         reAddMarkersToMap()
-        mMap.invalidate()
+        mapView.invalidate()
     }
 
     private fun addNewLayerWithUserDataToMap(wmsTileSource: WMSTileSourceRepaired) {
         val tilesOverlayRepaired = createTilesOverlay(userDamagesLayerName, wmsTileSource)
-        if (viewModel.detailModeShown.value == true && mMap.overlays.size - 1 > -1) {
-            mMap.overlays?.add(mMap.overlays.size - 1, tilesOverlayRepaired)
+        if (viewModel.detailModeShown.value == true && mapView.overlays.size - 1 > -1) {
+            mapView.overlays?.add(mapView.overlays.size - 1, tilesOverlayRepaired)
         } else {
-            mMap.overlays?.add(tilesOverlayRepaired)
+            mapView.overlays?.add(tilesOverlayRepaired)
         }
 
         reAddMarkersToMap()
-        mMap.invalidate()
+        mapView.invalidate()
     }
 
     private fun createTilesOverlay(
@@ -1147,7 +1147,7 @@ class MapFragment : Fragment() {
 
     private fun addExistingBaseLayer() {
         if (viewModel.selectedBaseLayer != null) {
-            mMap.setTileSource(viewModel.selectedBaseLayer)
+            mapView.setTileSource(viewModel.selectedBaseLayer)
         }
     }
 
@@ -1211,12 +1211,12 @@ class MapFragment : Fragment() {
         newPolygon.outlinePaint.color = Color.parseColor(polygonOutlineColorStr)
         newPolygon.fillPaint.color = Color.parseColor(polygonFillColorStr)
         newPolygon.points = geoPoints
-        mMap.overlays.add(newPolygon)
-        mMap.invalidate()
+        mapView.overlays.add(newPolygon)
+        mapView.invalidate()
     }
 
     private fun deleteOldPolygons() {
-        mMap.overlays.removeAll { it is Polygon }
+        mapView.overlays.removeAll { it is Polygon }
     }
 
     private fun observeAreaAndPerimeter() {
@@ -1323,7 +1323,7 @@ class MapFragment : Fragment() {
     private fun observeMarkersToAddToMap() {
         viewModel.markersToAddToMap.observe(viewLifecycleOwner) { list ->
             list.getContentIfNotHandled().let { listOfMarkers ->
-                listOfMarkers?.forEach { mMap.overlays.add(it) }
+                listOfMarkers?.forEach { mapView.overlays.add(it) }
             }
         }
     }
@@ -1331,7 +1331,7 @@ class MapFragment : Fragment() {
     private fun observeMarkersToRemoveFromMap() {
         viewModel.markersToRemoveFromMap.observe(viewLifecycleOwner) { list ->
             list.getContentIfNotHandled().let { listOfMarkers ->
-                listOfMarkers?.forEach { mMap.overlays.remove(it) }
+                listOfMarkers?.forEach { mapView.overlays.remove(it) }
             }
         }
     }

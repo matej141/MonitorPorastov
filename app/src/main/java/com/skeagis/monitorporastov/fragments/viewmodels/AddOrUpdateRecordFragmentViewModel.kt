@@ -86,15 +86,15 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     fun setNameOfDamageDataRecord(name: String) {
-        nameOfDamageDataRecord = name.removeWhitespaces()
+        nameOfDamageDataRecord = name.trim()
     }
 
     fun setDescriptionOfDamageDataRecord(description: String) {
-        descriptionOfDamageDataRecord = description.removeWhitespaces()
+        descriptionOfDamageDataRecord = description.trim()
     }
 
     fun setDamageType(type: String) {
-        damageType = type.removeWhitespaces()
+        damageType = type.trim()
     }
 
     private fun setUncompletedNameWarning() {
@@ -111,10 +111,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
 
     private fun setAdapterWasChanged() {
         _adapterWasChanged.value = true
-    }
-
-    private fun String.removeWhitespaces(): String {
-        return filterNot { it.isWhitespace() }
     }
 
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {

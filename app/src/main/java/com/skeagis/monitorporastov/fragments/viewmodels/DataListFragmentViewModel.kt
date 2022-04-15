@@ -128,8 +128,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
     ) {
 
         super.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
-        //copyObservers()
-        //setToViewModel()
         observeNetworkState { reloadUserData() }
     }
 
