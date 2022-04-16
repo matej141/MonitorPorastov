@@ -19,16 +19,11 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {
         super.setBitmaps(listOfBitmaps)
         _bitmaps.postValue(listOfBitmaps)
+        setNoPhotosToShow(listOfBitmaps.isNullOrEmpty())
     }
 
     private fun setNoPhotosToShow(value: Boolean) {
         _noPhotosToShow.postValue(value)
-    }
-
-    override fun setUpPreviouslyLoadedPhotos() {
-        super.setUpPreviouslyLoadedPhotos()
-        val bitmapList: MutableList<Bitmap>? = bitmaps.value
-        setNoPhotosToShow(bitmapList.isNullOrEmpty())
     }
 
     override fun setNewlyLoadedPhotos() {
