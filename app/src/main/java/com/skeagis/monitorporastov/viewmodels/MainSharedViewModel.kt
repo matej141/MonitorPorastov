@@ -36,11 +36,14 @@ class MainSharedViewModel : BaseViewModel() {
 
     fun setIfLoadedUserData(value: Boolean) {
         _loadedUserData.postValue(value)
-        _loadedUserData.postValue(value)
     }
 
     fun setIfLoadedMapLayerWithUserData(value: Boolean) {
         _loadedMapLayerWithUserData.value = value
+    }
+
+    fun setIfLoadedMapLayerWithUserDataAsync(value: Boolean) {
+        _loadedMapLayerWithUserData.postValue(value)
     }
 
     fun selectDamageData(item: DamageData) {
@@ -86,6 +89,7 @@ class MainSharedViewModel : BaseViewModel() {
         val resultOfDeleting = deferredBoolean.await()
         if (resultOfDeleting) {
             setIfLoadedUserData(false)
+            setIfLoadedMapLayerWithUserDataAsync(false)
         }
         setIfDeletingWasSuccessful(resultOfDeleting)
     }
