@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// https://deepmodi.com/2021/10/13/check-internet-connectivity-and-availability-android-ko/
 class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

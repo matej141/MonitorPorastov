@@ -160,7 +160,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
 
-    // --------
     fun addBitmapToAdapter(bitmap: Bitmap, context: Context) {
         val resizedBitmap = getResizedBitmap(bitmap)
         addPhotoItemToAdapter(resizedBitmap)
@@ -171,7 +170,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
         }
     }
 
-    // https://stackoverflow.com/questions/16954109/reduce-the-size-of-a-bitmap-to-a-specified-size-in-android
     private fun getResizedBitmap(image: Bitmap): Bitmap {
         var width = image.width
         var height = image.height
@@ -213,9 +211,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
         val childName = "filename"
         val newImageFile = File(context.cacheDir, childName)
         newImageFile.createNewFile()
-        // newImageFile.deleteOnExit() // vyskusat potom
         val byteArray = createByteArrayFromBitmap(bitmap)
-        // https://stackoverflow.com/questions/11274715/save-bitmap-to-file-function
         val fileOutputStream = FileOutputStream(newImageFile)
         fileOutputStream.write(byteArray)
         fileOutputStream.flush()
@@ -248,7 +244,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private suspend fun createByteArrayFromFile(file: File): ByteArray {
-        // https://stackoverflow.com/questions/10039672/android-how-to-read-file-in-bytes
         val size: Long = file.length()
         val byteArrayDeferred = CompletableDeferred<ByteArray>()
         val byteArray = ByteArray(size.toInt())
@@ -269,7 +264,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun createHexStringFromByteArray(bytes: ByteArray): String {
-        // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
         val hexArray = "0123456789ABCDEF".toCharArray()
         val hexChars = CharArray(bytes.size * 2)
         for (j in bytes.indices) {
