@@ -146,17 +146,16 @@ class DataDetailFragment : Fragment() {
             binding.dataDetailInfo.text = it.popis_poskodenia
             binding.dataDetailInfo.text = it.popis_poskodenia
             binding.dataDetailDatetime.text =
-                it.datetime?.let { datetimeStr -> createDateTime(datetimeStr) }
+                it.datetime?.let { datetimeStr -> createDateTimeString(datetimeStr) }
 
         }
     }
 
-    private fun createDateTime(dateTimeString: String): String? {
+    private fun createDateTimeString(dateTimeString: String): String? {
         val sdf1 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
         val date: Date? = sdf1.parse(dateTimeString)
         val sdf2 = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
         return date?.let { sdf2.format(it) }
-
     }
 
     override fun onDestroyView() {
