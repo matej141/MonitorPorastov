@@ -5,6 +5,7 @@ import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePr
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUniqueId
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.photosLayer
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.photosLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.workspaceName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisGMLUrl
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisOGCUrl
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisWFSUrl
@@ -40,7 +41,7 @@ object GeoserverPhotosPostStringsFactory {
     private fun createHeaderOfPhotosTransaction(): String {
         return "<Transaction xmlns=$openGisWFSUrl\n" +
                 "               xmlns:xsi=$xsiUrl\n" +
-                "               xmlns:geoserver_skeagis=\"$schemaLocationUrl\"\n" +
+                "               xmlns:$workspaceName=\"$schemaLocationUrl\"\n" +
                 "               xmlns:gml=$openGisGMLUrl service=\"WFS\"\n" +
                 "               xsi:schemaLocation=\"$schemaLocationUrl " +
                 "               $photosDescribeFeatureTypeUrl\" " +
@@ -72,6 +73,19 @@ object GeoserverPhotosPostStringsFactory {
                         "</PropertyIsEqualTo>\n"
         }
         return deleteFilterString
+    }
+
+    fun createDeletePhotosStringWithUniqueId(uniqueId: String): String {
+        return createHeaderOfPhotosTransaction() +
+                "<Delete xmlns=$openGisWFSUrl typeName=\"$photosLayerName\">\n" +
+                "           <Filter xmlns=$openGisOGCUrl>\n" +
+                "               <PropertyIsEqualTo>\n" +
+                "                   <PropertyName>$propertyNameOfUniqueId</PropertyName>\n" +
+                "                       <Literal>$uniqueId</Literal>\n" +
+                "               </PropertyIsEqualTo>\n" +
+                "           </Filter>\n" +
+                "</Delete>" +
+                "</Transaction>"
     }
 
     private fun createInsertPhotosString(hexOfPhotosList: List<String>, uniqueId: String): String {

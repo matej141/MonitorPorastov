@@ -180,14 +180,14 @@ object GeoserverDataPostStringsFactory {
                 "</Transaction>\n"
     }
 
-    fun createDeleteRecordTransactionString(id: Int): String {
+    fun createDeleteRecordTransactionString(uniqueId: String): String {
         return createHeaderOfTransaction() +
                 "<Delete xmlns=$openGisWFSUrl " +
                 "       typeName=\"$damagesLayerName\">\n" +
                 "       <Filter xmlns=$openGisOGCUrl>\n" +
                 "           <PropertyIsEqualTo>" +
-                "               <PropertyName>$propertyNameOfId</PropertyName>" +
-                "                   <Literal>$id</Literal>" +
+                "               <PropertyName>$propertyNameOfUniqueId</PropertyName>" +
+                "                   <Literal>$uniqueId</Literal>" +
                 "           </PropertyIsEqualTo>\n" +
                 "       </Filter>\n" +
                 "</Delete>\n" +

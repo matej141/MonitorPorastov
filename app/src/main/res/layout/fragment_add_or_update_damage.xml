@@ -16,18 +16,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="24dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:context=".fragments.AddOrUpdateRecordFragment">
 
             <TextView
                 android:id="@+id/main_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_horizontal"
                 android:layout_marginBottom="10dp"
-                android:gravity="center"
-                android:text="Zadajte informácie o poškodení:"
+                android:text="@string/add_or_update_title_txt"
                 android:textAppearance="@style/TextAppearance.MainTitle" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -40,7 +41,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Názov" />
+                    android:hint="@string/add_or_update_name_of_record_hint_txt" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -55,7 +56,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:focusableInTouchMode="false"
-                    android:hint="Druh poškodenia" />
+                    android:hint="@string/add_or_update_damage_type_hint_txt" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -68,7 +69,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Popis" />
+                    android:hint="@string/add_or_update_desc_hint_txt" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
@@ -77,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="10dp"
-                android:text="Odfoť"
+                android:text="@string/add_or_update_take_pic_txt"
                 app:icon="@drawable/ic_camera"
                 app:iconGravity="start" />
 
@@ -87,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="10dp"
-                android:text="Vyber z galérie"
+                android:text="@string/add_or_update_choose_from_gallery_txt"
                 app:icon="@drawable/ic_gallery"
                 app:iconGravity="start" />
         </LinearLayout>
@@ -106,14 +107,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
             android:indeterminate="true"
             android:indeterminateTint="@color/colorAccent"
-            app:layout_constraintTop_toBottomOf="@+id/linear1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:indeterminateTintMode="src_atop"
-            android:layout_marginBottom="20dp"
-            android:visibility="invisible" />
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linear1" />
 
         <LinearLayout
             android:id="@+id/linear2"
@@ -131,10 +132,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_marginBottom="20dp"
                 android:indeterminate="true"
                 android:indeterminateTint="@color/colorAccent"
                 android:indeterminateTintMode="src_atop"
-                android:layout_marginBottom="20dp"
                 android:visibility="gone" />
 
             <Button
@@ -143,7 +144,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="20dp"
-                android:text="Ulož" />
+                android:text="@string/add_or_update_save_button_txt" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -88,7 +88,7 @@
     <string name="location_alert">Poloha ešte nebola získaná, počkajte prosím</string>
     <string name="end_gps_measure_ad_title">Naozaj chcete ukončiť vyznačovanie krokovaním?</string>
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
-    <string name="detail_table_no_photos_txt">Žiadne fotky nie sú k dispozícii</string>
+    <string name="detail_table_no_photos_txt">Žiadne fotografie nie sú k dispozícii</string>
     <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
     <string name="ask_if_log_out_title">Naozaj sa chcete odhlásiť?</string>
 
@@ -112,4 +112,11 @@
     <string name="geoserver_url_filter_username_parameter">meno</string>
     <string name="successful_deleting">Dáta boli úspešne vymazané</string>
     <string name="unsuccessful_deleting">Dáta sa nepodarilo vymazať</string>
+    <string name="add_or_update_save_button_txt">Ulož</string>
+    <string name="add_or_update_choose_from_gallery_txt">Vyber z galérie</string>
+    <string name="add_or_update_take_pic_txt">Odfoť</string>
+    <string name="add_or_update_desc_hint_txt">Popis</string>
+    <string name="add_or_update_damage_type_hint_txt">Druh poškodenia</string>
+    <string name="add_or_update_name_of_record_hint_txt">Názov</string>
+    <string name="add_or_update_title_txt">Zadajte informácie o poškodení:</string>
 </resources>

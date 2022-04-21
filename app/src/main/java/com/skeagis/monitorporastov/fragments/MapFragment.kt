@@ -1368,8 +1368,7 @@ class MapFragment : Fragment() {
                 if (wasSuccessful) {
                     Toast.makeText(context, getString(R.string.successful_deleting),
                         Toast.LENGTH_SHORT).show()
-                    viewModel.setDefaultModeOfMap()
-                    viewModel.loadUserPolygons()
+                    viewModel.onSuccessfulDelete()
                     clearMapFromShownDetail()
                 } else {
                     Toast.makeText(context, getString(R.string.unsuccessful_deleting),

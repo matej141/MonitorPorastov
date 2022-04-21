@@ -22,7 +22,7 @@
         android:id="@+id/add_damage_fragment"
         android:name="com.skeagis.monitorporastov.fragments.AddOrUpdateRecordFragment"
         android:label="Informácie o poškodení"
-        tools:layout="@layout/fragment_add_damage">
+        tools:layout="@layout/fragment_add_or_update_damage">
         <action
             android:id="@+id/action_add_damage_fragment_TO_map_fragment"
             app:destination="@id/map_fragment"

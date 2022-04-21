@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import com.skeagis.monitorporastov.Event
 import com.skeagis.monitorporastov.Utils
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory.createDeleteRecordTransactionString
+import com.skeagis.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory.createDeletePhotosStringWithUniqueId
 import com.skeagis.monitorporastov.model.DamageData
 import kotlinx.coroutines.*
 
@@ -74,32 +75,43 @@ class MainSharedViewModel : BaseViewModel() {
         if (damageData == null) {
             return
         }
-        val id = damageData.id
+        val id = damageData.unique_id
         launch {
             performDeleting(id)
         }
     }
 
-    private suspend fun performDeleting(id: Int) {
+    private suspend fun performDeleting(uniqueId: String) {
         setLoading(true)
-        val deferredBoolean = CompletableDeferred<Boolean>()
-
-        deferredBoolean.complete(deleteItem(id))
-
-        val resultOfDeleting = deferredBoolean.await()
-        if (resultOfDeleting) {
-            setIfLoadedUserData(false)
-            setIfLoadedMapLayerWithUserDataAsync(false)
+        CoroutineScope(Dispatchers.Main).launch {
+            val resultsListDeferred =
+                listOf(
+                    async { deleteItem(uniqueId) },
+                    async { deleteItemPhotosOfItem(uniqueId)
+                    })
+            val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
+            val resultOfDeleting = Utils.checkIfCallsWereSucceeded(resultsList)
+            if (resultOfDeleting) {
+                setIfLoadedUserData(false)
+                setIfLoadedMapLayerWithUserDataAsync(false)
+            }
+            setIfDeletingWasSuccessful(resultOfDeleting)
+            setLoading(false)
         }
-        setIfDeletingWasSuccessful(resultOfDeleting)
     }
 
-    private suspend fun deleteItem(id: Int): Boolean {
-        val updateDamageDataString = createDeleteRecordTransactionString(id)
-        if (updateDamageDataString.isEmpty()) {
+    private suspend fun deleteItem(uniqueId: String): Boolean {
+        val deleteDamageDataString = createDeleteRecordTransactionString(uniqueId)
+        if (deleteDamageDataString.isEmpty()) {
             return true
         }
-        val requestBody = Utils.createRequestBody(updateDamageDataString)
+        val requestBody = Utils.createRequestBody(deleteDamageDataString)
+        return postToGeoserver(requestBody)
+    }
+
+    private suspend fun deleteItemPhotosOfItem(uniqueId: String): Boolean {
+        val deletePhotosString = createDeletePhotosStringWithUniqueId(uniqueId)
+        val requestBody = Utils.createRequestBody(deletePhotosString)
         return postToGeoserver(requestBody)
     }
 

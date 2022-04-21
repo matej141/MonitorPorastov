@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.skeagis.monitorporastov.Utils
 import com.skeagis.monitorporastov.Utils.createRequestBody
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.skeagis.monitorporastov.fragments.viewmodels.base.DamagePhotosBaseViewModel
@@ -297,7 +298,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
                     async { updatePhotosInGeoserver() }
                 )
             val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
-            val ifUpdateSucceeded = checkIfCallsWereSucceeded(resultsList)
+            val ifUpdateSucceeded = Utils.checkIfCallsWereSucceeded(resultsList)
 
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
@@ -307,11 +308,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             setLoading(false)
 
         }
-    }
-
-    private fun checkIfCallsWereSucceeded(resultsList: List<Boolean>): Boolean {
-        val predicate: (Boolean) -> Boolean = { it }
-        return resultsList.all(predicate)
     }
 
     private fun onSucceededResult() {
@@ -424,9 +420,9 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
                     async { sendDamageDataToGeoserver(uniqueId) },
                     async { sendPhotosToGeoserver(uniqueId)
                     })
-            resultsListDeferred.awaitAll()
+
             val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
-            val ifUpdateSucceeded = checkIfCallsWereSucceeded(resultsList)
+            val ifUpdateSucceeded = Utils.checkIfCallsWereSucceeded(resultsList)
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()

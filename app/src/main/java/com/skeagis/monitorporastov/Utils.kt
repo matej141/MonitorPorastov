@@ -54,13 +54,11 @@ object Utils {
     }
 
     fun noNetworkAvailable(context: Context): AlertDialog {
-        val ad = AlertDialog.Builder(context)
+        return AlertDialog.Builder(context)
             .setTitle("Nemáte prístup na internet")
             .setMessage("Pre správne fungovanie aplikácie skontrolujte, prosím, pripojenie do siete.")
             .setNegativeButton(R.string.ok_text) { dialog, _ -> dialog.cancel() }
             .create()
-
-        return ad
     }
 
     fun editableToCharArray(editable: Editable?): CharArray {
@@ -84,6 +82,11 @@ object Utils {
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
+    }
+
+    fun checkIfCallsWereSucceeded(resultsList: List<Boolean>): Boolean {
+        val predicate: (Boolean) -> Boolean = { it }
+        return resultsList.all(predicate)
     }
 
 }

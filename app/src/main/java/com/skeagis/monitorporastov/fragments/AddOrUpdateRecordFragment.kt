@@ -25,7 +25,7 @@ import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.afterTextChanged
 import com.skeagis.monitorporastov.Utils.hideKeyboard
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
-import com.skeagis.monitorporastov.databinding.FragmentAddDamageBinding
+import com.skeagis.monitorporastov.databinding.FragmentAddOrUpdateDamageBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.AddOrUpdateRecordFragmentViewModel
 import com.skeagis.monitorporastov.model.DamageData
 import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
@@ -39,7 +39,7 @@ class AddOrUpdateRecordFragment : Fragment() {
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private val viewModel: AddOrUpdateRecordFragmentViewModel by viewModels()
 
-    private var _binding: FragmentAddDamageBinding? = null
+    private var _binding: FragmentAddOrUpdateDamageBinding? = null
 
     private val binding get() = _binding!!
     private lateinit var listOfDamageType: Array<String>
@@ -53,7 +53,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        _binding = FragmentAddDamageBinding.inflate(inflater, container, false)
+        _binding = FragmentAddOrUpdateDamageBinding.inflate(inflater, container, false)
         return binding.root
     }
 

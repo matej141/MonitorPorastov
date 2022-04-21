@@ -761,7 +761,12 @@ class MapFragmentViewModel : MapBaseViewModel() {
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
+    fun onSuccessfulDelete() {
+        setIfLoadedMapLayerWithUserData(false)
+        setDefaultModeOfMap()
+        loadUserPolygons()
+        setGeopointsOfSelectedPolygon(null)
+        setDetailDamageData(null)
     }
+
 }
