@@ -6,7 +6,6 @@ import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePr
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDamageType
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfDatetime
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfGeometry
-import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfId
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfPerimeter
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUniqueId
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUser
@@ -37,8 +36,8 @@ object GeoserverDataPostStringsFactory {
                 "       <Filter xmlns=$openGisOGCUrl>\n" +
                 "           <PropertyIsEqualTo>\n" +
 
-                "               <PropertyName>$propertyNameOfId</PropertyName>\n" +
-                "               <Literal>${originalData.id}</Literal>\n" +
+                "               <PropertyName>$propertyNameOfUniqueId</PropertyName>\n" +
+                "               <Literal>${originalData.unique_id}</Literal>\n" +
 
                 "           </PropertyIsEqualTo>\n" +
                 "       </Filter>\n" +

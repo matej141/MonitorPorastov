@@ -27,12 +27,13 @@
             <group
                 android:id="@+id/menu_vrstva"
                 android:checkableBehavior="all">
-<!--                <item-->
-<!--                    android:id="@+id/menu_BPEJ"-->
-<!--                    android:title="@string/menu_BPEJ_txt" />-->
-<!--                <item-->
-<!--                    android:id="@+id/menu_JPRL"-->
-<!--                    android:title="@string/menu_JPRL_txt" />-->
+                <item
+                    android:id="@+id/menu_BPEJ"
+                    android:title="@string/menu_BPEJ_txt" />
+                <item
+                    android:id="@+id/menu_JPRL"
+                    android:title="@string/menu_JPRL_txt" />
+
                 <item
                     android:id="@+id/menu_LPIS"
                     android:title="@string/menu_LPIS_txt" />
@@ -42,6 +43,10 @@
                 <item
                     android:id="@+id/menu_E_parcel"
                     android:title="@string/menu_E_parcel_txt" />
+
+                <item
+                    android:id="@+id/menu_hunting_grounds"
+                    android:title="@string/menu_hunting_grounds_txt" />
 
                 <item
                     android:id="@+id/menu_watercourse"
@@ -54,6 +59,10 @@
                 <item
                     android:id="@+id/menu_vrstevnice50m"
                     android:title="@string/menu_vrstevnice50m_txt" />
+
+                <item
+                    android:id="@+id/menu_buildings"
+                    android:title="Zoznam stavieb" />
 
             </group>
         </menu>

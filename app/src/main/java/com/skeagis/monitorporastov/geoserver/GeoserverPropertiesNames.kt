@@ -53,9 +53,11 @@ object GeoserverPropertiesNames {
         private const val E_parcelLayer = "ParcelyRegistraE"
         private const val LPISLayer = "LPIS"
         private const val JPRLLayer = "JPRL"
+        private const val huntingGroundsLayer = "PolovneReviry"
         private const val watercourseLayer = "VodneToky"
         private const val vrstevnice10mLayer = "VrstevniceSR10m"
         private const val vrstevnice50mLayer = "VrstevniceSR50m"
+        private const val buildingsListLayer = "ZoznamStavieb"
 
         const val damagesLayerName = "$workspaceName:$damagesLayer"
         const val userDamagesLayerName = "$workspaceName:$userDamagesLayer"
@@ -69,6 +71,8 @@ object GeoserverPropertiesNames {
         const val watercourseLayerName = "$workspaceName:$watercourseLayer"
         const val vrstevnice10mLayerName = "$workspaceName:$vrstevnice10mLayer"
         const val vrstevnice50mLayerName = "$workspaceName:$vrstevnice50mLayer"
+        const val huntingGroundsLayerName = "$workspaceName:$huntingGroundsLayer"
+        const val buildingsListLayerName = "$workspaceName:$buildingsListLayer"
         const val defaultLayerName = "default"
     }
 

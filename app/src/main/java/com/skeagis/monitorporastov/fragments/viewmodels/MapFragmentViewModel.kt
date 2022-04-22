@@ -22,6 +22,10 @@ import com.skeagis.monitorporastov.model.DamageData
 import com.skeagis.monitorporastov.model.UsersData
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.BPEJLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.JPRLLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.buildingsListLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.huntingGroundsLayerName
 import kotlinx.coroutines.*
 import okhttp3.Credentials
 import org.osmdroid.config.Configuration
@@ -499,9 +503,9 @@ class MapFragmentViewModel : MapBaseViewModel() {
         var layerName = ""
 
         when (id) {
-//            R.id.menu_BPEJ -> {
-//                layerName = BPEJLayerName
-//            }
+            R.id.menu_BPEJ -> {
+                layerName = BPEJLayerName
+            }
             R.id.menu_C_parcel -> {
                 layerName = C_parcelLayerName
             }
@@ -511,9 +515,14 @@ class MapFragmentViewModel : MapBaseViewModel() {
             R.id.menu_LPIS -> {
                 layerName = LPISLayerName
             }
-//            R.id.menu_JPRL -> {
-//                layerName = JPRLLayerName
-//            }
+            R.id.menu_JPRL -> {
+                layerName = JPRLLayerName
+            }
+
+            R.id.menu_hunting_grounds -> {
+                layerName = huntingGroundsLayerName
+            }
+
             R.id.menu_watercourse -> {
                 layerName = watercourseLayerName
             }
@@ -522,6 +531,10 @@ class MapFragmentViewModel : MapBaseViewModel() {
 //            }
             R.id.menu_vrstevnice50m -> {
                 layerName = vrstevnice50mLayerName
+            }
+
+            R.id.menu_buildings -> {
+                layerName = buildingsListLayerName
             }
         }
         return layerName

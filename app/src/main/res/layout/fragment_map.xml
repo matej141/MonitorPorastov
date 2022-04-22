@@ -149,7 +149,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
 
             app:layout_constraintEnd_toStartOf="@id/saveButton"
-            app:srcCompat="@drawable/ic_delete"
+            app:srcCompat="@drawable/ic_edit_off"
             app:tint="@android:color/white"
             android:visibility="gone"/>
 

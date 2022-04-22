@@ -265,8 +265,8 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun createHexStringFromByteArray(bytes: ByteArray): String {
-        val hexArray = "0123456789ABCDEF".toCharArray()
-        val hexChars = CharArray(bytes.size * 2)
+        val hexArray = createHexArray()
+        val hexChars = createHexChars(bytes)
         for (j in bytes.indices) {
             val v = bytes[j].toInt() and 0xFF
 
@@ -274,6 +274,14 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             hexChars[j * 2 + 1] = hexArray[v and 0x0F]
         }
         return String(hexChars)
+    }
+
+    private fun createHexArray(): CharArray {
+        return "0123456789ABCDEF".toCharArray()
+    }
+
+    private fun createHexChars(bytes: ByteArray): CharArray {
+        return CharArray(bytes.size * 2)
     }
 
     fun saveData() {
@@ -306,7 +314,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
                 updateSavedData()
             }
             setLoading(false)
-
         }
     }
 
@@ -407,7 +414,6 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             sharedViewModel?.selectedDamageDataItem?.value?.id) {
             damageDataItem.value?.let { sharedViewModel?.selectDamageData(it) }
         }
-        //sharedViewModel.updateSelectedItems(damageDataItem)
     }
 
     private fun saveDataToGeoserver() {

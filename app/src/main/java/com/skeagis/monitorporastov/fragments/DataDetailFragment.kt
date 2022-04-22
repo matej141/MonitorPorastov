@@ -9,6 +9,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.skeagis.monitorporastov.Event
 import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.hideKeyboard
 import com.skeagis.monitorporastov.adapters.DataDetailPhotosRVAdapter
@@ -123,11 +124,6 @@ class DataDetailFragment : Fragment() {
         findNavController().navigate(R.id.action_data_detail_fragment_TO_map_fragment)
     }
 
-    private fun navigateToDataListFragment() {
-        findNavController().navigate(
-            R.id.action_data_detail_fragment_TO_data_list_fragment)
-    }
-
     /**
      * Naplní tabuľku údajmi.
      */
@@ -224,7 +220,8 @@ class DataDetailFragment : Fragment() {
 
     private fun observeBitmaps() {
         viewModel.bitmaps.observe(viewLifecycleOwner) { bitmaps ->
-            recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps)
+            recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps, requireContext())
+
         }
     }
 
@@ -238,9 +235,7 @@ class DataDetailFragment : Fragment() {
         sharedViewModel.deletingWasSuccessful.observe(viewLifecycleOwner) { value ->
             value.getContentIfNotHandled()?.let { wasSuccessful ->
                 if (wasSuccessful) {
-                    Toast.makeText(context, getString(R.string.successful_deleting),
-                        Toast.LENGTH_SHORT).show()
-                    navigateToDataListFragment()
+                    onSuccessfulDelete(value)
                 } else {
                     Toast.makeText(context, getString(R.string.unsuccessful_deleting),
                         Toast.LENGTH_SHORT).show()
@@ -248,4 +243,26 @@ class DataDetailFragment : Fragment() {
             }
         }
     }
+
+    private fun onSuccessfulDelete(value: Event<Boolean>) {
+        if (checkIfPreviousFragmentIsMapFragment()) {
+            value.setThatNotHandled()
+        } else {
+            Toast.makeText(context, getString(R.string.successful_deleting),
+                Toast.LENGTH_SHORT).show()
+        }
+        findNavController().navigateUp()
+    }
+
+
+    private fun checkIfPreviousFragmentIsMapFragment(): Boolean {
+        val previousFragment = findNavController()
+            .previousBackStackEntry?.destination?.id ?: return false
+        if (previousFragment != R.id.map_fragment) {
+            return false
+        }
+        return true
+    }
+
+
 }

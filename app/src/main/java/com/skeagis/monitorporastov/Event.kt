@@ -22,6 +22,10 @@ open class Event<out T>(private val content: T) {
         }
     }
 
+    fun setThatNotHandled() {
+        hasBeenHandled = false
+    }
+
     fun checkIfShould() {
         if (!hasBeenHandled) {
             getContentIfNotHandled()

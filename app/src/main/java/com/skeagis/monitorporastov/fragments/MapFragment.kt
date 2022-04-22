@@ -30,11 +30,16 @@ import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.adapters.models.DialogItem
 import com.skeagis.monitorporastov.databinding.FragmentMapBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.MapFragmentViewModel
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.BPEJLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.C_parcelLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.E_parcelLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.JPRLLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.LPISLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.buildingsListLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.huntingGroundsLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.ortofotoLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.userDamagesLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.vrstevnice10mLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.vrstevnice50mLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.watercourseLayerName
 import com.skeagis.monitorporastov.location.LocationLiveData
@@ -65,8 +70,7 @@ class MapFragment : Fragment() {
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
 
     private lateinit var drawerLockInterface: DrawerLockInterface  // interface na uzamykanie
-
-    // drawer layoutu
+                                                                // drawer layoutu
     private lateinit var polyMarkerIcon: Drawable  // ikona markeru v polygóne
     private lateinit var mapMarkerIcon: Drawable  // ikona hlavného markeru,
 
@@ -83,7 +87,6 @@ class MapFragment : Fragment() {
 
     private val mainMarkerId = "Main marker"
     private val detailPolygonId = "DetailPolygon"
-
 
     // na začiatku skontrolujeme povolenia k polohe
     init {
@@ -106,7 +109,6 @@ class MapFragment : Fragment() {
         }
     }
 
-
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,9 +120,7 @@ class MapFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-
         _binding = FragmentMapBinding.inflate(inflater, container, false)
-
         return binding.root
     }
 
@@ -311,7 +311,6 @@ class MapFragment : Fragment() {
         }
         binding.deleteRecordButton.setOnClickListener {
             askIfDeleteDataAD()
-
         }
         binding.detailRecordButton.setOnClickListener {
             navigateToDetailFragment()
@@ -320,7 +319,6 @@ class MapFragment : Fragment() {
             setUpForEditingPolygon()
         }
     }
-
 
     private fun navigateToDetailFragment() {
         findNavController().navigate(R.id.action_map_fragment_TO_data_detail_fragment)
@@ -937,10 +935,6 @@ class MapFragment : Fragment() {
 
     private fun setUpLocationReceiver() {
         locationLiveData?.observe(viewLifecycleOwner) {
-            // fejkovanie polohy
-//            val l = Location("")
-//            l.latitude = 49.033703
-//            l.longitude = 18.890103
             viewModel.setLastLocation(it)
         }
     }
@@ -1173,21 +1167,25 @@ class MapFragment : Fragment() {
         when (layerName) {
             ortofotoLayerName -> menu.findItem(R.id.menu_ortofoto).isChecked =
                 true
-//            BPEJLayerName -> menu.findItem(R.id.menu_BPEJ).isChecked =
-//                true
+            BPEJLayerName -> menu.findItem(R.id.menu_BPEJ).isChecked =
+                true
             C_parcelLayerName -> menu.findItem(R.id.menu_C_parcel).isChecked =
                 true
             E_parcelLayerName -> menu.findItem(R.id.menu_E_parcel).isChecked =
                 true
             LPISLayerName -> menu.findItem(R.id.menu_LPIS).isChecked =
                 true
-//            JPRLLayerName -> menu.findItem(R.id.menu_JPRL).isChecked =
-//                true
+            JPRLLayerName -> menu.findItem(R.id.menu_JPRL).isChecked =
+                true
+            huntingGroundsLayerName -> menu.findItem(R.id.menu_hunting_grounds).isChecked =
+                true
             watercourseLayerName -> menu.findItem(R.id.menu_watercourse).isChecked =
                 true
 //            vrstevnice10mLayerName -> menu.findItem(R.id.menu_vrstevnice10m).isChecked =
 //                true
             vrstevnice50mLayerName -> menu.findItem(R.id.menu_vrstevnice50m).isChecked =
+                true
+            buildingsListLayerName -> menu.findItem(R.id.menu_buildings).isChecked =
                 true
         }
     }
@@ -1308,7 +1306,6 @@ class MapFragment : Fragment() {
             }
         }
     }
-
 
     private fun setDeletingModeOfDeleteMarkerButton() {
         binding.deleteMarkerButton.backgroundTintList = ColorStateList.valueOf(Color

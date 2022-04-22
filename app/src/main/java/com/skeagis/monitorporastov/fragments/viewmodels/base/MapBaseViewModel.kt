@@ -39,8 +39,8 @@ abstract class MapBaseViewModel: BaseViewModel() {
     }
 
     open fun copyObservers() {
-        viewLifecycleOwner?.let {
-            errorOccurred.observe(it) {
+        viewLifecycleOwner?.let { lifecycleOwner ->
+            errorOccurred.observe(lifecycleOwner) {
                 sharedViewModel?.setErrorOccurred(it)
             }
         }
@@ -70,7 +70,6 @@ abstract class MapBaseViewModel: BaseViewModel() {
                     launch {
                         reloadFunction()
                     }
-                    //sharedViewModel?.isNetworkAvailable?.removeObservers(it)
                 }
                 setNetworkAvailability(isAvailable)
             }
