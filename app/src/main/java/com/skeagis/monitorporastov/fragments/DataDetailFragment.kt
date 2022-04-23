@@ -135,12 +135,13 @@ class DataDetailFragment : Fragment() {
             val txtArea = "${
                 it.obsah.toInt()
             } m\u00B2"
+            val defaultTxt = "-"
             binding.dataDetailName.text = it.nazov
-            binding.dataDetailDamageType.text = it.typ_poskodenia
+            binding.dataDetailDamageType.text = it.typ_poskodenia.ifEmpty { defaultTxt }
             binding.dataDetailPerimeter.text = txtPerimeter
             binding.dataDetailArea.text = txtArea
             binding.dataDetailInfo.text = it.popis_poskodenia
-            binding.dataDetailInfo.text = it.popis_poskodenia
+            binding.dataDetailInfo.text = it.popis_poskodenia.ifEmpty { defaultTxt }
             binding.dataDetailDatetime.text =
                 it.datetime?.let { datetimeStr -> createDateTimeString(datetimeStr) }
 

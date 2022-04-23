@@ -25,7 +25,6 @@ class LauncherActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             delay(100)
             if (sharedPreferences.getIfLoggedInValue()) {
-
                 startMainActivity()
                 return@launch
             }

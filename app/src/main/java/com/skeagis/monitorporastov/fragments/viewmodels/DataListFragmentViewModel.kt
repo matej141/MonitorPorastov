@@ -111,8 +111,6 @@ class DataListFragmentViewModel : MapBaseViewModel() {
     }
 
     private fun checkIfShouldReloadUserData(): Boolean {
-        val a = isNetworkAvailable.value
-        val b = _loadedUserData.value
         return isNetworkAvailable.value == true && (_loadedUserData.value == false || _loadedUserData.value == null)
     }
 

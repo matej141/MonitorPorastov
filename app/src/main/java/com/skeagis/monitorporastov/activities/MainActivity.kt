@@ -2,6 +2,7 @@ package com.skeagis.monitorporastov.activities
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
@@ -29,6 +30,10 @@ import com.skeagis.monitorporastov.connection.ConnectionLiveData
 import com.skeagis.monitorporastov.databinding.ActivityMainBinding
 import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
 import com.google.android.material.navigation.NavigationView
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.C_parcelLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.watercourseLayerName
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.modules.SqlTileWriter
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
@@ -48,10 +53,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         createEncryptedSharedPreferences(applicationContext)
     }
 
-    private lateinit var noNetworkAvailableAD :AlertDialog
+    private lateinit var noNetworkAvailableAD: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setAllNecessaryForUI()
+        callAllNecessaryFunctions()
+    }
+
+    private fun setAllNecessaryForUI() {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -67,15 +77,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setUpActionBarUnLocked()
 
         navView.setupWithNavController(navController)
-
         setMainNavigationBehaviour(navView)
+        noNetworkAvailableAD = noNetworkAvailable(this)
+    }
+
+    private fun callAllNecessaryFunctions() {
         setUpConnectionLiveData()
         setUserCredentialsInSharedViewModel()
-        observeNetwork()
-        observeErrorMessage()
-        observeUnauthorisedError()
-
-        noNetworkAvailableAD = noNetworkAvailable(this)
+        setUpObservers()
     }
 
 
@@ -182,12 +191,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         sharedViewModel.isNetworkAvailable.observe(this) { isAvailable ->
             if (!isAvailable) {
                 noNetworkAvailableAD.show()
-            }
-            else {
+            } else {
                 noNetworkAvailableAD.dismiss()
-//                Toast.makeText(this,
-//                    "Pripojenie k sieti sa obnovilo",
-//                    Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -280,6 +285,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             .create()
             .show()
+    }
+
+    private fun setUpObservers() {
+        observeNetwork()
+        observeErrorMessage()
+        observeUnauthorisedError()
     }
 
     override fun onDestroy() {

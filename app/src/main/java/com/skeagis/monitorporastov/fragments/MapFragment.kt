@@ -2,6 +2,8 @@ package com.skeagis.monitorporastov.fragments
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -27,6 +29,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import com.skeagis.monitorporastov.*
 import com.skeagis.monitorporastov.R
+import com.skeagis.monitorporastov.activities.MainActivity
 import com.skeagis.monitorporastov.adapters.models.DialogItem
 import com.skeagis.monitorporastov.databinding.FragmentMapBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.MapFragmentViewModel
@@ -46,8 +49,10 @@ import com.skeagis.monitorporastov.location.LocationLiveData
 import com.skeagis.monitorporastov.model.DamageData
 import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
 import kotlinx.coroutines.*
+import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.MapTileProviderBasic
+import org.osmdroid.tileprovider.modules.SqlTileWriter
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -87,6 +92,13 @@ class MapFragment : Fragment() {
 
     private val mainMarkerId = "Main marker"
     private val detailPolygonId = "DetailPolygon"
+
+    companion object {
+        private const val SHARED_PREFS_FOR_STORING_VERSION_NAME =
+            "shared_preferences_for_storing_version_num"
+        private const val SHARED_PREFS_VERSION_KEY = "version_number"
+        private const val CURRENT_VERSION_CODE_NUM = 10
+    }
 
     // na začiatku skontrolujeme povolenia k polohe
     init {
@@ -431,6 +443,7 @@ class MapFragment : Fragment() {
         setUpRotationGestureOverlay()
         // https://github.com/osmdroid/osmdroid/issues/295
         setUpMapReceiver()
+        clearMapCache()
     }
 
     private fun setUpMapView() {
@@ -558,6 +571,45 @@ class MapFragment : Fragment() {
         }
         // tento receiver sa nakoniec pridá do mapy ako overlay
         mapView.overlays.add(MapEventsOverlay(mReceive))
+    }
+
+    private fun clearMapCache() {
+        if (!checkIfSavedVersionOfCodeIsSmaller()) {
+            return
+        }
+        uploadVersionOfCode()
+        clearCacheOfChangedLayers()
+    }
+
+    private fun clearCacheOfChangedLayers() {
+        val sqlTileWriter = SqlTileWriter()
+        sqlTileWriter.purgeCache(C_parcelLayerName)
+        sqlTileWriter.purgeCache(watercourseLayerName)
+        sqlTileWriter.purgeCache(vrstevnice50mLayerName)
+    }
+
+    private fun checkIfSavedVersionOfCodeIsSmaller(): Boolean {
+        val savedVersionOfCodeNumber = getSavedVersionOfCode()
+        return savedVersionOfCodeNumber < CURRENT_VERSION_CODE_NUM
+    }
+
+    private fun getSavedVersionOfCode(): Int {
+        val sharedPreferences = createSharedPrefs() ?: return 0
+        return sharedPreferences.getInt(SHARED_PREFS_VERSION_KEY, 0)
+    }
+
+    private fun uploadVersionOfCode() {
+        val sharedPreferences = createSharedPrefs() ?: return
+        with(sharedPreferences.edit()) {
+            putInt(SHARED_PREFS_VERSION_KEY,
+                CURRENT_VERSION_CODE_NUM)
+            apply()
+        }
+    }
+
+    private fun createSharedPrefs(): SharedPreferences? {
+        return requireActivity().getSharedPreferences(
+            SHARED_PREFS_FOR_STORING_VERSION_NAME, Context.MODE_PRIVATE)
     }
 
     private fun setUpForEditingPolygon() {

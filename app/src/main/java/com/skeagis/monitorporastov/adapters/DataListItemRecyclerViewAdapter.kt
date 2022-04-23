@@ -57,12 +57,14 @@ class DataListItemRecyclerViewAdapter(
         private val dataListItemInfo: TextView = binding.dataListItemInfo
 
         fun bind(item: DamageData) {
-            val emptyTxt = "-"
+            val defaultTxt = "-"
+            val damageTypeDefaultTxt = "(nezadaný typ poškodenia)"
+            val damageDescDefaultTxt = "(nezadaný popis)"
             dataListItemName.text = item.nazov
             if (item.typ_poskodenia.isNullOrEmpty()) dataListItemDamageType.text =
-                emptyTxt else dataListItemDamageType.text = item.typ_poskodenia
+                defaultTxt else dataListItemDamageType.text = item.typ_poskodenia
             if (item.popis_poskodenia.isNullOrEmpty()) dataListItemInfo.text =
-                emptyTxt else dataListItemInfo.text = item.popis_poskodenia
+                defaultTxt else dataListItemInfo.text = item.popis_poskodenia
         }
     }
 }
