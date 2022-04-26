@@ -29,7 +29,6 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import com.skeagis.monitorporastov.*
 import com.skeagis.monitorporastov.R
-import com.skeagis.monitorporastov.activities.MainActivity
 import com.skeagis.monitorporastov.adapters.models.DialogItem
 import com.skeagis.monitorporastov.databinding.FragmentMapBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.MapFragmentViewModel
@@ -42,14 +41,12 @@ import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.huntingGroundsLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.ortofotoLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.userDamagesLayerName
-import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.vrstevnice10mLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.vrstevnice50mLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.watercourseLayerName
 import com.skeagis.monitorporastov.location.LocationLiveData
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import kotlinx.coroutines.*
-import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.MapTileProviderBasic
 import org.osmdroid.tileprovider.modules.SqlTileWriter

@@ -20,7 +20,7 @@ import com.skeagis.monitorporastov.connection.ConnectionLiveData
 import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.afterTextChanged
 import com.skeagis.monitorporastov.Utils.createErrorMessageAD
-import com.skeagis.monitorporastov.Utils.noNetworkAvailable
+import com.skeagis.monitorporastov.Utils.noNetworkAvailableAD
 import com.skeagis.monitorporastov.activities.viewmodels.LoginActivityViewModel
 import com.skeagis.monitorporastov.databinding.ActivityLoginBinding
 import com.google.android.material.textfield.TextInputLayout
@@ -75,7 +75,7 @@ class LoginActivity : AppCompatActivity() {
     private fun observeNetworkStatus() {
         viewModel.isNetworkAvailable.observe(this) { isAvailable ->
             if (!isAvailable) {
-                noNetworkAvailable(this)
+                noNetworkAvailableAD(this)
             }
         }
     }

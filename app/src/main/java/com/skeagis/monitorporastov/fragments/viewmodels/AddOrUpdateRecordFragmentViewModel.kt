@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import com.skeagis.monitorporastov.Utils
 import com.skeagis.monitorporastov.Utils.createRequestBody
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
-import com.skeagis.monitorporastov.fragments.viewmodels.base.DamagePhotosBaseViewModel
+import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.DamagePhotosBaseViewModel
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory
 import com.skeagis.monitorporastov.model.DamageData
@@ -45,13 +45,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     private val _adapterWasChanged = MutableLiveData<Boolean>()
     val adapterWasChanged: LiveData<Boolean> = _adapterWasChanged
 
-
-    init {
-        val addDamageFragmentPhotosRVAdapter = AddOrUpdateRecordPhotosRVAdapter(mutableListOf())
-        setAdapterOfPhotos(addDamageFragmentPhotosRVAdapter)
-    }
-
-    private fun setAdapterOfPhotos(
+    fun setAdapterOfPhotos(
         adapter:
         AddOrUpdateRecordPhotosRVAdapter,
     ) {

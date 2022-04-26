@@ -4,7 +4,7 @@ import android.text.Editable
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.skeagis.monitorporastov.viewmodels.BaseViewModel
+import com.skeagis.monitorporastov.apps_view_models.BaseViewModel
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import com.skeagis.monitorporastov.Utils.editableToCharArray

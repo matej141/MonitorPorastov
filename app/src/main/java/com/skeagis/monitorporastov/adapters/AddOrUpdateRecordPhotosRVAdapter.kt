@@ -1,11 +1,13 @@
 package com.skeagis.monitorporastov.adapters
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import com.skeagis.monitorporastov.adapters.utils.DialogForDisplayPhotoDetail
 import com.skeagis.monitorporastov.databinding.PhotoListItemBinding
 
 /**
@@ -14,6 +16,7 @@ import com.skeagis.monitorporastov.databinding.PhotoListItemBinding
  */
 class AddOrUpdateRecordPhotosRVAdapter(
     var bitmaps: MutableList<Bitmap>,
+    val context: Context
 ) :
     RecyclerView.Adapter<AddOrUpdateRecordPhotosRVAdapter.ViewHolder>() {
 
@@ -29,24 +32,18 @@ class AddOrUpdateRecordPhotosRVAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = bitmaps[position]
-
         holder.photoImage.setImageBitmap(item)
-            //bitmaps.add(item.image)
-
+        holder.photoImage.setOnClickListener {
+            DialogForDisplayPhotoDetail.showDialogOfPhotoDetail(holder.photoImage, context)
+        }
         holder.deleteButton.setOnClickListener {
-            //photoItems.removeAt(holder.adapterPosition)
             bitmaps.removeAt(holder.adapterPosition)
             hexStrings.removeAt(holder.adapterPosition)
             val deletedIndex = indexesOfPhotos[holder.adapterPosition]
             deletedIndexes.add(deletedIndex)
             indexesOfPhotos.removeAt(holder.adapterPosition)
             notifyItemRemoved(holder.adapterPosition)
-            //notifyItemRangeChanged(0, photoItems.size)
         }
-    }
-
-    fun addHexString(hexString: String) {
-        hexStrings.add(hexString)
     }
 
     override fun getItemCount() = bitmaps.size

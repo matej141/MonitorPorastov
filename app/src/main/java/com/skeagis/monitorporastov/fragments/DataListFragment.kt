@@ -14,7 +14,7 @@ import com.skeagis.monitorporastov.adapters.DataListItemRecyclerViewAdapter
 import com.skeagis.monitorporastov.databinding.FragmentDataListBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.DataListFragmentViewModel
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 
 /**
  * Fragment zobrazujúci zoznam poškodení.

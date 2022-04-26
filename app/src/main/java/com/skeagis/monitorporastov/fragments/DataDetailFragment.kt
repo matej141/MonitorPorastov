@@ -16,7 +16,7 @@ import com.skeagis.monitorporastov.adapters.DataDetailPhotosRVAdapter
 import com.skeagis.monitorporastov.databinding.FragmentDataDetailBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.DataDetailFragmentViewModel
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -127,7 +127,7 @@ class DataDetailFragment : Fragment() {
     /**
      * Naplní tabuľku údajmi.
      */
-    private fun setupContent(damageDataItem: DamageData) {
+    private fun setupContentOfDamageData(damageDataItem: DamageData) {
         damageDataItem.let {
             val txtPerimeter = "${
                 it.obvod.toInt()
@@ -170,9 +170,6 @@ class DataDetailFragment : Fragment() {
         observeSelectedItemFromMap()
     }
 
-    private fun setUpDamageData(damageData: DamageData) {
-        setupContent(damageData)
-    }
 
     private fun askIfDeleteDataAD() {
         AlertDialog.Builder(requireContext())  //
@@ -210,7 +207,7 @@ class DataDetailFragment : Fragment() {
         viewModel.setDamageDataItem(damageDataItem)
         viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
         viewModel.prepareToLoadPhotos()
-        setUpDamageData(damageDataItem)
+        setupContentOfDamageData(damageDataItem)
     }
 
     private fun observeLoadingValue() {

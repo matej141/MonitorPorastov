@@ -2,12 +2,15 @@ package com.skeagis.monitorporastov
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Bitmap
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import okhttp3.MediaType
 import okhttp3.RequestBody
@@ -53,7 +56,7 @@ object Utils {
             .show()
     }
 
-    fun noNetworkAvailable(context: Context): AlertDialog {
+    fun noNetworkAvailableAD(context: Context): AlertDialog {
         return AlertDialog.Builder(context)
             .setTitle("Nemáte prístup na internet")
             .setMessage("Pre správne fungovanie aplikácie skontrolujte, prosím, pripojenie do siete.")
@@ -88,5 +91,4 @@ object Utils {
         val predicate: (Boolean) -> Boolean = { it }
         return resultsList.all(predicate)
     }
-
 }

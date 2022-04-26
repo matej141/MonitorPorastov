@@ -3,7 +3,7 @@ package com.skeagis.monitorporastov.fragments.viewmodels
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.skeagis.monitorporastov.fragments.viewmodels.base.DamagePhotosBaseViewModel
+import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.DamagePhotosBaseViewModel
 import com.skeagis.monitorporastov.model.DamageData
 
 open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {

@@ -28,7 +28,7 @@ import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.skeagis.monitorporastov.databinding.FragmentAddOrUpdateDamageBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.AddOrUpdateRecordFragmentViewModel
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 
 
 /**
@@ -65,6 +65,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         listOfDamageType = resources.getStringArray(R.array.damages)
         setUpObservers()
         viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        setRecycleViewAdapterInViewModel()
     }
 
     private fun setUpObservers() {
@@ -74,6 +75,11 @@ class AddOrUpdateRecordFragment : Fragment() {
         observeUncompletedNameWarning()
         observeIfUpdateSucceeded()
         observeLoadingValue()
+    }
+
+    private fun setRecycleViewAdapterInViewModel() {
+        val addDamageFragmentPhotosRVAdapter = AddOrUpdateRecordPhotosRVAdapter(mutableListOf(), requireContext())
+        viewModel.setAdapterOfPhotos(addDamageFragmentPhotosRVAdapter)
     }
 
     private fun setTextChangeListeners() {
@@ -277,6 +283,7 @@ class AddOrUpdateRecordFragment : Fragment() {
             else {
                 nonSucceededToast()
             }
+            //if (sharedViewModel.selectedDamageDataItemFromMap.value.isDirectlyFromMap )
             sharedViewModel.clearSelectedDamageDataItemFromMap()
         }
     }

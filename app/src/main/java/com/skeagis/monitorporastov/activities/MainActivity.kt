@@ -2,7 +2,6 @@ package com.skeagis.monitorporastov.activities
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
@@ -25,15 +24,11 @@ import com.skeagis.monitorporastov.AppsEncryptedSharedPreferences.getSavedUserna
 import com.skeagis.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInValue
 import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.createErrorMessageAD
-import com.skeagis.monitorporastov.Utils.noNetworkAvailable
+import com.skeagis.monitorporastov.Utils.noNetworkAvailableAD
 import com.skeagis.monitorporastov.connection.ConnectionLiveData
 import com.skeagis.monitorporastov.databinding.ActivityMainBinding
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import com.google.android.material.navigation.NavigationView
-import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.C_parcelLayerName
-import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.watercourseLayerName
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.modules.SqlTileWriter
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
@@ -78,7 +73,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         navView.setupWithNavController(navController)
         setMainNavigationBehaviour(navView)
-        noNetworkAvailableAD = noNetworkAvailable(this)
+        noNetworkAvailableAD = noNetworkAvailableAD(this)
     }
 
     private fun callAllNecessaryFunctions() {

@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.skeagis.monitorporastov.fragments.viewmodels.base.MapBaseViewModel
+import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.MapBaseViewModel
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.model.DamageData
 import com.skeagis.monitorporastov.model.UsersData
-import com.skeagis.monitorporastov.viewmodels.MainSharedViewModel
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import org.osmdroid.util.GeoPoint
 import retrofit2.Response
 

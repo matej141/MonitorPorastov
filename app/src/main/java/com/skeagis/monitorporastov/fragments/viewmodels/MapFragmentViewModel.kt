@@ -6,7 +6,7 @@ import android.view.MenuItem
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.skeagis.monitorporastov.*
-import com.skeagis.monitorporastov.fragments.viewmodels.base.MapBaseViewModel
+import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.MapBaseViewModel
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.C_parcelLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.E_parcelLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.LPISLayerName
@@ -381,10 +381,9 @@ class MapFragmentViewModel : MapBaseViewModel() {
 
     private suspend fun createWMSTileSource(layerName: String): WMSTileSourceRepaired? {
         val deferredSource = CompletableDeferred<WMSTileSourceRepaired?>()
-        val getCapabilitiesUrl = getCapabilitiesUrl
         launch {
             setLoading(true)
-            val wmsEndpoint: WMSEndpoint? = loadWmsEndpoint(getCapabilitiesUrl)
+            val wmsEndpoint: WMSEndpoint? = loadWmsEndpoint()
 
             if (wmsEndpoint != null) {
                 val wmsTileSource = getSource(wmsEndpoint, layerName)
@@ -414,10 +413,10 @@ class MapFragmentViewModel : MapBaseViewModel() {
         }
     }
 
-    private fun loadWmsEndpoint(urlString: String): WMSEndpoint? {
+    private fun loadWmsEndpoint(): WMSEndpoint? {
         var wmsEndpoint: WMSEndpoint? = null
         try {
-            val c: HttpURLConnection = URL(urlString).openConnection() as HttpURLConnection
+            val c: HttpURLConnection = URL(getCapabilitiesUrl).openConnection() as HttpURLConnection
             val credential = Credentials.basic(String(usernameCharArray.value!!),
                 String(passwordCharArray.value!!))
             c.setRequestProperty("Authorization", credential)
