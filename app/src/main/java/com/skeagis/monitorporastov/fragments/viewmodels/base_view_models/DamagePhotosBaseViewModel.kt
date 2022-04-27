@@ -143,22 +143,12 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
 
     private fun createListsNecessaryForPhotos(usersData: UsersData) {
         createStringsOfPhotosList(usersData)
-        createIndexesOfPhotosList(usersData)
-    }
-
-    private fun createIndexesOfPhotosList(usersData: UsersData) {
-        val listOfIndexesOfPhotos = mutableListOf<Int>()
-        usersData.features.forEach { listOfIndexesOfPhotos.add(it.properties.id) }
-        setIndexesOfPhotos(listOfIndexesOfPhotos)
+        setIndexesOfPhotos(createIndexesOfPhotosList(usersData))
     }
 
     private fun createStringsOfPhotosList(usersData: UsersData) {
         val listOfStringsOfPhotos = mutableListOf<String>()
         usersData.features.forEach { listOfStringsOfPhotos.add(it.properties.foto) }
         stringsOfPhotosList = listOfStringsOfPhotos.toMutableList()
-    }
-
-    private fun createURLFilterForPhotos(uniqueId: String): String {
-        return "$urlNameOfIdParameter:$uniqueId"
     }
 }

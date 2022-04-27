@@ -23,6 +23,7 @@ class AddOrUpdateRecordPhotosRVAdapter(
     var hexStrings = mutableListOf<String>()
     val indexesOfPhotos = mutableListOf<Int>()
     val deletedIndexes = mutableListOf<Int>()
+    var deletePhotoClickable = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding =
@@ -30,13 +31,23 @@ class AddOrUpdateRecordPhotosRVAdapter(
         return ViewHolder(binding)
     }
 
+    fun setIfDeletePhotoClickable(value: Boolean) {
+        deletePhotoClickable = value
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = bitmaps[position]
         holder.photoImage.setImageBitmap(item)
         holder.photoImage.setOnClickListener {
+            if (!deletePhotoClickable) {
+                return@setOnClickListener
+            }
             DialogForDisplayPhotoDetail.showDialogOfPhotoDetail(holder.photoImage, context)
         }
         holder.deleteButton.setOnClickListener {
+            if (!deletePhotoClickable) {
+                return@setOnClickListener
+            }
             bitmaps.removeAt(holder.adapterPosition)
             hexStrings.removeAt(holder.adapterPosition)
             val deletedIndex = indexesOfPhotos[holder.adapterPosition]

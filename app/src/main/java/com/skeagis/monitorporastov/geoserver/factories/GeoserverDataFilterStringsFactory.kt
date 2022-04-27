@@ -1,6 +1,7 @@
 package com.skeagis.monitorporastov.geoserver.factories
 
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfGeometry
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUniqueId
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.DatabasePropertiesName.propertyNameOfUser
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisGMLUrl
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.openGisOGCUrl
@@ -28,6 +29,18 @@ object GeoserverDataFilterStringsFactory {
                 "                   </Literal>\n" +
                 "           </PropertyIsEqualTo>" +
                 "       </And>" +
+                "</Filter>"
+    }
+
+    fun createFilterStringByUniqueId(uniqueId: String): String {
+        return "<Filter xmlns:ogc=$openGisOGCUrl " +
+                "   xmlns:gml=$openGisGMLUrl>" +
+                "           <PropertyIsEqualTo>\n" +
+                "               <PropertyName>$propertyNameOfUniqueId</PropertyName>\n" +
+                "                   <Literal>" +
+                "                       $uniqueId" +
+                "                   </Literal>\n" +
+                "           </PropertyIsEqualTo>" +
                 "</Filter>"
     }
 

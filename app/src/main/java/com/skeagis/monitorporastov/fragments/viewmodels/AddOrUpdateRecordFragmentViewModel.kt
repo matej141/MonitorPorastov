@@ -8,9 +8,12 @@ import com.skeagis.monitorporastov.Utils
 import com.skeagis.monitorporastov.Utils.createRequestBody
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.DamagePhotosBaseViewModel
+import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataFilterStringsFactory.createFilterStringByUniqueId
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory
+import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.model.DamageData
+import com.skeagis.monitorporastov.model.UsersData
 import id.zelory.compressor.Compressor
 import id.zelory.compressor.constraint.format
 import id.zelory.compressor.constraint.quality
@@ -229,7 +232,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             val compressedImageFile: File = Compressor.compress(context, imageFile) {
                 quality(80)
                 format(Bitmap.CompressFormat.JPEG)
-                size(1_097_152)
+                size(1_000_000)
             }
             imageFile.delete()
             compressedImageFileDeferred.complete(compressedImageFile)
@@ -279,35 +282,45 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     fun saveData() {
+        if (sharedViewModel?.isNetworkAvailable?.value == false || blockedClicking) {
+            return
+        }
         if (nameOfDamageDataRecord.isEmpty()) {
             setUncompletedNameWarning()
             return
         }
+        _adapterOfPhotos.value?.setIfDeletePhotoClickable(false)
+        val uniqueId = createUniqueId()
         val isEditingDataValue = isEditingData.value
         if (isEditingDataValue == true) {
-            updateDataInGeoserver()
+
+            observeNetworkState { updateDataInGeoserver() }
         } else {
-            saveDataToGeoserver()
+            observeNetworkState { saveDataToGeoserver(uniqueId) }
         }
     }
 
     private fun updateDataInGeoserver() {
         setLoading(true)
-        job = CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             val resultsListDeferred: List<Deferred<Boolean>> =
                 listOf(
                     async { updateDamageInfoInGeoserver() },
                     async { updatePhotosInGeoserver() }
                 )
+            if (checkIfShouldUpdate()) {
+                setIfUpdateSucceeded(true)
+                onSucceededResult()
+                return@launch
+            }
             val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
             val ifUpdateSucceeded = Utils.checkIfCallsWereSucceeded(resultsList)
 
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()
-                updateSavedData()
             }
-            setLoading(false)
+
         }
     }
 
@@ -315,6 +328,8 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
         updateDataInSharedViewModel()
         whereToNavigateBack()
         setDataNotLoadedInSharedViewModel()
+        updateSavedData()
+        setLoading(false)
     }
 
     private fun setDataNotLoadedInSharedViewModel() {
@@ -328,6 +343,9 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private suspend fun updateDamageInfoInGeoserver(): Boolean {
+        if (compareIfLocalDamageDataItemWithDataInGeoserverAreEqual()) {
+            return true
+        }
         val updateDamageDataString = createUpdateDamageDataString()
         if (updateDamageDataString.isEmpty()) {
             return true
@@ -373,6 +391,9 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private suspend fun updatePhotosInGeoserver(): Boolean {
+        if (!compareIfLocalAndRemoteListsOfBitmapIndexesAreEqual()) {
+            return true
+        }
         val updatePhotosTransactionString = createUpdatePhotosTransactionString()
         if (updatePhotosTransactionString.isEmpty()) {
             return true
@@ -404,30 +425,39 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private fun updateDataInSharedViewModel() {
-        if (sharedViewModel?.selectedDamageDataItemFromMap?.value?.id ==
-            sharedViewModel?.selectedDamageDataItem?.value?.id) {
+        val idOfSelectedDamageDataItemFromMap =
+            sharedViewModel?.selectedDamageDataItemFromMap?.value?.id
+        val idOfSelectedDamageDataItem = sharedViewModel?.selectedDamageDataItem?.value?.id
+        if (idOfSelectedDamageDataItemFromMap == null && idOfSelectedDamageDataItem == null) {
+            return
+        }
+        if (idOfSelectedDamageDataItemFromMap ==
+            idOfSelectedDamageDataItem
+        ) {
             damageDataItem.value?.let { sharedViewModel?.selectDamageData(it) }
         }
     }
 
-    private fun saveDataToGeoserver() {
+    private fun saveDataToGeoserver(uniqueId: String) {
         setLoading(true)
-        val uniqueId = createUniqueId()
-
-        job = CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             val resultsListDeferred =
                 listOf(
                     async { sendDamageDataToGeoserver(uniqueId) },
-                    async { sendPhotosToGeoserver(uniqueId)
+                    async {
+                        sendPhotosToGeoserver(uniqueId)
                     })
-
+            if (checkIfItemIsInGeoserver(uniqueId)) {
+                onSucceededResult()
+                setIfUpdateSucceeded(true)
+                return@launch
+            }
             val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
             val ifUpdateSucceeded = Utils.checkIfCallsWereSucceeded(resultsList)
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()
             }
-            setLoading(false)
         }
     }
 
@@ -436,6 +466,9 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private suspend fun sendDamageDataToGeoserver(uniqueId: String): Boolean {
+        if (checkIfItemIsInGeoserver(uniqueId)) {
+            return true
+        }
         val insertDataTransactionString = createInsertDataTransactionString(uniqueId)
         val requestBody = createRequestBody(insertDataTransactionString)
         return postToGeoserver(requestBody)
@@ -454,6 +487,9 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
     }
 
     private suspend fun sendPhotosToGeoserver(uniqueId: String): Boolean {
+        if (checkIfItemIsInGeoserver(uniqueId)) {
+            return true
+        }
         if (getBitmapsFromAdapter().isEmpty()) {
             return true
         }
@@ -468,5 +504,35 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             uniqueId)
     }
 
+    private suspend fun checkIfItemIsInGeoserver(uniqueId: String): Boolean {
+        return getDamageDataItemFromGeoServerByUniqueId(uniqueId) != null
+    }
+
+
+    private suspend fun compareIfLocalDamageDataItemWithDataInGeoserverAreEqual(): Boolean {
+        val localDamageDataItem = damageDataItem.value ?: return false
+        val uniqueId = damageDataItem.value?.unique_id ?: return false
+        val damageDataItemFromGeoserver =
+            getDamageDataItemFromGeoServerByUniqueId(uniqueId) ?: return false
+        if (localDamageDataItem == damageDataItemFromGeoserver) {
+            return true
+        }
+        return false
+    }
+
+    private suspend fun compareIfLocalAndRemoteListsOfBitmapIndexesAreEqual(): Boolean {
+        val uniqueId = damageDataItem.value?.unique_id ?: return false
+        val localIndexes = damageDataItem.value?.indexesOfPhotos ?: return false
+        val remoteIndexes = getIndexesOfPhotosFromGeoserver(uniqueId) ?: return false
+        if (localIndexes == remoteIndexes) {
+            return true
+        }
+        return false
+    }
+
+    private suspend fun checkIfShouldUpdate(): Boolean {
+        return compareIfLocalDamageDataItemWithDataInGeoserverAreEqual() &&
+                !compareIfLocalAndRemoteListsOfBitmapIndexesAreEqual()
+    }
 
 }

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.MenuItem
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.skeagis.monitorporastov.*
 import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.MapBaseViewModel
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.C_parcelLayerName
@@ -113,13 +114,13 @@ class MapFragmentViewModel : MapBaseViewModel() {
     private val _newPolygonMarkersHistory = MutableLiveData<MutableList<List<Marker>>>()
     val newPolygonMarkersHistory: LiveData<MutableList<List<Marker>>> = _newPolygonMarkersHistory
 
-    override fun copyObservers() {
-        super.copyObservers()
-        viewLifecycleOwner?.let {
-            loadedMapLayerWithUserData.observe(it) { loaded ->
-                sharedViewModel?.setIfLoadedMapLayerWithUserData(loaded)
-            }
-        }
+    private val loadedMapLayerWithUserDataObserver = Observer<Boolean> { loaded ->
+        sharedViewModel?.setIfLoadedMapLayerWithUserData(loaded)
+    }
+
+    override fun setObservers() {
+        super.setObservers()
+        loadedMapLayerWithUserData.observeForever(loadedMapLayerWithUserDataObserver)
     }
 
     override fun setToViewModel() {
@@ -351,18 +352,15 @@ class MapFragmentViewModel : MapBaseViewModel() {
 
     private suspend fun getWmsTileSourceOnRepeat(layerName: String): WMSTileSourceRepaired? {
         val deferredSource = CompletableDeferred<WMSTileSourceRepaired?>()
-
         withContext(Dispatchers.Main) {
             observeNetworkState {
                 if (loadedMapLayerWithUserData.value == true) {
                     deferredSource.complete(null)
-                }
-                else {
+                } else {
                     setLoading(true)
                     val wmsTileSource = createWMSTileSource(layerName)
                     deferredSource.complete(wmsTileSource)
                 }
-
             }
         }
         return deferredSource.await()
@@ -552,7 +550,7 @@ class MapFragmentViewModel : MapBaseViewModel() {
         }
     }
 
-     private fun createListOfGeopointsFromMarkers(): List<GeoPoint> {
+    private fun createListOfGeopointsFromMarkers(): List<GeoPoint> {
         return polygonMarkersList.map {
             GeoPoint(it.position.latitude,
                 it.position.longitude)
@@ -616,10 +614,10 @@ class MapFragmentViewModel : MapBaseViewModel() {
         }
         val username = String(usernameCharArray.value!!)
         val filterString = createFilterStringByIntersectAndUsername(geoPoint, username)
-        getDetailFromOfPolygonFromGeoserver(filterString)
+        getDetailOfPolygonFromGeoserver(filterString)
     }
 
-    private suspend fun getDetailFromOfPolygonFromGeoserver(filterString: String) {
+    private suspend fun getDetailOfPolygonFromGeoserver(filterString: String) {
         val geoserverRetrofitAPI: GeoserverRetrofitAPI =
             getGeoserverServiceAPIWithGson() ?: return
         val resultOfCallToGeoserver: Pair<Boolean, Response<UsersData>?> =
@@ -781,4 +779,8 @@ class MapFragmentViewModel : MapBaseViewModel() {
         setDetailDamageData(null)
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        loadedMapLayerWithUserData.removeObserver(loadedMapLayerWithUserDataObserver)
+    }
 }

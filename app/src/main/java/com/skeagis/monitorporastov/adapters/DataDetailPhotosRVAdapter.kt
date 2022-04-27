@@ -14,10 +14,12 @@ import com.skeagis.monitorporastov.databinding.DataDetailPhotoListItemBinding
  * zobrazujúcom detail o poškodení.
  */
 class DataDetailPhotosRVAdapter(
-    private var values: List<Bitmap>,
+    var bitmaps: List<Bitmap>,
     val context: Context,
 ) :
     RecyclerView.Adapter<DataDetailPhotosRVAdapter.ViewHolder>() {
+
+    var deletePhotoClickable = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding =
@@ -25,18 +27,24 @@ class DataDetailPhotosRVAdapter(
                 parent,
                 false)
         return ViewHolder(binding)
+    }
 
+    fun setIfDeletePhotoClickable(value: Boolean) {
+        deletePhotoClickable = value
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = values[position]
+        val item = bitmaps[position]
         holder.photoImage.setImageBitmap(item)
         holder.photoImage.setOnClickListener {
+            if (!deletePhotoClickable) {
+                return@setOnClickListener
+            }
             DialogForDisplayPhotoDetail.showDialogOfPhotoDetail(holder.photoImage, context)
         }
     }
 
-    override fun getItemCount() = values.size
+    override fun getItemCount() = bitmaps.size
 
     inner class ViewHolder(binding: DataDetailPhotoListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {

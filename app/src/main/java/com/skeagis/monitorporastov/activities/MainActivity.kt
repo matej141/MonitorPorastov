@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
+import com.google.android.material.navigation.NavigationView
 import com.skeagis.monitorporastov.*
 import com.skeagis.monitorporastov.AppsEncryptedSharedPreferences.createEncryptedSharedPreferences
 import com.skeagis.monitorporastov.AppsEncryptedSharedPreferences.getIfLoggedInValue
@@ -25,10 +26,9 @@ import com.skeagis.monitorporastov.AppsEncryptedSharedPreferences.setLoggedInVal
 import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.createErrorMessageAD
 import com.skeagis.monitorporastov.Utils.noNetworkAvailableAD
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import com.skeagis.monitorporastov.connection.ConnectionLiveData
 import com.skeagis.monitorporastov.databinding.ActivityMainBinding
-import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
-import com.google.android.material.navigation.NavigationView
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
@@ -194,11 +194,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun observeErrorMessage() {
         sharedViewModel.errorMessage.observe(this) { errorMessage ->
-            if (errorMessage != null) {
-                createErrorMessageAD(this, errorMessage)
-                sharedViewModel.clearErrorMessage()
+            errorMessage.getContentIfNotHandled()?.let { errorMessageString ->
+                createErrorMessageAD(this, errorMessageString)
             }
-
         }
     }
 

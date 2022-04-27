@@ -16,8 +16,8 @@ android {
         applicationId "com.skeagis.monitorporastov"
         minSdk 23
         targetSdk 31
-        versionCode 11
-        versionName "1.0.3"
+        versionCode 12
+        versionName "1.0.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

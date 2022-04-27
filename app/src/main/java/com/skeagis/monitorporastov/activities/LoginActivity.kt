@@ -63,11 +63,8 @@ class LoginActivity : AppCompatActivity() {
 
     private fun observeErrorMessage() {
         viewModel.errorMessage.observe(this) { errorMessage ->
-            if (errorMessage != null) {
-                createErrorMessageAD(this, errorMessage)
-                viewModel.clearErrorMessage()
-            } else {
-                showNoInternetToastMessage()
+            errorMessage.getContentIfNotHandled()?.let { errorMessageString ->
+                createErrorMessageAD(this, errorMessageString)
             }
         }
     }

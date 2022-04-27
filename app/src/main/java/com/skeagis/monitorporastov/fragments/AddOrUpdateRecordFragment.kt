@@ -11,11 +11,11 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -25,10 +25,10 @@ import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.Utils.afterTextChanged
 import com.skeagis.monitorporastov.Utils.hideKeyboard
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
+import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 import com.skeagis.monitorporastov.databinding.FragmentAddOrUpdateDamageBinding
 import com.skeagis.monitorporastov.fragments.viewmodels.AddOrUpdateRecordFragmentViewModel
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 
 
 /**
@@ -66,6 +66,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         setUpObservers()
         viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
         setRecycleViewAdapterInViewModel()
+        setUpBackStackCallback()
     }
 
     private fun setUpObservers() {
@@ -78,7 +79,8 @@ class AddOrUpdateRecordFragment : Fragment() {
     }
 
     private fun setRecycleViewAdapterInViewModel() {
-        val addDamageFragmentPhotosRVAdapter = AddOrUpdateRecordPhotosRVAdapter(mutableListOf(), requireContext())
+        val addDamageFragmentPhotosRVAdapter =
+            AddOrUpdateRecordPhotosRVAdapter(mutableListOf(), requireContext())
         viewModel.setAdapterOfPhotos(addDamageFragmentPhotosRVAdapter)
     }
 
@@ -123,7 +125,44 @@ class AddOrUpdateRecordFragment : Fragment() {
             choiceAD()
         }
         binding.saveDamage.setOnClickListener {
+            saveData()
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (checkIfClickingIsBlocked()) {
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+
+    }
+
+    private fun setUpBackStackCallback() {
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            if (checkIfClickingIsBlocked()) {
+                return@addCallback
+            }
+            findNavController().navigateUp()
+        }
+    }
+
+    private fun blockEditTexts(view: View) {
+            // view.isEnabled = false
+            view.isClickable = false
+            view.isFocusable = false
+
+    }
+
+    private fun saveData() {
+        if (checkIfClickingIsBlocked()) {
+            return
+        }
+        if (sharedViewModel.isNetworkAvailable.value == true) {
+            // (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
             viewModel.saveData()
+
+            blockEditTexts(binding.addDataNameText)
+            blockEditTexts(binding.addDataDescriptionText)
         }
     }
 
@@ -143,6 +182,9 @@ class AddOrUpdateRecordFragment : Fragment() {
      * Zobrazuje pouužívateľovi alert dialog umožňujúci vybrať typ poškodenia.
      */
     private fun choiceAD() {
+        if (checkIfClickingIsBlocked()) {
+            return
+        }
         AlertDialog.Builder(requireContext())
             .setTitle("Vyberte typ poškodenia:")
             .setSingleChoiceItems(listOfDamageType, -1) { dialogInterface, i ->
@@ -215,8 +257,7 @@ class AddOrUpdateRecordFragment : Fragment() {
     }
 
     private fun observeSelectedItemFromMap() {
-        sharedViewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner) {
-                selectedDamageDataItemFromMap ->
+        sharedViewModel.selectedDamageDataItemFromMap.observe(viewLifecycleOwner) { selectedDamageDataItemFromMap ->
             selectedDamageDataItemFromMap?.let {
                 viewModel.setDamageDataFromMap(it)
             }
@@ -227,6 +268,9 @@ class AddOrUpdateRecordFragment : Fragment() {
      * Výber fotiek z galérie.
      */
     private fun choosePhoto() {
+        if (checkIfClickingIsBlocked()) {
+            return
+        }
         val galleryIntent = Intent(
             Intent.ACTION_PICK,
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -238,12 +282,18 @@ class AddOrUpdateRecordFragment : Fragment() {
      * Použitie fotoaparátu.
      */
     private fun takePhoto() {
+        if (checkIfClickingIsBlocked()) {
+            return
+        }
         val cameraIntent = Intent(
             ACTION_IMAGE_CAPTURE
         )
         resultTakePhotoLauncher.launch(cameraIntent)
     }
 
+    private fun checkIfClickingIsBlocked(): Boolean {
+        return viewModel.blockedClicking
+    }
 
     private fun observeIfEditing() {
         viewModel.isEditingData.observe(viewLifecycleOwner) {
@@ -279,12 +329,9 @@ class AddOrUpdateRecordFragment : Fragment() {
             if (updateSucceeded) {
                 succeededToasts()
                 observeWhereToNavigate()
-            }
-            else {
+            } else {
                 nonSucceededToast()
             }
-            //if (sharedViewModel.selectedDamageDataItemFromMap.value.isDirectlyFromMap )
-            sharedViewModel.clearSelectedDamageDataItemFromMap()
         }
     }
 
@@ -292,8 +339,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         if (viewModel.isEditingData.value == true) {
             Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
                 Toast.LENGTH_SHORT).show()
-        }
-        else {
+        } else {
             Toast.makeText(context, "Záznam bol úspešne uložený",
                 Toast.LENGTH_SHORT).show()
         }
@@ -303,8 +349,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         if (viewModel.isEditingData.value == true) {
             Toast.makeText(context, "Záznam sa nepodarilo aktualizovať",
                 Toast.LENGTH_SHORT).show()
-        }
-        else {
+        } else {
             Toast.makeText(context, "Záznam sa nepodarilo uložiť",
                 Toast.LENGTH_SHORT).show()
         }

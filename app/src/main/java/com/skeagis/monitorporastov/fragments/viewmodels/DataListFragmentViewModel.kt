@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.MapBaseViewModel
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.model.DamageData
@@ -19,6 +20,10 @@ class DataListFragmentViewModel : MapBaseViewModel() {
 
     private val _loadedUserData = MutableLiveData<Boolean>()
     val loadedUserData: LiveData<Boolean> = _loadedUserData
+
+    private val loadedUserDataObserver = Observer<Boolean> {
+        sharedViewModel?.setIfLoadedUserData(it)
+    }
 
     companion object {
         private const val USER_DATA_TAG = "ObservingUserData"
@@ -129,13 +134,9 @@ class DataListFragmentViewModel : MapBaseViewModel() {
         observeNetworkState { reloadUserData() }
     }
 
-    override fun copyObservers() {
-        super.copyObservers()
-        viewLifecycleOwner?.let {
-            loadedUserData.observe(it) {
-                sharedViewModel?.setIfLoadedUserData(it)
-            }
-        }
+    override fun setObservers() {
+        super.setObservers()
+        loadedUserData.observeForever(loadedUserDataObserver)
     }
 
     override fun setToViewModel() {
@@ -145,4 +146,8 @@ class DataListFragmentViewModel : MapBaseViewModel() {
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        loadedUserData.removeObserver(loadedUserDataObserver)
+    }
 }

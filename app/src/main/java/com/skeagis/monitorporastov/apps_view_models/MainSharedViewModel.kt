@@ -3,11 +3,7 @@ package com.skeagis.monitorporastov.apps_view_models
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.skeagis.monitorporastov.Event
-import com.skeagis.monitorporastov.Utils
-import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory.createDeleteRecordTransactionString
-import com.skeagis.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory.createDeletePhotosStringWithUniqueId
 import com.skeagis.monitorporastov.model.DamageData
-import kotlinx.coroutines.*
 
 // class MainSharedViewModel :ViewModel(), ViewModelInterface by ViewModelDelegate()
 
@@ -35,6 +31,10 @@ class MainSharedViewModel : BaseViewModel() {
     private val _deletingWasSuccessful = MutableLiveData<Event<Boolean>>()
     val deletingWasSuccessful: LiveData<Event<Boolean>> = _deletingWasSuccessful
 
+    private val _uniqueIdOfDeletedDamageDataItem = MutableLiveData<Event<String>>()
+    val uniqueIdOfDeletedDamageDataItem: LiveData<Event<String>> = _uniqueIdOfDeletedDamageDataItem
+
+
     fun setIfLoadedUserData(value: Boolean) {
         _loadedUserData.postValue(value)
     }
@@ -45,6 +45,14 @@ class MainSharedViewModel : BaseViewModel() {
 
     fun setIfLoadedMapLayerWithUserDataAsync(value: Boolean) {
         _loadedMapLayerWithUserData.postValue(value)
+    }
+
+    fun clearSelectedDamageDataItemAsync() {
+        _selectedDamageDataItem.postValue(null)
+    }
+
+    fun clearSelectedDamageDataItemFromMapAsync() {
+        _selectedDamageDataItemFromMap.postValue(null)
     }
 
     fun selectDamageData(item: DamageData) {
@@ -60,7 +68,6 @@ class MainSharedViewModel : BaseViewModel() {
     }
 
     fun clearSelectedDamageDataItemFromMap() {
-        _selectedDamageDataItemFromMap.value?.let { selectDamageData(it) }
         _selectedDamageDataItemFromMap.value = null
     }
 
@@ -68,54 +75,12 @@ class MainSharedViewModel : BaseViewModel() {
         _selectedDamageDataItemToShowInMap.value = null
     }
 
-    private fun setIfDeletingWasSuccessful(value: Boolean) {
+    fun setIfDeletingWasSuccessful(value: Boolean) {
         _deletingWasSuccessful.postValue(Event(value))
     }
 
-    fun prepareToDelete(damageData: DamageData?) {
-        if (damageData == null) {
-            return
-        }
-        val id = damageData.unique_id
-        launch {
-            performDeleting(id)
-        }
+    fun setUniqueIdOfDeletedDamageDataItem(uniqueId: String) {
+        _uniqueIdOfDeletedDamageDataItem.value = Event(uniqueId)
     }
-
-    private suspend fun performDeleting(uniqueId: String) {
-        setLoading(true)
-        CoroutineScope(Dispatchers.Main).launch {
-            val resultsListDeferred =
-                listOf(
-                    async { deleteItem(uniqueId) },
-                    async { deleteItemPhotosOfItem(uniqueId)
-                    })
-            val resultsList: List<Boolean> = resultsListDeferred.awaitAll()
-            val resultOfDeleting = Utils.checkIfCallsWereSucceeded(resultsList)
-            if (resultOfDeleting) {
-                setIfLoadedUserData(false)
-                setIfLoadedMapLayerWithUserDataAsync(false)
-            }
-            setIfDeletingWasSuccessful(resultOfDeleting)
-            setLoading(false)
-        }
-    }
-
-    private suspend fun deleteItem(uniqueId: String): Boolean {
-        val deleteDamageDataString = createDeleteRecordTransactionString(uniqueId)
-        if (deleteDamageDataString.isEmpty()) {
-            return true
-        }
-        val requestBody = Utils.createRequestBody(deleteDamageDataString)
-        return postToGeoserver(requestBody)
-    }
-
-    private suspend fun deleteItemPhotosOfItem(uniqueId: String): Boolean {
-        val deletePhotosString = createDeletePhotosStringWithUniqueId(uniqueId)
-        val requestBody = Utils.createRequestBody(deletePhotosString)
-        return postToGeoserver(requestBody)
-    }
-
-
 
 }

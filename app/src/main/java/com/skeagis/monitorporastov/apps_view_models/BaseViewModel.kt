@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.skeagis.monitorporastov.CoroutineScopeDelegate
 import com.skeagis.monitorporastov.CoroutineScopeInterface
+import com.skeagis.monitorporastov.Event
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitBuilder
 import kotlinx.coroutines.*
@@ -16,25 +17,27 @@ import java.net.*
 abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by CoroutineScopeDelegate() {
     override var job: Job = Job()
     private val _loading = MutableLiveData(false)
-    val loading: LiveData<Boolean> get() = _loading
+    val loading: LiveData<Boolean> = _loading
 
     private val _usernameCharArray = MutableLiveData<CharArray>()
-    val usernameCharArray: LiveData<CharArray> get() = _usernameCharArray
+    val usernameCharArray: LiveData<CharArray> = _usernameCharArray
 
     private val _passwordCharArray = MutableLiveData<CharArray>()
-    val passwordCharArray: LiveData<CharArray> get() = _passwordCharArray
+    val passwordCharArray: LiveData<CharArray> = _passwordCharArray
 
     private val _isNetworkAvailable = MutableLiveData<Boolean>()
-    val isNetworkAvailable: LiveData<Boolean> get() = _isNetworkAvailable
+    val isNetworkAvailable: LiveData<Boolean> = _isNetworkAvailable
 
     private val _errorOccurred = MutableLiveData<Boolean>()
-    val errorOccurred: LiveData<Boolean> get() = _errorOccurred
+    val errorOccurred: LiveData<Boolean> = _errorOccurred
 
-    private val _errorMessage = MutableLiveData<String?>()
-    val errorMessage: LiveData<String?> get() = _errorMessage
+    private val _errorMessage = MutableLiveData<Event<String>>()
+    val errorMessage: LiveData<Event<String>> = _errorMessage
 
     private val _unauthorisedErrorIsOccurred = MutableLiveData<Boolean>()
-    val unauthorisedErrorIsOccurred: LiveData<Boolean> get() = _unauthorisedErrorIsOccurred
+    val unauthorisedErrorIsOccurred: LiveData<Boolean> = _unauthorisedErrorIsOccurred
+
+    var blockedClicking = false
 
     companion object {
         private const val CALL_TO_GEOSERVER_TAG = "CallToGeoserver"
@@ -52,11 +55,16 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
 
     fun setLoading(value: Boolean) {
         _loading.postValue(value)
+        setIfClickingIsBlocked(value)
+    }
+
+    private fun setIfClickingIsBlocked(value: Boolean) {
+        blockedClicking = value
     }
 
     fun onError(message: String) {
         if (_isNetworkAvailable.value == true) {
-            _errorMessage.postValue(message)
+            _errorMessage.postValue(Event(message))
         }
     }
 
@@ -98,6 +106,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
                 }
 
             }
+
             catch (e: Exception) {
                 setErrorOccurred(true)
                 successResultDeferred.complete(false)
@@ -115,7 +124,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
             e is UnknownHostException -> {
                 Log.e(CALL_TO_GEOSERVER_TAG, "UnknownHostException: $e")
             }
-            e is SocketException && e.message == "java.net.SocketException: Software caused connection abort" -> {
+            e is SocketException && e.message == "Software caused connection abort" -> {
                 Log.e(CALL_TO_GEOSERVER_TAG, "SocketException: $e")
             }
             else -> {
@@ -129,7 +138,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         Log.d(UNLOAD_CREDENTIALS_TAG, "Error was occurred during attempt to load credentials")
     }
 
-    private fun getGeoserverServiceAPIWithScalars(): GeoserverRetrofitAPI? {
+    fun getGeoserverServiceAPIWithScalars(): GeoserverRetrofitAPI? {
         val geoserverRetrofitAPI: GeoserverRetrofitAPI? =
             usernameCharArray.value?.let { usernameChars ->
                 passwordCharArray.value?.let { passwordChars ->
@@ -169,9 +178,4 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         super.onCleared()
         job.cancel()
     }
-
-    fun clearErrorMessage() {
-        _errorMessage.value = null
-    }
-
 }

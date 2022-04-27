@@ -72,7 +72,8 @@ class MapFragment : Fragment() {
     private var mainMarker: Marker? = null  // marker ukazujúci polohu používateľa
 
     private lateinit var drawerLockInterface: DrawerLockInterface  // interface na uzamykanie
-                                                                // drawer layoutu
+
+    // drawer layoutu
     private lateinit var polyMarkerIcon: Drawable  // ikona markeru v polygóne
     private lateinit var mapMarkerIcon: Drawable  // ikona hlavného markeru,
 
@@ -148,6 +149,7 @@ class MapFragment : Fragment() {
             viewLifecycleOwner) { result ->
             if (result) {
                 viewModel.setDefaultModeOfMap()
+                sharedViewModel.clearSelectedDamageDataItemFromMap()
                 // nastavenie defaultneho zobrazenia mapy (bez buttonov
                 // zobrazených počas vyznačovania poškodeného územia)
                 navController.currentBackStackEntry?.savedStateHandle?.set("key", false)
@@ -244,10 +246,11 @@ class MapFragment : Fragment() {
                 viewModel.manualSelecting.value == true -> {
                     clearMeasureAlert()
                 }
-                checkIfPreviousFragmentIsDataDetailFragment() -> {
+                checkIfCouldReturnToDataDetailFragment() && !checkIfBlockedClicking() -> {
                     sharedViewModel.clearSelectedDamageDataItemFromMap()
                     findNavController().navigateUp()
                 }
+
                 else -> {
                     // ak nemerá nič, opýta sa ho, či chce ukončít aplikáciu.
                     showIfShouldEndAppAD()
@@ -330,8 +333,26 @@ class MapFragment : Fragment() {
     }
 
     private fun navigateToDetailFragment() {
+        if (checkIfBlockedClicking()) {
+            return
+        }
         findNavController().navigate(R.id.action_map_fragment_TO_data_detail_fragment)
     }
+
+    private fun checkIfNetworkAvailable(): Boolean {
+        return sharedViewModel.isNetworkAvailable.value == true
+    }
+
+    private fun showToastAboutThatUserMustHaveInternetForSaveData() {
+        Toast.makeText(context, "Na uloženie nového záznamu musíte mať prístup do siete",
+            Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showToastAboutUserMustHaveInternetForDeleting() {
+        Toast.makeText(context, "Na odstránenie záznamu musíte mať prístup do siete",
+            Toast.LENGTH_SHORT).show()
+    }
+
 
     /**
      * Zobrazí alert dialog, keď chce používateľ začať vyznačovanie poškodeného územia
@@ -344,6 +365,7 @@ class MapFragment : Fragment() {
         if (!locationCheck()) {
             return
         }
+
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.show_measure_ad_title))
             // inicializuje List adapter na výber možností:
@@ -542,6 +564,22 @@ class MapFragment : Fragment() {
         return true
     }
 
+    private fun checkIfCouldReturnToDataDetailFragment(): Boolean {
+        if (checkIfPreviousFragmentIsDataDetailFragment() &&
+            !checkIfSelectedDamageDataItemInSharedVMIsNull()) {
+            return true
+        }
+        return false
+    }
+
+    private fun checkIfBlockedClicking(): Boolean {
+        return viewModel.blockedClicking
+    }
+
+    private fun checkIfSelectedDamageDataItemInSharedVMIsNull(): Boolean {
+        return sharedViewModel.selectedDamageDataItem.value == null
+    }
+
     /**
      * Inicializuje receiver mapy, reagujujúci na kliknutie do mapy.
      * Ak je totiž zapnuté manuálne meranie poškodenej plochy (klikaním), tak vďaka tomuto
@@ -554,10 +592,7 @@ class MapFragment : Fragment() {
                 if (viewModel.manualSelecting.value == true) {
                     addMarkerToMapOnClick(p)
                 } else {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        viewModel.getDetailOfPolygonOnMap(p)
-                    }
-
+                    getDetailFromMap(p)
                 }
                 return true
             }
@@ -568,6 +603,15 @@ class MapFragment : Fragment() {
         }
         // tento receiver sa nakoniec pridá do mapy ako overlay
         mapView.overlays.add(MapEventsOverlay(mReceive))
+    }
+
+    private fun getDetailFromMap(p: GeoPoint) {
+        if (checkIfBlockedClicking()) {
+            return
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            viewModel.getDetailOfPolygonOnMap(p)
+        }
     }
 
     private fun clearMapCache() {
@@ -610,6 +654,9 @@ class MapFragment : Fragment() {
     }
 
     private fun setUpForEditingPolygon() {
+        if (checkIfBlockedClicking()) {
+            return
+        }
         viewModel.clearFromDetailOfPolygon()
         viewModel.setForManualSelecting()
         addMarkersOfEditedPolygon()
@@ -903,7 +950,11 @@ class MapFragment : Fragment() {
      * Uloženie poškodenia. Na uloženie treba mať aspoň 3 body na mape určené.
      */
     private fun saveDamageData(v: View) {
-        if (!checkIfMoreThan3PointsAdded()) {
+        if (!checkIfNetworkAvailable()) {
+            showToastAboutThatUserMustHaveInternetForSaveData()
+            return
+        }
+        if (checkIfBlockedClicking() || !checkIfMoreThan3PointsAdded()) {
             return
         }
         sendDamageDataToAddFragment(v)
@@ -973,7 +1024,8 @@ class MapFragment : Fragment() {
             it.setOnMarkerClickListener { m, _ ->
                 deleteMarker(m)
                 true
-            }}
+            }
+        }
         mapView.invalidate()
     }
 
@@ -989,11 +1041,19 @@ class MapFragment : Fragment() {
     }
 
     private fun askIfDeleteDataAD() {
+        if (!checkIfNetworkAvailable()) {
+            showToastAboutUserMustHaveInternetForDeleting()
+            return
+        }
+        if (checkIfBlockedClicking()) {
+            return
+        }
         AlertDialog.Builder(requireContext())  //
             .setTitle(R.string.if_delete_record_title)
             .setPositiveButton(R.string.button_positive_text) { _, _ ->
                 binding.progressBar.visibility = View.VISIBLE
-                sharedViewModel.prepareToDelete(viewModel.getSelectedDamageRecord())
+                viewModel.prepareToDelete(viewModel.getSelectedDamageRecord())
+                drawerLockInterface.lockDrawer()
             }
             .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
                 dialog.cancel()
@@ -1041,6 +1101,7 @@ class MapFragment : Fragment() {
         observeNewPolygonMarkersHistory()
         observeMarkersToAddOrRemoveFromMap()
         observeIfDeletingWasSuccessful()
+        observeUniqueIdOfDeletedDamageDataItem()
     }
 
     private fun setUpViewModel() {
@@ -1416,10 +1477,23 @@ class MapFragment : Fragment() {
                         Toast.LENGTH_SHORT).show()
                     viewModel.onSuccessfulDelete()
                     clearMapFromShownDetail()
+                    drawerLockInterface.unlockDrawer()
                 } else {
                     Toast.makeText(context, getString(R.string.unsuccessful_deleting),
                         Toast.LENGTH_SHORT).show()
                 }
+            }
+        }
+    }
+
+    private fun observeUniqueIdOfDeletedDamageDataItem() {
+        sharedViewModel.uniqueIdOfDeletedDamageDataItem.observe(viewLifecycleOwner) { value ->
+            value.getContentIfNotHandled()?.let { uniqueId ->
+                val idOfDetailedDamageDataItem = viewModel.detailDamageData.value?.unique_id
+                if (uniqueId == idOfDetailedDamageDataItem) {
+                    viewModel.onSuccessfulDelete()
+                }
+
             }
         }
     }

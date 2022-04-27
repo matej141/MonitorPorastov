@@ -3,6 +3,7 @@ package com.skeagis.monitorporastov.fragments
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -51,6 +52,8 @@ class DataDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.dataDetailPhotoRv
         setUpObservers()
+        setAdapterInViewModel()
+        setUpBackStackCallback()
         hideKeyboard()
     }
 
@@ -69,10 +72,16 @@ class DataDetailFragment : Fragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
+        if (viewModel.isNetworkAvailable.value == false) {
+            return false
+        }
         if (!checkIfPhotosHaveBeenLoaded(id)) {
             Toast.makeText(context, "Fotografie ešte neboli načítané, počkajte prosím",
                 Toast.LENGTH_SHORT).show()
             return false
+        }
+        if (checkIfShouldNotClickOnButtons()) {
+            return true
         }
         if (id == R.id.menu_edit_data) {
             viewModel.detailDamageDataItem.let {
@@ -90,6 +99,12 @@ class DataDetailFragment : Fragment() {
             handleToMapFragment()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun setAdapterInViewModel() {
+        val dataDetailPhotosRVAdapter =
+            DataDetailPhotosRVAdapter(mutableListOf(), requireContext())
+        viewModel.setAdapterOfDetailsOfPhotos(dataDetailPhotosRVAdapter)
     }
 
     private fun checkIfPhotosHaveBeenLoaded(id: Int): Boolean {
@@ -176,7 +191,8 @@ class DataDetailFragment : Fragment() {
             .setTitle(R.string.if_delete_record_title)
             .setPositiveButton(R.string.button_positive_text) { _, _ ->
                 binding.progressBar.visibility = View.VISIBLE
-                sharedViewModel.prepareToDelete(viewModel.detailDamageDataItem)
+                viewModel.prepareToDelete(viewModel.detailDamageDataItem)
+                viewModel.setImageInAdapterNonClickable()
             }
             .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
                 dialog.cancel()
@@ -217,9 +233,8 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun observeBitmaps() {
-        viewModel.bitmaps.observe(viewLifecycleOwner) { bitmaps ->
-            recyclerView.adapter = DataDetailPhotosRVAdapter(bitmaps, requireContext())
-
+        viewModel.adapterOfDetailOfPhotos.observe(viewLifecycleOwner) {
+            recyclerView.adapter = it
         }
     }
 
@@ -236,7 +251,7 @@ class DataDetailFragment : Fragment() {
                     onSuccessfulDelete(value)
                 } else {
                     Toast.makeText(context, getString(R.string.unsuccessful_deleting),
-                        Toast.LENGTH_SHORT).show()
+                        Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -247,9 +262,12 @@ class DataDetailFragment : Fragment() {
             value.setThatNotHandled()
         } else {
             Toast.makeText(context, getString(R.string.successful_deleting),
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_LONG).show()
         }
         findNavController().navigateUp()
+        viewModel.damageDataItem.value?.let {
+            sharedViewModel.setUniqueIdOfDeletedDamageDataItem(it.unique_id)
+        }
     }
 
 
@@ -262,5 +280,28 @@ class DataDetailFragment : Fragment() {
         return true
     }
 
+    private fun checkIfShouldNotClickOnButtons(): Boolean {
+        return viewModel.blockedClicking
+    }
 
+    private fun setUpBackStackCallback() {
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            if (checkIfShouldNotClickOnButtons()) {
+                return@addCallback
+            }
+            if (checkIfShouldCLearBackstack()
+            ) {
+                findNavController().navigate(R.id.action_data_detail_fragment_TO_map_fragment_PopUp)
+            } else {
+                findNavController().navigateUp()
+            }
+
+        }
+    }
+
+    private fun checkIfShouldCLearBackstack(): Boolean {
+        return sharedViewModel.selectedDamageDataItemFromMap.value != null &&
+                sharedViewModel.selectedDamageDataItem.value !=
+                sharedViewModel.selectedDamageDataItemFromMap.value
+    }
 }
