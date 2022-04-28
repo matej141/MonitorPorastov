@@ -122,7 +122,7 @@ open class DamagePhotosBaseViewModel : MapBaseViewModel() {
         }
 
         val bitmaps = mutableListOf<Bitmap>()
-        job = CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             stringsOfPhotosList.forEach {
                 val imageBytes: ByteArray = Base64.decode(it, 0)
                 val image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)

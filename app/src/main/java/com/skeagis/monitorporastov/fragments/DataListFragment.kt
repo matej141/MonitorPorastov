@@ -7,8 +7,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.skeagis.monitorporastov.CoroutineScopeDelegate
-import com.skeagis.monitorporastov.CoroutineScopeInterface
 import com.skeagis.monitorporastov.R
 import com.skeagis.monitorporastov.adapters.DataListItemRecyclerViewAdapter
 import com.skeagis.monitorporastov.databinding.FragmentDataListBinding
@@ -19,7 +17,7 @@ import com.skeagis.monitorporastov.apps_view_models.MainSharedViewModel
 /**
  * Fragment zobrazujúci zoznam poškodení.
  */
-class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDelegate() {
+class DataListFragment : Fragment() {
 
     private var _binding: FragmentDataListBinding? = null
 
@@ -86,11 +84,6 @@ class DataListFragment : Fragment(), CoroutineScopeInterface by CoroutineScopeDe
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
     }
 
     private fun observeDamageDataList() {

@@ -442,6 +442,7 @@ class MapFragmentViewModel : MapBaseViewModel() {
             setThatShouldDisplayDefaultLayer()
             item.isChecked = true
             baseMapLayerName = defaultLayerName
+            selectedLayersList.remove(ortofotoLayerName)
             clearBaseLayer()
             return
         }
@@ -467,6 +468,7 @@ class MapFragmentViewModel : MapBaseViewModel() {
             item.isChecked = false
             setLayerToDeleteString(layerName)
             mapLayersList.removeAll { it.first == layerName }
+            selectedLayersList.remove(layerName)
             return
         }
 

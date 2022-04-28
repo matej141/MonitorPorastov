@@ -162,7 +162,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
         val resizedBitmap = getResizedBitmap(bitmap)
         addPhotoItemToAdapter(resizedBitmap)
         notifyItemInsertedInAdapter()
-        job = CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             addBitmapHexToAdapter(resizedBitmap, context)
             setAdapterWasChanged()
         }

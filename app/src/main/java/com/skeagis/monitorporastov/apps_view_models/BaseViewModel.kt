@@ -86,7 +86,7 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
         val retrofitResponseDeferred = CompletableDeferred<Response<T>?>()
 
         setErrorOccurred(false)
-        job = CoroutineScope(Dispatchers.IO).launch {
+        launch {
             try {
                 val response = serviceMethod()
                 retrofitResponseDeferred.complete(response)
