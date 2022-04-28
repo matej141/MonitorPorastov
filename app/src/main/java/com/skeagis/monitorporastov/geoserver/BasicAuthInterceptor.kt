@@ -1,4 +1,4 @@
-package com.skeagis.monitorporastov
+package com.skeagis.monitorporastov.geoserver
 
 import okhttp3.Credentials
 import okhttp3.Interceptor

@@ -446,7 +446,6 @@ class MapFragmentViewModel : MapBaseViewModel() {
             return
         }
         if (id == R.id.menu_ortofoto && baseMapLayerName != ortofotoLayerName) {
-
             launch {
                 getWMSTileSourceForBaseLayer(ortofotoLayerName)
                 withContext(Dispatchers.Main) {

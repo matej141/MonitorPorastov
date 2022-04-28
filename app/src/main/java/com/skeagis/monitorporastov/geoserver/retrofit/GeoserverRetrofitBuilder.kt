@@ -1,6 +1,6 @@
 package com.skeagis.monitorporastov.geoserver.retrofit
 
-import com.skeagis.monitorporastov.BasicAuthInterceptor
+import com.skeagis.monitorporastov.geoserver.BasicAuthInterceptor
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.UrlsNames.basicUrl
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

@@ -38,12 +38,12 @@ class ConnectionLiveData(context: Context) : LiveData<Boolean>() {
 
         override fun onLost(network: Network) {
             super.onLost(network)
-            postValue(false)
+            checkInternetAccess()
         }
 
         override fun onUnavailable() {
             super.onUnavailable()
-            postValue(false)
+            checkInternetAccess()
         }
     }
 
