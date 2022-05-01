@@ -72,11 +72,9 @@ class DataDetailFragment : Fragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if (viewModel.isNetworkAvailable.value == false) {
-            return false
-        }
+
         if (!checkIfPhotosHaveBeenLoaded(id)) {
-            Toast.makeText(context, "Fotografie ešte neboli načítané, počkajte prosím",
+            Toast.makeText(context, getString(R.string.photos_have_not_been_loaded),
                 Toast.LENGTH_SHORT).show()
             return false
         }
@@ -84,21 +82,46 @@ class DataDetailFragment : Fragment() {
             return true
         }
         if (id == R.id.menu_edit_data) {
-            viewModel.detailDamageDataItem.let {
-                it.isInGeoserver = true
-                it.isDirectlyFromMap = false
-                findNavController().navigate(
-                    R.id.action_data_detail_fragment_TO_add_or_update_fragment)
-            }
+            handleToDetailFragment()
         }
         if (id == R.id.menu_delete_data) {
-            askIfDeleteDataAD()
+            handleToDeleteData()
         }
 
         if (id == R.id.menu_show_on_map_data) {
             handleToMapFragment()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun handleToDetailFragment() {
+        if (!checkIfNetworkIsAvailable()) {
+            Toast.makeText(context, getString(R.string.network_necessary_for_update_record),
+                Toast.LENGTH_SHORT).show()
+            return
+        }
+        viewModel.detailDamageDataItem.let {
+            it.isInGeoserver = true
+            it.isDirectlyFromMap = false
+            findNavController().navigate(
+                R.id.action_data_detail_fragment_TO_add_or_update_fragment)
+        }
+    }
+
+    private fun handleToDeleteData() {
+        if (!checkIfNetworkIsAvailable()) {
+            Toast.makeText(context, getString(R.string.network_necessary_for_delete_record),
+                Toast.LENGTH_SHORT).show()
+            return
+        }
+        askIfDeleteDataAD()
+    }
+
+    private fun checkIfNetworkIsAvailable(): Boolean {
+        if (sharedViewModel.isNetworkAvailable.value == false) {
+            return false
+        }
+        return true
     }
 
     private fun setAdapterInViewModel() {
@@ -125,9 +148,14 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun handleToMapFragment() {
+        if (!checkIfNetworkIsAvailable()) {
+            Toast.makeText(context, getString(R.string.network_necessary_for_show_record_on_map),
+                Toast.LENGTH_SHORT).show()
+            return
+        }
         val damageDataItem = viewModel.damageDataItem.value
         if (damageDataItem == null) {
-            Toast.makeText(context, "Dáta ešte neboli načítané, počkajte prosím",
+            Toast.makeText(context, getString(R.string.data_have_not_been_loaded),
                 Toast.LENGTH_SHORT).show()
         } else {
             sharedViewModel.selectDamageDataToShowInMap(damageDataItem)
@@ -221,7 +249,7 @@ class DataDetailFragment : Fragment() {
 
     private fun setDataToViewModel(damageDataItem: DamageData) {
         viewModel.setDamageDataItem(damageDataItem)
-        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        viewModel.initViewModelMethods(sharedViewModel)
         viewModel.prepareToLoadPhotos()
         setupContentOfDamageData(damageDataItem)
     }

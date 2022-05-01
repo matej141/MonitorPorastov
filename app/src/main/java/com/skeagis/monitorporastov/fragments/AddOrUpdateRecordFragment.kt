@@ -15,7 +15,6 @@ import android.view.*
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -64,7 +63,7 @@ class AddOrUpdateRecordFragment : Fragment() {
         setTextChangeListeners()
         listOfDamageType = resources.getStringArray(R.array.damages)
         setUpObservers()
-        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        viewModel.initViewModelMethods(sharedViewModel)
         setRecycleViewAdapterInViewModel()
         setUpBackStackCallback()
     }
@@ -171,9 +170,9 @@ class AddOrUpdateRecordFragment : Fragment() {
      */
     private fun warningAD() {
         AlertDialog.Builder(requireContext())
-            .setTitle("Nekompletné údaje")
-            .setMessage("Musíte zadať aspoň názov poškodenia")
-            .setNegativeButton("Ok") { dialog, _ -> dialog.cancel() }
+            .setTitle(getString(R.string.not_completed_data_ad_title))
+            .setMessage(getString(R.string.not_completed_data_ad_message))
+            .setNegativeButton(getString(R.string.ok_text_small)) { dialog, _ -> dialog.cancel() }
             .create()
             .show()
     }
@@ -186,7 +185,7 @@ class AddOrUpdateRecordFragment : Fragment() {
             return
         }
         AlertDialog.Builder(requireContext())
-            .setTitle("Vyberte typ poškodenia:")
+            .setTitle(getString(R.string.choose_type_of_damage_ad_title))
             .setSingleChoiceItems(listOfDamageType, -1) { dialogInterface, i ->
                 binding.addDataDamageType.setText(listOfDamageType[i])
                 dialogInterface.dismiss()
@@ -337,20 +336,20 @@ class AddOrUpdateRecordFragment : Fragment() {
 
     private fun succeededToasts() {
         if (viewModel.isEditingData.value == true) {
-            Toast.makeText(context, "Záznam bol úspešne aktualizovaný",
+            Toast.makeText(context, getString(R.string.successful_update_toast_message),
                 Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Záznam bol úspešne uložený",
+            Toast.makeText(context, getString(R.string.successful_saving_toast_message),
                 Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun nonSucceededToast() {
         if (viewModel.isEditingData.value == true) {
-            Toast.makeText(context, "Záznam sa nepodarilo aktualizovať",
+            Toast.makeText(context, getString(R.string.unsuccessful_update_toast_message),
                 Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Záznam sa nepodarilo uložiť",
+            Toast.makeText(context, getString(R.string.unsuccessful_saving_toast_message),
                 Toast.LENGTH_SHORT).show()
         }
     }

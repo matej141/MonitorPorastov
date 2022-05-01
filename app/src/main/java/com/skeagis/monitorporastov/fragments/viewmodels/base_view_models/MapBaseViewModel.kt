@@ -49,7 +49,6 @@ abstract class MapBaseViewModel : BaseViewModel() {
 
     open fun initViewModelMethods(
         sharedViewModel: MainSharedViewModel,
-        viewLifecycleOwner: LifecycleOwner,
     ) {
         initSharedViewModel(sharedViewModel)
         setObservers()

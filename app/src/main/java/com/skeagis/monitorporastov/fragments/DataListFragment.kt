@@ -50,7 +50,7 @@ class DataListFragment : Fragment() {
         observeDamageDataList()
         observeIfDataLoaded()
         sharedViewModel.clearSelectedDamageDataItemFromMap()
-        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        viewModel.initViewModelMethods(sharedViewModel)
     }
 
     private fun setUpAdapter() {
@@ -97,10 +97,9 @@ class DataListFragment : Fragment() {
         viewModel.loadedUserData.observe(viewLifecycleOwner) { loaded ->
             if (loaded) {
                 binding.progressBar.visibility = View.GONE
-            }
-            else {
+            } else {
                 binding.progressBar.visibility = View.VISIBLE
-                Toast.makeText(context, "Načítavam dáta",
+                Toast.makeText(context, getString(R.string.loading_data),
                     Toast.LENGTH_SHORT).show()
             }
 

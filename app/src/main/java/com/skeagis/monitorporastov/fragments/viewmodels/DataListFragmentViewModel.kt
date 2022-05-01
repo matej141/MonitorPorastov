@@ -127,10 +127,10 @@ class DataListFragmentViewModel : MapBaseViewModel() {
 
     override fun initViewModelMethods(
         sharedViewModel: MainSharedViewModel,
-        viewLifecycleOwner: LifecycleOwner,
+
     ) {
 
-        super.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        super.initViewModelMethods(sharedViewModel)
         observeNetworkState { reloadUserData() }
     }
 

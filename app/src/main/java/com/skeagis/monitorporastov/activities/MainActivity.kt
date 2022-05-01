@@ -202,18 +202,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun observeUnauthorisedError() {
         sharedViewModel.unauthorisedErrorIsOccurred.observe(this) {
-            createWrongCredentialsWarningAD()
+            createWrongSavedCredentialsWarningAD()
         }
     }
 
-    private fun createWrongCredentialsWarningAD() {
+    private fun createWrongSavedCredentialsWarningAD() {
         AlertDialog.Builder(this)
-            .setTitle("Nesprávne prihlasovacie údaje")
-            .setMessage("Vaše prihlasovecie údaje uložené v aplikácii zrejme nie sú správne.\n" +
-                    "Pre správne fungovanie aplikácie sa prosím odhláste a prihláste sa s " +
-                    "aktualizovanými prihlasovacími údajmi.\n" +
-                    "Prípadne kontaktuje podporu.")
-            .setPositiveButton("Odhlásiť sa") { _, _ ->
+            .setTitle(getString(R.string.wrong_saved_credentials_ad_title))
+            .setMessage(getString(R.string.wrong_saved_credentials_ad_message))
+            .setPositiveButton(R.string.menu_log_out_txt) { _, _ ->
                 logOut()
             }
             .setNeutralButton(getString(R.string.button_cancel_text)) { dialog, _ -> dialog.cancel() }
@@ -267,10 +264,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun unableToLoadUserCredentialsFromMemoryAD() {
         AlertDialog.Builder(this)
-            .setTitle("Nepodarilo sa načítať uložené meno a heslo v aplikácii")
-            .setMessage("Pre správne fungovanie aplikácie sa prosím odhláste a " +
-                    "zadajte svoje prihlasovacie údaje znovu.")
-            .setPositiveButton("Odhlásiť sa") { _, _ ->
+            .setTitle(getString(R.string.unsuccessful_loading_of_credentials_ad_title))
+            .setMessage(getString(R.string.unsuccessful_loading_of_credentials_ad_message))
+            .setPositiveButton(getString(R.string.menu_log_out_txt)) { _, _ ->
                 logOut()
             }
             .setNeutralButton(getString(R.string.button_cancel_text)) { dialog, _ ->

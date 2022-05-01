@@ -18,6 +18,7 @@
 
     <string name="menu_default_map_txt">Základná mapa</string>
     <string name="menu_BPEJ_txt">BPEJ</string>
+<!--    <string name="menu_cadastral_map_txt">Katastrálna mapa</string>-->
     <string name="menu_JPRL_txt">JPRL</string>
     <string name="menu_LPIS_txt">LPIS</string>
     <string name="menu_ortofoto_txt">Ortofoto</string>
@@ -31,8 +32,6 @@
     <string name="stay_logged">zostať prihlásený</string>
     <string name="menu_log_out_txt">Odhlásiť sa</string>
 
-    <string name="menu_nadm_zakl_txt">Nadmorské výšky - základná</string>
-    <string name="menu_nadm_rozs_txt">Nadmorské výšky - rozšírená</string>
     <string name="default_test_text">aaaa</string>
 
     <string name="title_activity_login">LoginActivity</string>
@@ -69,6 +68,15 @@
     <string name="detail_record_button_desc">Detail record button desc</string>
     <string name="edit_polygon_button_desc">Edit polygon button desc</string>
 
+    <string name="add_or_update_save_button_txt">Ulož</string>
+    <string name="add_or_update_choose_from_gallery_txt">Vyber z galérie</string>
+    <string name="add_or_update_take_pic_txt">Odfoť</string>
+    <string name="add_or_update_desc_hint_txt">Popis</string>
+    <string name="add_or_update_damage_type_hint_txt">Druh poškodenia</string>
+    <string name="add_or_update_name_of_record_hint_txt">Názov</string>
+    <string name="add_or_update_title_txt">Zadajte informácie o poškodení:</string>
+
+
     <string name="map_default">default</string>
     <string name="map_ortofoto">ortofoto</string>
 
@@ -78,19 +86,34 @@
     <string name="button_negative_text">Nie</string>
     <string name="button_cancel_text">Zrušiť</string>
     <string name="ok_text">OK</string>
+    <string name="ok_text_small">Ok</string>
     <string name="exit_app_ad_title">Chcete ukončiť aplikáciu?</string>
     <string name="show_measure_ad_title">Vyberte spôsob:</string>
     <string name="login_ag_title">Prihlásenie neúspešné</string>
     <string name="login_ag_message">Skontrolujte svoje prihlasovacie údaje.
         Ak problém pretrváva, kontaktujte podporu.</string>
-    <string name="explanation_ad_title">Aktuálnu polohu nie je možné zobraziť</string>
-    <string name="explanation_ad_message">Aktuálnu polohu nie je možné zobraziť a ani nie je možné s ňou pracovať, pretože prístup k polohe nebol udelený.</string>
+    <string name="no_location_explanation_ad_title">Aktuálnu polohu nie je možné zobraziť</string>
+    <string name="no_location_explanation_ad_message">Aktuálnu polohu nie je možné zobraziť a ani nie je možné s ňou pracovať, pretože prístup k polohe nebol udelený.</string>
+    <string name="no_location_for_gps_selecting_explanation_ad_title">Prístup k polohe nebol udelený</string>
+    <string name="no_location_for_gps_selecting_explanation_ad_message">Na vyznačenie poškodeného územia krokovaním je potrebné mať prístup k polohe zariadenia, ktorý nebol udelený.</string>
     <string name="location_alert">Poloha ešte nebola získaná, počkajte prosím</string>
     <string name="end_gps_measure_ad_title">Naozaj chcete ukončiť vyznačovanie krokovaním?</string>
     <string name="clear_measure_ad_title">Chcete zahodiť aktuálne vyznačovanie územia?</string>
     <string name="detail_table_no_photos_txt">Žiadne fotografie nie sú k dispozícii</string>
     <string name="if_delete_record_title">Naozaj chcete vymazať tento záznam?</string>
     <string name="ask_if_log_out_title">Naozaj sa chcete odhlásiť?</string>
+    <string name="not_enough_points_ad_title">Nezadali ste dostatočný počet bodov</string>
+    <string name="not_enough_points_ad_message">Na uloženie záznamu musíte zadať aspoň 3 body.</string>
+    <string name="not_completed_data_ad_title">Nekompletné údaje</string>
+    <string name="not_completed_data_ad_message">Musíte zadať aspoň názov poškodenia.</string>
+    <string name="choose_type_of_damage_ad_title">Vyberte typ poškodenia:</string>
+    <string name="wrong_saved_credentials_ad_title">Nesprávne uložené prihlasovacie údaje</string>
+    <string name="wrong_saved_credentials_ad_message">Vaše prihlasovecie údaje uložené v aplikácii zrejme nie sú správne. <br/>
+                    Pre správne fungovanie aplikácie sa prosím odhláste a prihláste sa s
+                    aktualizovanými prihlasovacími údajmi. <br/>
+                    Prípadne kontaktuje podporu.</string>
+    <string name="unsuccessful_loading_of_credentials_ad_title">Nepodarilo sa načítať uložené meno a heslo v aplikácii</string>
+    <string name="unsuccessful_loading_of_credentials_ad_message">Pre správne fungovanie aplikácie sa prosím odhláste a zadajte svoje prihlasovacie údaje znovu.</string>
 
     <string-array name="damages">
         <item>Požiar</item>
@@ -106,17 +129,30 @@
     <!--    Other-->
     <string name="no_username_added">Nezadali ste prihlasovacie meno</string>
     <string name="no_password_added">Nezadali ste heslo</string>
+    <string name="manual_selecting_txt">Manuálne vyznačenie</string>
+    <string name="gps_selecting_txt">Krokové vyznačenie</string>
+
+    <string name="no_name_of_damage">(nezadaný názov poškodenia)</string>
+    <string name="no_type_of_damage">(nezadaný typ poškodenia)</string>
+    <string name="no_desc_of_damage">(nezadaný popis)</string>
 
     <!--    Toast-->
     <string name="must_be_password_before_login">Na prihlásenie sa do aplikácie musíte mať prístup na internet</string>
     <string name="geoserver_url_filter_username_parameter">meno</string>
     <string name="successful_deleting">Dáta boli úspešne vymazané</string>
     <string name="unsuccessful_deleting">Dáta sa nepodarilo vymazať</string>
-    <string name="add_or_update_save_button_txt">Ulož</string>
-    <string name="add_or_update_choose_from_gallery_txt">Vyber z galérie</string>
-    <string name="add_or_update_take_pic_txt">Odfoť</string>
-    <string name="add_or_update_desc_hint_txt">Popis</string>
-    <string name="add_or_update_damage_type_hint_txt">Druh poškodenia</string>
-    <string name="add_or_update_name_of_record_hint_txt">Názov</string>
-    <string name="add_or_update_title_txt">Zadajte informácie o poškodení:</string>
+    <string name="network_necessary_for_save_record">Na uloženie nového záznamu musíte mať prístup do siete</string>
+    <string name="network_necessary_for_delete_record">Na odstránenie záznamu musíte mať prístup do siete</string>
+    <string name="network_necessary_for_update_record">Na úpravu záznamu musíte mať prístup na internet</string>
+    <string name="network_necessary_for_choosing_layers">Na výber iných mapových vrstiev musíte mať prístup na internet</string>
+    <string name="network_necessary_for_show_record_on_map">Na zobrazenie záznamu na mape by ste mali mať prístup na internet</string>
+
+    <string name="data_have_not_been_loaded">Dáta ešte neboli načítané, počkajte prosím</string>
+    <string name="photos_have_not_been_loaded">Fotografie ešte neboli načítané, počkajte prosím</string>
+    <string name="loading_data">Načítavam dáta</string>
+    <string name="successful_update_toast_message">Záznam bol úspešne aktualizovaný</string>
+    <string name="successful_saving_toast_message">Záznam bol úspešne uložený</string>
+    <string name="unsuccessful_update_toast_message">Záznam sa nepodarilo aktualizovať</string>
+    <string name="unsuccessful_saving_toast_message">Záznam sa nepodarilo uložiť</string>
+
 </resources>

@@ -26,6 +26,7 @@ import com.google.maps.android.SphericalUtil
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.BPEJLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.JPRLLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.buildingsListLayerName
+import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.cadastralMapLayerName
 import com.skeagis.monitorporastov.geoserver.GeoserverPropertiesNames.LayersNames.huntingGroundsLayerName
 import kotlinx.coroutines.*
 import okhttp3.Credentials
@@ -510,6 +511,9 @@ class MapFragmentViewModel : MapBaseViewModel() {
             R.id.menu_E_parcel -> {
                 layerName = E_parcelLayerName
             }
+//            R.id.menu_cadastral_map -> {
+//                layerName = cadastralMapLayerName
+//            }
             R.id.menu_LPIS -> {
                 layerName = LPISLayerName
             }

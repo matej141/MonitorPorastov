@@ -113,8 +113,6 @@ class MapFragment : Fragment() {
             // ak sú povolené, začneme sledovať polohu
             if (allPermissionsAreGranted) {
                 setUpConnectionLiveData()
-            } else {
-                showExplainPermissionsAD()
             }
         }
     }
@@ -143,15 +141,12 @@ class MapFragment : Fragment() {
     }
 
     private fun setUpNavController() {
-        // riešenie navcontrolleru, keď sa používateľ z fragmentu vráti do tohto fragmentu
         val navController = findNavController()
         navController.currentBackStackEntry?.savedStateHandle?.getLiveData<Boolean>("key")?.observe(
             viewLifecycleOwner) { result ->
             if (result) {
                 viewModel.setDefaultModeOfMap()
                 sharedViewModel.clearSelectedDamageDataItemFromMap()
-                // nastavenie defaultneho zobrazenia mapy (bez buttonov
-                // zobrazených počas vyznačovania poškodeného územia)
                 navController.currentBackStackEntry?.savedStateHandle?.set("key", false)
             }
         }
@@ -180,10 +175,10 @@ class MapFragment : Fragment() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun showExplainPermissionsAD() {
+    private fun showExplainLocationPermissionsAD() {
         AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.explanation_ad_title))
-            .setMessage(getString(R.string.explanation_ad_message))
+            .setTitle(getString(R.string.no_location_explanation_ad_title))
+            .setMessage(getString(R.string.no_location_explanation_ad_message))
             .setNegativeButton(getString(R.string.ok_text)) { dialog, _ ->
                 dialog.cancel()
             }
@@ -344,12 +339,12 @@ class MapFragment : Fragment() {
     }
 
     private fun showToastAboutThatUserMustHaveInternetForSaveData() {
-        Toast.makeText(context, "Na uloženie nového záznamu musíte mať prístup do siete",
+        Toast.makeText(context, getString(R.string.network_necessary_for_save_record),
             Toast.LENGTH_SHORT).show()
     }
 
     private fun showToastAboutUserMustHaveInternetForDeleting() {
-        Toast.makeText(context, "Na odstránenie záznamu musíte mať prístup do siete",
+        Toast.makeText(context, getString(R.string.network_necessary_for_delete_record),
             Toast.LENGTH_SHORT).show()
     }
 
@@ -362,9 +357,7 @@ class MapFragment : Fragment() {
     private fun showNewRecordAD() {
         // najskôr skontroluje, či už bola načítaná poloha a udelené povolenia.
         // Ak nie, alert dialog sa nezobrazí.
-        if (!locationCheck()) {
-            return
-        }
+
 
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.show_measure_ad_title))
@@ -374,12 +367,38 @@ class MapFragment : Fragment() {
                 if (item == 0) {
                     viewModel.setForManualSelecting()
                 } else {
-                    viewModel.setForGPSSelecting()
+                    if (checkIfShouldStartGPSSelecting()) {
+                        viewModel.setForGPSSelecting()
+                    }
+
                 }
                 sharedViewModel.clearSelectedDamageDataItemFromMap()
                 viewModel.setSelectedDamageRecordAsNull()
             }
             .setNegativeButton(getString(R.string.button_cancel_text)) { dialog, _ ->
+                dialog.cancel()
+            }
+            .create()
+            .show()
+    }
+
+    private fun checkIfShouldStartGPSSelecting(): Boolean {
+        if (!checkIfLocationPermissionsWereGranted()) {
+            showThatForGPSSelectingIsNecessaryToGrantPerm()
+            return false
+        }
+        if (!checkIfCurrentLocationWasObtained()) {
+            return false
+        }
+        return true
+
+    }
+
+    private fun showThatForGPSSelectingIsNecessaryToGrantPerm() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.no_location_for_gps_selecting_explanation_ad_title))
+            .setMessage(getString(R.string.no_location_for_gps_selecting_explanation_ad_message))
+            .setNegativeButton(getString(R.string.ok_text)) { dialog, _ ->
                 dialog.cancel()
             }
             .create()
@@ -415,8 +434,8 @@ class MapFragment : Fragment() {
      */
     private fun measureAlertDialogItems(): Array<DialogItem> {
         return arrayOf(
-            DialogItem("Manuálne vyznačenie", R.drawable.ic_touch),
-            DialogItem("Krokové vyznačenie", R.drawable.ic_walk_colored))
+            DialogItem(getString(R.string.manual_selecting_txt), R.drawable.ic_touch),
+            DialogItem(getString(R.string.gps_selecting_txt), R.drawable.ic_walk_colored))
     }
 
     /**
@@ -708,11 +727,11 @@ class MapFragment : Fragment() {
             data.obsah.toInt()
         } m\u00B2"
         binding.layoutContainer.detailInformationLayout.damageName.text =
-            if (!data.nazov.isNullOrEmpty()) data.nazov else "-------"
+            if (!data.nazov.isNullOrEmpty()) data.nazov else getString(R.string.no_name_of_damage)
         binding.layoutContainer.detailInformationLayout.damageType.text =
-            if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else "(nezadaný typ poškodenia)"
+            if (!data.typ_poskodenia.isNullOrEmpty()) data.typ_poskodenia else getString(R.string.no_type_of_damage)
         binding.layoutContainer.detailInformationLayout.damageInfo.text =
-            if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else "(nezadaný popis)"
+            if (!data.popis_poskodenia.isNullOrEmpty()) data.popis_poskodenia else getString(R.string.no_desc_of_damage)
         binding.layoutContainer.detailInformationLayout.perimeter.text = txtPerimeter
         binding.layoutContainer.detailInformationLayout.area.text = txtArea
     }
@@ -790,7 +809,7 @@ class MapFragment : Fragment() {
      * Vráti zoom mapy na aktuálnu polohu.
      */
     private fun centerMap() {
-        if (!locationCheck()) {
+        if (!checkIfCurrentLocationIsAvailable()) {
             return
         }
         val maxZoomLevel = 25
@@ -811,14 +830,28 @@ class MapFragment : Fragment() {
     /**
      * Kontrola, či už bola načítaná poloha.
      */
-    private fun locationCheck(): Boolean {
-        checkForPermissions()
-        if (!allPermissionsAreGranted) {
+    private fun checkIfCurrentLocationIsAvailable(): Boolean {
+        if (!checkIfLocationPermissionsWereGranted()) {
+            showExplainLocationPermissionsAD()
             return false
         }
+        if (!checkIfCurrentLocationWasObtained()) {
+            return false
+        }
+        return true
+    }
+
+    private fun checkIfCurrentLocationWasObtained(): Boolean {
         if (viewModel.getLastLocation() == null) {
             Toast.makeText(context, getString(R.string.location_alert),
                 Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
+    }
+
+    private fun checkIfLocationPermissionsWereGranted(): Boolean {
+        if (!allPermissionsAreGranted) {
             return false
         }
         return true
@@ -939,8 +972,8 @@ class MapFragment : Fragment() {
 
     private fun lessThan3PointsAD() {
         AlertDialog.Builder(requireContext())
-            .setTitle("Nezadali ste dostatočný počet bodov")
-            .setMessage("Na uloženie záznamu musíte zadať aspoň 3 body.")
+            .setTitle(getString(R.string.not_enough_points_ad_title))
+            .setMessage(getString(R.string.not_enough_points_ad_message))
             .setNegativeButton(getText(R.string.ok_text)) { dialog, _ -> dialog.cancel() }
             .create()
             .show()
@@ -1105,7 +1138,7 @@ class MapFragment : Fragment() {
     }
 
     private fun setUpViewModel() {
-        viewModel.initViewModelMethods(sharedViewModel, viewLifecycleOwner)
+        viewModel.initViewModelMethods(sharedViewModel)
         viewModel.setConfiguration()
     }
 
@@ -1235,7 +1268,7 @@ class MapFragment : Fragment() {
             it.getContentIfNotHandled().let { value ->
                 if (value != null) {
                     Toast.makeText(context,
-                        "Na výber iných mapových vrstiev musíte mať prístup na internet.",
+                        getString(R.string.network_necessary_for_choosing_layers),
                         Toast.LENGTH_SHORT).show()
                 }
             }
@@ -1283,6 +1316,8 @@ class MapFragment : Fragment() {
                 true
             E_parcelLayerName -> menu.findItem(R.id.menu_E_parcel).isChecked =
                 true
+//            cadastralMapLayerName -> menu.findItem(R.id.menu_cadastral_map).isChecked =
+//                true
             LPISLayerName -> menu.findItem(R.id.menu_LPIS).isChecked =
                 true
             JPRLLayerName -> menu.findItem(R.id.menu_JPRL).isChecked =
@@ -1418,13 +1453,15 @@ class MapFragment : Fragment() {
     }
 
     private fun setDeletingModeOfDeleteMarkerButton() {
+        val colorString = "#EA0A0A"
         binding.deleteMarkerButton.backgroundTintList = ColorStateList.valueOf(Color
-            .parseColor("#EA0A0A"))
+            .parseColor(colorString))
     }
 
     private fun unsetDeletingModeOfDeleteMarkerButton() {
+        val colorString = "#B4802E"
         binding.deleteMarkerButton.backgroundTintList = ColorStateList.valueOf(Color
-            .parseColor("#B4802E"))
+            .parseColor(colorString))
     }
 
     private fun observeMarkersToAddOrRemoveFromMap() {

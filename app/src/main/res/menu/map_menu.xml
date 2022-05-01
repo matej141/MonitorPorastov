@@ -33,7 +33,9 @@
                 <item
                     android:id="@+id/menu_JPRL"
                     android:title="@string/menu_JPRL_txt" />
-
+<!--                <item-->
+<!--                    android:id="@+id/menu_cadastral_map"-->
+<!--                    android:title="Lesné cesty" />-->
                 <item
                     android:id="@+id/menu_LPIS"
                     android:title="@string/menu_LPIS_txt" />
