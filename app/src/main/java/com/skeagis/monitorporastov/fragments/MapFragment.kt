@@ -1069,6 +1069,13 @@ class MapFragment : Fragment() {
 
     private fun setUpLocationReceiver() {
         locationLiveData?.observe(viewLifecycleOwner) {
+            // fejkovanie polohy
+//            val l = Location("")
+//            l.latitude = 49.033703
+//            l.longitude = 18.890103
+//            val l2 = Location("")
+//            l2.latitude = 49.03820129764798
+//            l2.longitude = 18.882136175632414
             viewModel.setLastLocation(it)
         }
     }

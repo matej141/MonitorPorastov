@@ -27,6 +27,7 @@ import java.util.*
 class DataDetailFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var adapterOfDamagePhotos: DataDetailPhotosRVAdapter
 
     private var _binding: FragmentDataDetailBinding? = null
 
@@ -51,6 +52,7 @@ class DataDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.dataDetailPhotoRv
+        adapterOfDamagePhotos = DataDetailPhotosRVAdapter(mutableListOf(), requireContext())
         setUpObservers()
         setAdapterInViewModel()
         setUpBackStackCallback()
@@ -220,7 +222,7 @@ class DataDetailFragment : Fragment() {
             .setPositiveButton(R.string.button_positive_text) { _, _ ->
                 binding.progressBar.visibility = View.VISIBLE
                 viewModel.prepareToDelete(viewModel.detailDamageDataItem)
-                viewModel.setImageInAdapterNonClickable()
+                adapterOfDamagePhotos.setIfDeletePhotoClickable(false)
             }
             .setNegativeButton(R.string.button_negative_text) { dialog, _ ->
                 dialog.cancel()
@@ -261,8 +263,9 @@ class DataDetailFragment : Fragment() {
     }
 
     private fun observeBitmaps() {
-        viewModel.adapterOfDetailOfPhotos.observe(viewLifecycleOwner) {
-            recyclerView.adapter = it
+        viewModel.bitmaps.observe(viewLifecycleOwner) {
+            adapterOfDamagePhotos = DataDetailPhotosRVAdapter(it, requireContext())
+            recyclerView.adapter = adapterOfDamagePhotos
         }
     }
 

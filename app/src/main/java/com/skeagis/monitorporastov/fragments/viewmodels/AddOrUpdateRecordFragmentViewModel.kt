@@ -319,6 +319,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()
+                removeObserverOfNetwork()
             }
 
         }
@@ -457,6 +458,7 @@ class AddOrUpdateRecordFragmentViewModel : DamagePhotosBaseViewModel() {
             setIfUpdateSucceeded(ifUpdateSucceeded)
             if (ifUpdateSucceeded) {
                 onSucceededResult()
+                removeObserverOfNetwork()
             }
         }
     }

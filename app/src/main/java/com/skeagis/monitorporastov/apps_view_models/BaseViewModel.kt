@@ -127,6 +127,9 @@ abstract class BaseViewModel : ViewModel(), CoroutineScopeInterface by Coroutine
             e is SocketException && e.message == "Software caused connection abort" -> {
                 Log.e(CALL_TO_GEOSERVER_TAG, "SocketException: $e")
             }
+            e is ConnectException && e.message == "Failed to connect to services.skeagis.sk/212.5.204.126:7492" -> {
+                Log.e(CALL_TO_GEOSERVER_TAG, "ConnectException: $e")
+            }
             else -> {
                 onError(e.toString())
             }

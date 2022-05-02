@@ -152,6 +152,7 @@ abstract class MapBaseViewModel : BaseViewModel() {
             val resultOfDeleting = Utils.checkIfCallsWereSucceeded(resultsList)
             if (resultOfDeleting) {
                 onSuccessfulDelete()
+                removeObserverOfNetwork()
             }
             sharedViewModel?.setIfDeletingWasSuccessful(resultOfDeleting)
         }
@@ -202,11 +203,15 @@ abstract class MapBaseViewModel : BaseViewModel() {
                     uniqueId) == null
     }
 
+    fun removeObserverOfNetwork() {
+        sharedViewModel?.isNetworkAvailable?.removeObserver(networkAvailabilityObserver)
+    }
+
     override fun onCleared() {
         super.onCleared()
         errorOccurred.removeObserver(errorOccurredObserver)
         errorMessage.removeObserver(errorMessageObserver)
         unauthorisedErrorIsOccurred.removeObserver(unauthorisedErrorIsOccurredObserver)
-        sharedViewModel?.isNetworkAvailable?.removeObserver(networkAvailabilityObserver)
+        removeObserverOfNetwork()
     }
 }
