@@ -12,7 +12,7 @@ import retrofit2.http.Query
 
 interface GeoserverRetrofitAPI {
 
-    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=$userDamagesLayer&outputFormat=application/json&sortBy=id")
+    @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=$userDamagesLayer&outputFormat=application/json")
     suspend fun getUserData(@Query("viewparams", encoded = true) user: String): Response<UsersData>
 
     @GET("wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=fotografie_sql&outputFormat=application/json")
