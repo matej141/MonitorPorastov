@@ -15,35 +15,12 @@ open class DataDetailFragmentViewModel : DamagePhotosBaseViewModel() {
     private val _noPhotosToShow = MutableLiveData<Boolean>()
     val noPhotosToShow: LiveData<Boolean> = _noPhotosToShow
 
-    private val _adapterOfDetailOfPhotos = MutableLiveData<DataDetailPhotosRVAdapter>()
-    val adapterOfDetailOfPhotos: LiveData<DataDetailPhotosRVAdapter> = _adapterOfDetailOfPhotos
-
     lateinit var detailDamageDataItem: DamageData
 
     override fun setBitmaps(listOfBitmaps: MutableList<Bitmap>) {
         super.setBitmaps(listOfBitmaps)
         _bitmaps.postValue(listOfBitmaps)
-        setBitmapsOfAdapter(listOfBitmaps)
         setNoPhotosToShow(listOfBitmaps.isNullOrEmpty())
-    }
-
-    private fun setBitmapsOfAdapter(listOfBitmaps: MutableList<Bitmap>) {
-        val adapter = _adapterOfDetailOfPhotos.value
-        if (adapter != null) {
-            adapter.bitmaps = listOfBitmaps
-            _adapterOfDetailOfPhotos.postValue(adapter!!)
-        }
-    }
-
-    fun setImageInAdapterNonClickable() {
-        _adapterOfDetailOfPhotos.value?.setIfDeletePhotoClickable(false)
-    }
-
-    fun setAdapterOfDetailsOfPhotos(
-        adapter:
-        DataDetailPhotosRVAdapter,
-    ) {
-        _adapterOfDetailOfPhotos.value = adapter
     }
 
     private fun setNoPhotosToShow(value: Boolean) {

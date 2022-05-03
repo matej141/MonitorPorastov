@@ -8,12 +8,9 @@ import com.skeagis.monitorporastov.Utils
 import com.skeagis.monitorporastov.Utils.createRequestBody
 import com.skeagis.monitorporastov.adapters.AddOrUpdateRecordPhotosRVAdapter
 import com.skeagis.monitorporastov.fragments.viewmodels.base_view_models.DamagePhotosBaseViewModel
-import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataFilterStringsFactory.createFilterStringByUniqueId
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverDataPostStringsFactory
 import com.skeagis.monitorporastov.geoserver.factories.GeoserverPhotosPostStringsFactory
-import com.skeagis.monitorporastov.geoserver.retrofit.GeoserverRetrofitAPI
 import com.skeagis.monitorporastov.model.DamageData
-import com.skeagis.monitorporastov.model.UsersData
 import id.zelory.compressor.Compressor
 import id.zelory.compressor.constraint.format
 import id.zelory.compressor.constraint.quality

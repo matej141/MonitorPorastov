@@ -54,7 +54,6 @@ class DataDetailFragment : Fragment() {
         recyclerView = binding.dataDetailPhotoRv
         adapterOfDamagePhotos = DataDetailPhotosRVAdapter(mutableListOf(), requireContext())
         setUpObservers()
-        setAdapterInViewModel()
         setUpBackStackCallback()
         hideKeyboard()
     }
@@ -124,12 +123,6 @@ class DataDetailFragment : Fragment() {
             return false
         }
         return true
-    }
-
-    private fun setAdapterInViewModel() {
-        val dataDetailPhotosRVAdapter =
-            DataDetailPhotosRVAdapter(mutableListOf(), requireContext())
-        viewModel.setAdapterOfDetailsOfPhotos(dataDetailPhotosRVAdapter)
     }
 
     private fun checkIfPhotosHaveBeenLoaded(id: Int): Boolean {
