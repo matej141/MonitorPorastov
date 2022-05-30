@@ -173,7 +173,6 @@ class LoginActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             doLogin()
         }
-
     }
 
     private fun checkIfNetworkAvailable(): Boolean {
@@ -270,7 +269,7 @@ class LoginActivity : AppCompatActivity() {
      * Kontrola, či používateľ vyplnil meno.
      */
     private fun checkIfUserNameNotEmpty(): Boolean {
-        if (binding.loginUsername.editText?.length() ?: 0 == 0) {
+        if ((binding.loginUsername.editText?.length() ?: 0) == 0) {
             binding.loginUsername.error = getString(R.string.no_username_added)
             return false
         }
@@ -281,7 +280,7 @@ class LoginActivity : AppCompatActivity() {
      * Kontrola, či používateľ vyplnil meno.
      */
     private fun checkIfPasswordNotEmpty(): Boolean {
-        if (binding.loginPassword.editText?.length() ?: 0 == 0) {
+        if ((binding.loginPassword.editText?.length() ?: 0) == 0) {
             binding.loginPassword.error = getString(R.string.no_password_added)
             return false
         }

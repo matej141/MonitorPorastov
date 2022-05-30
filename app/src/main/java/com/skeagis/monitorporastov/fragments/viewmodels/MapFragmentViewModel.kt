@@ -252,7 +252,6 @@ class MapFragmentViewModel : MapBaseViewModel() {
     fun setForManualSelecting() {
         setManualSelectingValue(true)
         setGPSSelectingValue(false)
-
     }
 
     fun setForGPSSelecting() {
